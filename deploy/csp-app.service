@@ -1,0 +1,57 @@
+[Unit]
+Description=CSP-NG (CardServProxy NG) — admin console & runtime
+Documentation=https://github.com/ucefmath/CSP-NG
+After=network-online.target postgresql.service
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=exec
+User=csp
+Group=csp
+WorkingDirectory=/opt/csp
+EnvironmentFile=/etc/csp/csp.env
+Environment=QUARKUS_PROFILE=prod
+
+# JVM runtime : JDK 21 (matrice supportée Quarkus 3.20 LTS).
+# Repli GraalVM 25 : remplacer le binaire par /opt/graalvm-25/bin/java ET ajouter
+#   --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED
+ExecStart=/usr/lib/jvm/java-21-openjdk-amd64/bin/java -Xms128m -Xmx512m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF-8 -jar /opt/csp/current/quarkus-app/quarkus-run.jar
+
+KillSignal=SIGTERM
+KillMode=mixed
+TimeoutStopSec=45s
+TimeoutStartSec=180s
+Restart=on-failure
+RestartSec=10s
+SuccessExitStatus=143
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=csp-app
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+ReadWritePaths=/var/lib/csp /etc/csp/secrets
+StateDirectory=csp
+StateDirectoryMode=0750
+UMask=0077
+LimitNOFILE=65536
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target

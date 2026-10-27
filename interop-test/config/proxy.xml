@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuration minimale du nœud CSP legacy (Java) pour le test d'interop L3b.
+  Seule la couche ClusteredCache UDP est active : aucun connecteur, aucune session.
+  Les pairs sont découverts via le tracker local (peers.txt) + auto-add-peers.
+  Port UDP d'écoute : 9009.
+-->
+<cardserv-proxy ver="0.9.0">
+  <user-manager class="com.bowman.cardserv.XmlUserManager">
+    <auth-config user-file-url="file:config/users.xml"/>
+  </user-manager>
+  <connection-manager>
+    <max-cw-wait>5000</max-cw-wait>
+    <service-map>
+      <mapper enabled="true"/>
+    </service-map>
+    <cws-connectors>
+      <newcamd-connector name="placeholder" profile="default" enabled="false" host="127.0.0.1" port="1234" user="test" password="test" des-key="01 02 03 04 05 06 07 08 09 10 11 12 13 14"/>
+    </cws-connectors>
+  </connection-manager>
+  <ca-profiles>
+    <default-des-key>01 02 03 04 05 06 07 08 09 10 11 12 13 14</default-des-key>
+  </ca-profiles>
+  <cache-handler class="com.bowman.cardserv.ClusteredCache" ver="0.9.1" enable-service-linking="false">
+    <cache-config cw-max-age="120000" max-cw="100000" max-cache-wait="5s">
+      <local-port>9009</local-port>
+      <local-host>csp-legacy</local-host>
+      <tracker-url>file:config/peers.txt</tracker-url>
+      <tracker-update>0</tracker-update>
+      <auto-add-peers>true</auto-add-peers>
+      <cw-validation checksum="true" zero-counting="true" require-id="true" log-warnings="true"/>
+    </cache-config>
+  </cache-handler>
+  <logging log-level="info" log-file="log/proxy.log"/>
+</cardserv-proxy>

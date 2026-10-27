@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.bowman.cspng</groupId>
+    <artifactId>csp-new-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>csp-web</artifactId>
+  <name>CSP-NG — Web UI / API</name>
+  <description>
+    Remplacement de RMI : API XML legacy-compatible, REST/JSON, SSE et assets statiques (lots L6/L8).
+  </description>
+
+  <properties>
+    <!-- Sauter le build frontend : -Dskip.frontend=true (le bundle /admin/* est alors absent). -->
+    <skip.frontend>false</skip.frontend>
+    <!-- Sauter uniquement l'exécution E2E Playwright (Chromium) tout en bundlant le frontend : -Dskip.frontend.e2e=true -->
+    <skip.frontend.e2e>${skip.frontend}</skip.frontend.e2e>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-domain</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-config</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-users</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-connectors</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-filters</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-vertx-http</artifactId>
+    </dependency>
+
+    <!-- Quarkus REST (Jackson) pour l'API admin JSON -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-jackson</artifactId>
+    </dependency>
+    <!-- Hibernate Validator -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-validator</artifactId>
+    </dependency>
+    <!-- Quarkus Security + Elytron pour Basic auth -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-elytron-security-common</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--
+        Frontend admin (React 19 + React Router 7, sources : frontend/src).
+        Build reproductible : typecheck + tests vitest + bundle Vite deterministe
+        (assets/app.js, assets/app.css, index.html) vers target/frontend-dist,
+        puis E2E Playwright (Chromium système) sur le bundle packagé,
+        recopie vers target/classes/META-INF/resources/admin pour le packaging.
+        node_modules/ et dist/ ne sont jamais commités. Node 24 requis sur le PATH,
+        Chromium système requis pour les E2E (CSP_CHROMIUM_BIN sinon /usr/bin/chromium).
+      -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.6.4</version>
+        <executions>
+          <execution>
+            <id>frontend-npm-ci</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.frontend}</skip>
+              <workingDirectory>${project.basedir}/frontend</workingDirectory>
+              <executable>npm</executable>
+              <arguments>
+                <argument>ci</argument>
+                <argument>--no-audit</argument>
+                <argument>--no-fund</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>frontend-verify-build</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.frontend}</skip>
+              <workingDirectory>${project.basedir}/frontend</workingDirectory>
+              <executable>npm</executable>
+              <arguments>
+                <argument>run</argument>
+                <argument>verify</argument>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>frontend-e2e</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.frontend.e2e}</skip>
+              <workingDirectory>${project.basedir}/frontend</workingDirectory>
+              <executable>npm</executable>
+              <arguments>
+                <argument>run</argument>
+                <argument>e2e</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-frontend-dist</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.frontend}</skip>
+              <outputDirectory>${project.build.outputDirectory}/META-INF/resources/admin</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/target/frontend-dist</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.smallrye</groupId>
+        <artifactId>jandex-maven-plugin</artifactId>
+        <version>3.2.3</version>
+        <executions>
+          <execution>
+            <id>make-index</id>
+            <goals>
+              <goal>jandex</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

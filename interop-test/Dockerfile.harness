@@ -1,0 +1,14 @@
+# syntax=docker/dockerfile:1
+# ---------------------------------------------------------------------------------------------
+# Dockerfile.harness — injecteur/assertions d'interop L3b (plan §5.3)
+# Contexte de build : csp_new/interop-test
+# ---------------------------------------------------------------------------------------------
+FROM python:3.12-slim
+
+WORKDIR /harness
+COPY harness/harness.py /harness/harness.py
+COPY harness/probe-oscam.py /harness/probe-oscam.py
+COPY harness/probe2-oscam.py /harness/probe2-oscam.py
+
+# Le script est lancé via `docker compose run --rm harness python3 -u /harness/harness.py`
+CMD ["sleep", "infinity"]

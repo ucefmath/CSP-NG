@@ -1,0 +1,12 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "\\QMETA-INF/vertx/vertx-version.txt\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/io.netty.versions.properties\\E"
+      }
+    ]
+  }
+}

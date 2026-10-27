@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.bowman.cspng</groupId>
+    <artifactId>csp-new-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>csp-app</artifactId>
+  <name>CSP-NG — Application Quarkus</name>
+  <description>
+    Assemblage Quarkus, bootstrap programmatique des verticles et wiring CDI.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-domain</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-codec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-cluster-udp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-connectors</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-sessions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-users</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-filters</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-config</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-infinispan-bridge</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-cluster-tcp</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-vertx</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-vertx-http</artifactId>
+    </dependency>
+
+    <!-- Flyway : migrations au démarrage (JDBC bloquant, hors datapath) -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-flyway</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+
+    <!-- Reactive PG client (ConfigRepository, ConfigWatcher) -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-reactive-pg-client</artifactId>
+    </dependency>
+
+    <!-- Quarkus REST (Jackson) pour l'API admin -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-jackson</artifactId>
+    </dependency>
+    <!-- Quarkus Security + Elytron pour Basic auth -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-elytron-security-common</artifactId>
+    </dependency>
+
+    <!-- Observabilité : SmallRye Health & Micrometer Prometheus -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-health</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
+    </dependency>
+
+    <!-- Testcontainers pour test PG réel -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--
+        Redefinition du enforcer herite : autorise org.postgresql:postgresql (JDBC)
+        UNIQUEMENT dans csp-app (utilise par Flyway en mode dev-/startup, hors datapath).
+        Les autres interdictions restent (mysql, hibernate ORM, RESTEasy classic).
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>ban-blocking-dependencies</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration combine.self="override">
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>mysql:mysql-connector-java</exclude>
+                    <!-- org.postgresql:postgresql autorise ici (Flyway JDBC) -->
+                    <exclude>org.hibernate.orm:hibernate-core</exclude>
+                    <exclude>io.quarkus:quarkus-resteasy</exclude>
+                  </excludes>
+                  <message>
+                    Dépendance bloquante interdite (mysql, hibernate-orm, quarkus-resteasy).
+                    org.postgresql:postgresql est autorisé UNIQUEMENT dans csp-app (Flyway).
+                  </message>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>io.smallrye</groupId>
+        <artifactId>jandex-maven-plugin</artifactId>
+        <version>3.2.3</version>
+        <executions>
+          <execution>
+            <id>make-index</id>
+            <goals>
+              <goal>jandex</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+              <goal>generate-code</goal>
+              <goal>generate-code-tests</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

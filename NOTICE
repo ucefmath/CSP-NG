@@ -1,0 +1,89 @@
+CSP-NG (CardServProxy NG) — NOTICE D'ATTRIBUTION ET PROVENANCE TECHNIQUE
+========================================================================
+
+CSP-NG est une réécriture moderne et réactive de CardServProxy (CSP) en Java 21
+(Quarkus / Eclipse Vert.x), distribuée sous licence GNU General Public License v3.0
+(voir le fichier LICENSE à la racine du dépôt).
+
+Ce projet réimplémente en Java idiomatique et non-bloquant des protocoles de
+communication camd et d'échange de cache existants (ClusteredCache UDP, Newcamd,
+Radegast, CCcam 2.1.x, CS378x / camd35, CacheEx modes 1/2/3, CSPv2).
+
+
+1. PROJETS DE RÉFÉRENCE ET ATTRIBUTIONS PROTOCOLAIRES
+-----------------------------------------------------
+
+- CardServProxy (CSP original) — par Bowman
+  Licence d'origine : GNU General Public License v2 (GPLv2)
+  Référence historique et conceptuelle pour l'architecture générale d'un proxy
+  ECM/CW, le protocole UDP `ClusteredCache`, les dialectes de sessions/connecteurs
+  Newcamd et Radegast, le filtrage DCW (`DcwFilterPlugin`, `TvService`) et l'héritage
+  du namespace Java historique `com.bowman.*`.
+
+- OSCam (Open Source Conditional Access Module) — par Streamboard Team & contributeurs
+  Dépôt officiel : https://git.streamboard.tv/common/oscam
+  Licence : GNU General Public License v3 (GPLv3)
+  Référence d'interopérabilité protocolaire et comportementale pour :
+  * CCcam 2.1.x (framing, handshake miroir, scrambling CW, partage de cartes)
+  * CS378x / camd35 TCP (framing AES-128, `ucrc`, commandes ECM/EMM)
+  * Échange de cache CacheEx (modes 1, 2 et 3, conventions node_id et métadonnées)
+  * Contrôle de cycle CW (`CW_CYCLE_CHECK`)
+  * Dialecte Newcamd `oscam-ncd525` (`nc_des` et support `md5-crypt` `$1$`)
+  * Formats des dictionnaires de services `oscam.srvid` (canonique, legacy, srvid2)
+    et de providers `oscam.provid`
+  Les contrats wire ont été caractérisés par analyse d'interopérabilité et
+  réimplémentés en Java idiomatique sans copie de code source C.
+
+- tsdecrypt — par Georgi Chorbadzhiyski
+  Dépôt officiel : https://github.com/gfto/tsdecrypt
+  Licence : GNU General Public License v2 (GPLv2)
+  Référence technique indépendante pour la vérification croisée du format de trame
+  CS378x / camd35 TCP et des tailles de paquets sur le fil.
+
+- Algorithme MD5-Crypt (`$1$`) — par Poul-Henning Kamp (FreeBSD Project)
+  Licence : FreeBSD "Beer-ware" License / Domaine public
+  Algorithme cryptographique de hachage de mots de passe `$1$` réimplémenté en
+  Java pur pour l'interopérabilité d'authentification Newcamd et des comptes
+  utilisateurs historiques.
+
+
+2. DONNÉES ET DICTIONNAIRES EMBARQUÉS (`csp-app/src/main/resources/srvid/`)
+---------------------------------------------------------------------------
+
+- `oscam.srvid` :
+  Table de correspondance des services TV/Radio générée à partir des données
+  publiques de KingOfSat (https://fr.kingofsat.net/).
+
+- `oscam.provid` :
+  Table de correspondance CAID:PROVID issue du projet communautaire
+  `gianni8127/OScam-Collection` (https://github.com/gianni8127/OScam-Collection)
+  et de la documentation du Wiki Streamboard OSCam
+  (https://wiki.streamboard.tv/wiki/OSCam/en/Config/oscam.provid).
+
+
+3. PRINCIPAUX COMPOSANTS ET BIBLIOTHÈQUES OPEN SOURCE UTILISÉS
+--------------------------------------------------------------
+
+Backend (Java / Maven) :
+- Quarkus (https://quarkus.io/) — Apache License 2.0
+- Eclipse Vert.x (https://vertx.io/) — Eclipse Public License 2.0 / Apache License 2.0
+- Caffeine (https://github.com/ben-manes/caffeine) — Apache License 2.0
+- Infinispan & JGroups (https://infinispan.org/) — Apache License 2.0
+- Flyway (https://flywaydb.org/) — Apache License 2.0
+- PostgreSQL JDBC & Vert.x Reactive Client — BSD-2-Clause / Apache License 2.0
+- Jackson (https://github.com/FasterXML/jackson) — Apache License 2.0
+
+Frontend Administration (`csp-web/frontend`) :
+- React & React DOM (https://react.dev/) — MIT License
+- React Router (https://reactrouter.com/) — MIT License
+- Radix UI Primitives (https://www.radix-ui.com/) — MIT License
+- Lucide Icons (https://lucide.dev/) — ISC License
+- Tailwind CSS & Vite — MIT License
+
+
+4. POLITIQUE DE SÉCURITÉ ET SECRETS
+-----------------------------------
+
+Aucun secret, clé privée de production ou mot de passe réel n'est inclus dans ce dépôt.
+Les secrets sont exclusivement gérés par référence (`env:` pour les variables
+d'environnement ou `file:` pour les fichiers sous permissions restreintes).

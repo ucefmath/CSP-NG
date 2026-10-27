@@ -1,0 +1,6 @@
+[reader]
+label = constcw
+protocol = constcw
+device = /oscam/constant.cw
+group = 1
+caid = 0100

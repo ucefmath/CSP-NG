@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------------------------
+# docker-compose.yml — Test d'interopérabilité L3b (plan §5.3)
+#
+# 4 services sur le réseau bridge `interop-net` :
+#   csp-legacy : CSP Java 17 (reference), ClusteredCache UDP port 9009, pairs via peers.txt
+#   csp-new    : csp_new Quarkus/Vert.x, UdpClusterVerticle UDP port 9009, pairs statiques
+#                (csp-legacy, oscam), stats HTTP sur 8080 (/cluster-stats)
+#   oscam      : OSCam compile avec CS_CACHEEX + module-csp, port CSP 12346
+#   harness    : injecteur + assertions (lance via `docker compose run --rm harness`)
+#
+# Réseau : unicast uniquement (bridge Docker) — aucun multicast nécessaire.
+# ---------------------------------------------------------------------------------------------
+services:
+  csp-legacy:
+    build:
+      context: ../..
+      dockerfile: csp_new/interop-test/Dockerfile.csp-legacy
+    container_name: interop-csp-legacy
+    hostname: csp-legacy
+    networks: [interop-net]
+    restart: "no"
+
+  csp-new:
+    build:
+      context: ../../csp_new
+      dockerfile: interop-test/Dockerfile.csp-new
+    container_name: interop-csp-new
+    hostname: csp-new
+    environment:
+      CSP_UDP_CLUSTER_ENABLED: "true"
+      CSP_UDP_BIND_ADDRESS: "0.0.0.0"
+      CSP_UDP_BIND_PORT: "9009"
+      CSP_UDP_REMOTE_HOST: "csp-legacy,oscam"
+      CSP_UDP_REMOTE_PORT: "9009,12346"
+      CSP_UDP_MAX_PPS: "50"
+    ports:
+      - "18080:8080"          # stats /cluster-stats (exposé pour debug hôte)
+    networks: [interop-net]
+    restart: "no"
+
+  oscam:
+    build:
+      context: ./context-oscam
+      dockerfile: Dockerfile.oscam
+    container_name: interop-oscam
+    hostname: oscam
+    networks: [interop-net]
+    restart: "no"
+
+  harness:
+    build:
+      context: .
+      dockerfile: Dockerfile.harness
+    container_name: interop-harness
+    hostname: harness
+    environment:
+      HARNESS_PORT: "19000"
+      LEGACY_PORT: "9009"
+      NEW_PORT: "9009"
+      OSCAM_PORT: "12346"
+      STATS_URL: "http://csp-new:8080/cluster-stats"
+    networks: [interop-net]
+    depends_on:
+      - csp-legacy
+      - csp-new
+      - oscam
+    restart: "no"
+
+networks:
+  interop-net:
+    driver: bridge

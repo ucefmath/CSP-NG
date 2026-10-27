@@ -1,0 +1,29 @@
+# Build Maven
+target/
+.m2/
+*.class
+*.jar
+*.war
+*.ear
+dependency-reduced-pom.xml
+
+# Frontend admin (csp-web/frontend) — build reproduit par Maven, jamais commité
+csp-web/frontend/node_modules/
+csp-web/frontend/dist/
+csp-web/frontend/test-results/
+csp-web/frontend/playwright-report/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+log/

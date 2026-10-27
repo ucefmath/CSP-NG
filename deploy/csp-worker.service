@@ -1,0 +1,49 @@
+# csp-worker — worker relais CSP-NG (headless, sans PG, sans UI)
+# Cible : Debian 13 (Trixie) x86_64. Binaire natif baseline portable
+# (-march=compatibility) OU jar JVM en repli (voir runbook rollback).
+#
+# Installation :
+#   install -m 0755 csp-worker /usr/local/bin/csp-worker
+#   install -m 0644 deploy/csp-worker.service /etc/systemd/system/csp-worker.service
+#   install -d -m 0750 -o csp-worker -g csp-worker /etc/csp/worker
+#   systemctl daemon-reload && systemctl enable --now csp-worker
+#
+# Secrets : JAMAIS en clair ici. Certificats/cles via fichiers 0600 sous
+# /etc/csp/worker (proprietaire csp-worker). Mots de passe amont et cles DES
+# via env:VAR (EnvironmentFile) ou file:/run/secrets/... resolus localement.
+[Unit]
+Description=CSP-NG relay worker (headless)
+Documentation=file:///usr/local/share/doc/csp-ng/packaging-worker.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=csp-worker
+Group=csp-worker
+# Rollback JVM : remplacer ExecStart par :
+#   ExecStart=/usr/bin/java -jar /usr/local/lib/csp-ng/csp-worker.jar
+ExecStart=/usr/local/bin/csp-worker
+Environment=CSP_WORKER_CENTRAL_URL=https://centrale:8444
+Environment=CSP_WORKER_NODE_ID=peer-a
+Environment=CSP_WORKER_TLS_CERT_FILE=/etc/csp/worker/cert.pem
+Environment=CSP_WORKER_TLS_KEY_FILE=/etc/csp/worker/key.pem
+Environment=CSP_WORKER_TLS_TRUST_FILE=/etc/csp/worker/ca.pem
+Environment=CSP_WORKER_TTL_MS=30000
+Environment=CSP_WORKER_POLL_MS=10000
+Environment=CSP_WORKER_CSPV2_PORT=0
+# Fichier optionnel pour secrets env: (0600, proprietaire csp-worker) :
+# EnvironmentFile=-/etc/csp/worker/secrets.env
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

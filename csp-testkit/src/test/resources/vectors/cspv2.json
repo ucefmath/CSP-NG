@@ -1,0 +1,62 @@
+{
+  "generator": "hand-authored CSPv2 v1 reference vectors (big-endian, strict UTF-8)",
+  "count": 8,
+  "vectors": [
+    {
+      "id": "hello-01",
+      "type": "HELLO",
+      "length": 52,
+      "hex": "4353503201010000000000200000000000000000000A6E6F64652D616C70686111223344556677880000000100100000000003E8",
+      "description": "HELLO node-alpha stream0"
+    },
+    {
+      "id": "hello-ack-01",
+      "type": "HELLO_ACK",
+      "length": 51,
+      "hex": "43535032010200000000001F000000000000000000096E6F64652D6265746111223344556677880000000100100000000003E8",
+      "description": "HELLO_ACK node-beta stream0"
+    },
+    {
+      "id": "ecm-request-01",
+      "type": "ECM_REQUEST",
+      "length": 64,
+      "hex": "43535032011000000000002C000000000000000180123400010B003FDC62F5000C746573742D70726F66696C65000D80000A112233445566778899AA00001388",
+      "description": "ECM_REQUEST profile test-profile ecm 13b stream1"
+    },
+    {
+      "id": "dcw-reply-ok-01",
+      "type": "DCW_REPLY",
+      "length": 64,
+      "hex": "43535032011100000000002C000000000000000180123400010B003FDC62F580001011223366445566FF010203060A0B0C21000C636F6E6E6563746F722D3432",
+      "description": "DCW_REPLY OK cw valid connector-42 stream1"
+    },
+    {
+      "id": "error-rate-limited-01",
+      "type": "ERROR",
+      "length": 36,
+      "hex": "4353503201310000000000100000000000000000000C000C726174655F6C696D69746564",
+      "description": "ERROR RATE_LIMITED rate_limited stream0"
+    },
+    {
+      "id": "heartbeat-01",
+      "type": "HEARTBEAT",
+      "length": 20,
+      "hex": "4353503201400000000000000000000000000000",
+      "description": "HEARTBEAT empty stream0"
+    },
+    {
+      "id": "header-oversize-u32",
+      "type": "HEADER_ONLY",
+      "length": 20,
+      "hex": "4353503201010000FFFFFFFF0000000000000000",
+      "description": "header only oversize payloadLength 0xFFFFFFFF > max"
+    },
+    {
+      "id": "reserved-state-snapshot",
+      "type": "RESERVED",
+      "length": 20,
+      "hex": "4353503201200000000000000000000000000000",
+      "description": "reserved type STATE_SNAPSHOT 0x20 unsupported"
+    }
+  ]
+}

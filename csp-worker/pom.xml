@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.bowman.cspng</groupId>
+    <artifactId>csp-new-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>csp-worker</artifactId>
+  <name>CSP-NG — Worker relais headless (sans PG, sans UI)</name>
+  <description>
+    Worker relais dataplane (listeners CCcam/CS378x, connecteurs amont assignes,
+    pont CSPv2, canal controle HTTPS mTLS). Aucune dependance PG
+    (reactive-pg-client, jdbc, Flyway), aucune UI (csp-web).
+    Natif Debian 13 x86_64 : profil 'native' (GraalVM 21 LTS, baseline portable).
+  </description>
+
+  <properties>
+    <!-- Baseline CPU portable x86-64 (jamais march=native). -->
+    <native.march>compatibility</native.march>
+    <!-- GraalVM 21 LTS : compatible Quarkus 3.20 / smallrye (voir runbook).
+         Le plugin native-maven ignore cet element : build via
+         JAVA_HOME="$HOME/.sdkman/candidates/java/21.0.5-graal"
+         (jamais GraalVM 25, incompatible substitutions smallrye 2.12.2). -->
+    <native.graalvm.home>${env.JAVA_HOME}</native.graalvm.home>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-domain</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>io.quarkus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.quarkus.arc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-sql-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-sql-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-codec</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>io.quarkus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.quarkus.arc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-sql-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-sql-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-config</artifactId>
+      <exclusions>
+        <!-- Natif plain-Java : worker = records purs + Vert.x direct (zero
+             import io.quarkus/smallrye/PG verifie). Tout le runtime Quarkus
+             (arc, vertx, netty, elytron, PG, datasource) est exclu : ses
+             substitutions @TargetClass sont intraitables sans bootstrap
+             Quarkus. Preuve : dependency:tree (voir runbook). -->
+        <exclusion>
+          <groupId>io.quarkus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.quarkus.arc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-sql-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-sql-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-connectors</artifactId>
+      <exclusions>
+        <!-- Natif plain-Java : worker = records purs + Vert.x direct (zero
+             import io.quarkus/smallrye/PG verifie). Tout le runtime Quarkus
+             (arc, vertx, netty, elytron, PG, datasource) est exclu : ses
+             substitutions @TargetClass sont intraitables sans bootstrap
+             Quarkus. Preuve : dependency:tree (voir runbook). -->
+        <exclusion>
+          <groupId>io.quarkus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.quarkus.arc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-sql-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-sql-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-cache</artifactId>
+      <exclusions>
+        <!-- Natif plain-Java : worker = records purs + Vert.x direct (zero
+             import io.quarkus/smallrye/PG verifie). Tout le runtime Quarkus
+             (arc, vertx, netty, elytron, PG, datasource) est exclu : ses
+             substitutions @TargetClass sont intraitables sans bootstrap
+             Quarkus. Preuve : dependency:tree (voir runbook). -->
+        <exclusion>
+          <groupId>io.quarkus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.quarkus.arc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-sql-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-sql-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-cluster-udp</artifactId>
+      <exclusions>
+        <!-- Natif plain-Java : worker = records purs + Vert.x direct (zero
+             import io.quarkus/smallrye/PG verifie). Tout le runtime Quarkus
+             (arc, vertx, netty, elytron, PG, datasource) est exclu : ses
+             substitutions @TargetClass sont intraitables sans bootstrap
+             Quarkus. Preuve : dependency:tree (voir runbook). -->
+        <exclusion>
+          <groupId>io.quarkus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.quarkus.arc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-sql-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-sql-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-cluster-tcp</artifactId>
+      <exclusions>
+        <!-- Natif plain-Java : worker = records purs + Vert.x direct (zero
+             import io.quarkus/smallrye/PG verifie). Tout le runtime Quarkus
+             (arc, vertx, netty, elytron, PG, datasource) est exclu : ses
+             substitutions @TargetClass sont intraitables sans bootstrap
+             Quarkus. Preuve : dependency:tree (voir runbook). -->
+        <exclusion>
+          <groupId>io.quarkus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.quarkus.arc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-sql-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-sql-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-sessions</artifactId>
+      <exclusions>
+        <!-- Natif plain-Java : worker = records purs + Vert.x direct (zero
+             import io.quarkus/smallrye/PG verifie). Tout le runtime Quarkus
+             (arc, vertx, netty, elytron, PG, datasource) est exclu : ses
+             substitutions @TargetClass sont intraitables sans bootstrap
+             Quarkus. Preuve : dependency:tree (voir runbook). -->
+        <exclusion>
+          <groupId>io.quarkus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.quarkus.arc</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-sql-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-pg-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.smallrye.reactive</groupId>
+          <artifactId>smallrye-mutiny-vertx-sql-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <id>shade-fat-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.bowman.cspng.worker.WorkerMain</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- Build natif GraalVM 21 LTS : mvn -B -pl csp-worker -am package -Pnative
+         avec JAVA_HOME=.../21.0.5-graal. Baseline portable, pas de fallback. -->
+    <profile>
+      <id>native</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>shade-fat-jar</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+            <version>0.10.3</version>
+            <extensions>true</extensions>
+            <configuration>
+              <metadataRepository>
+                <enabled>true</enabled>
+              </metadataRepository>
+              <mainClass>com.bowman.cspng.worker.WorkerMain</mainClass>
+              <buildArgs>
+                <buildArg>--no-fallback</buildArg>
+                <buildArg>-march=${native.march}</buildArg>
+                <buildArg>--enable-https</buildArg>
+                <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                <!-- Champs Unsafe des queues jctools shadees : conserves via
+                     reflect-config.json (allDeclaredFields). Sans cela,
+                     l'elimination closed-world casse getDeclaredField
+                     ("producerIndex") au premier usage Netty (TLS inclus).
+                     Aucun flag init aveugle : JUL/logmanager/smallrye ont
+                     disparu du classpath (exclusions ci-dessus). -->
+              </buildArgs>
+            </configuration>
+            <executions>
+              <execution>
+                <id>build-native</id>
+                <goals>
+                  <goal>compile-no-fork</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

@@ -1,0 +1,22 @@
+package com.bowman.cspng.web.admin;
+
+import com.bowman.cspng.users.UserNotFoundException;
+import com.bowman.cspng.web.admin.dto.ErrorResponse;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
+
+import java.util.UUID;
+
+@Provider
+public class UserNotFoundExceptionMapper implements ExceptionMapper<UserNotFoundException> {
+    @Override
+    public Response toResponse(UserNotFoundException e) {
+        String corrId = UUID.randomUUID().toString().substring(0, 8);
+        return Response.status(Response.Status.NOT_FOUND)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(new ErrorResponse("NOT_FOUND", "Resource not found", null, corrId))
+            .build();
+    }
+}

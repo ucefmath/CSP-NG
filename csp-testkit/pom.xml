@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.bowman.cspng</groupId>
+    <artifactId>csp-new-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>csp-testkit</artifactId>
+  <name>CSP-NG — Testkit / Vecteurs golden</name>
+  <description>
+    Générateur de vecteurs binaires golden, faux pairs OSCam/CSP legacy et injecteur
+    de charge. Les vecteurs UDP sont produits par exécution du code legacy Java 17
+    (ClusteredCache.writeCacheReq / writeCacheRpl) sans modification de celui-ci.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-domain</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-codec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-filters</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

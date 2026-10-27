@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.bowman.cspng</groupId>
+  <artifactId>csp-new-parent</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+
+  <name>CardServProxy NG — Parent / Reactor</name>
+  <description>
+    Réécriture réactive de CardServProxy (Quarkus 3.x + Vert.x core brut).
+  </description>
+  <url>https://github.com/ucefmath/CSP-NG</url>
+
+  <licenses>
+    <license>
+      <name>GNU General Public License v3.0</name>
+      <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <!-- Quarkus 3.x stable (dernière version 3.x disponible au moment de L0) -->
+    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.version>3.20.6.2</quarkus.platform.version>
+
+    <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
+    <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
+    <testcontainers.version>1.20.4</testcontainers.version>
+  </properties>
+
+  <modules>
+    <module>csp-domain</module>
+    <module>csp-codec</module>
+    <module>csp-cache</module>
+    <module>csp-cluster-udp</module>
+    <module>csp-cluster-tcp</module>
+    <module>csp-connectors</module>
+    <module>csp-sessions</module>
+    <module>csp-users</module>
+    <module>csp-filters</module>
+    <module>csp-config</module>
+    <module>csp-web</module>
+    <module>csp-infinispan-bridge</module>
+    <module>csp-app</module>
+    <module>csp-worker</module>
+    <module>csp-testkit</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- BOM Quarkus : versions centralisées de Quarkus, Vert.x, JUnit 5, etc. -->
+      <dependency>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Modules internes -->
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-codec</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-cache</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-cluster-udp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-cluster-tcp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-connectors</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-sessions</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-users</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-filters</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-config</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-web</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-infinispan-bridge</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-app</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-worker</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.bowman.cspng</groupId>
+        <artifactId>csp-testkit</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven-compiler-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven-surefire-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>${maven-enforcer-plugin.version}</version>
+          <executions>
+            <execution>
+              <!-- Module-specifique : chaque module peut redefinir cette execution.
+                   csp-app surcharge avec exclusion assouplie pour postgresql JDBC (Flyway). -->
+              <id>ban-blocking-dependencies</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <bannedDependencies>
+                    <excludes>
+                      <exclude>mysql:mysql-connector-java</exclude>
+                      <exclude>org.postgresql:postgresql</exclude>
+                      <exclude>org.hibernate.orm:hibernate-core</exclude>
+                      <exclude>io.quarkus:quarkus-resteasy</exclude>
+                    </excludes>
+                    <message>
+                      Dépendance bloquante interdite par la discipline anti-blocage du plan §3.2.
+                    </message>
+                  </bannedDependencies>
+                </rules>
+                <fail>true</fail>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <!--
+        Discipline anti-blocage (plan §3.2) : interdit dans TOUT le reactor
+        les dépendances connues pour bloquer l'event-loop ou ramener des stacks
+        synchrones non désirées. Les clients réactifs Vert.x/Quarkus ont des
+        groupId/artifactId différents et ne sont PAS concernés.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>ban-blocking-dependencies</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

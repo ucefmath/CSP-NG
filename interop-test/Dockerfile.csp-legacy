@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1
+# ---------------------------------------------------------------------------------------------
+# Dockerfile.csp-legacy — nœud CSP legacy (Java) pour le test d'interop L3b (plan §5.3)
+#
+# Contexte de build : dépôt CSP legacy, dockerfile interop-test/Dockerfile.csp-legacy
+#
+# NOTE IMPORTANTE (documentée) : le build documenté dans AGENTS.md (`find src ... javac`)
+# ne compile PAS de zéro dans l'état actuel du dépôt : le fichier
+# `src/com/bowman/cardserv/rmi/LocalHandler.java` référence `User`, `ProxyLogger` et
+# `SessionManager` sans imports valides dans ce snapshot source (l'agent ne doit pas
+# corriger le code legacy). En conséquence, ce conteneur utilise les classes PRÉ-COMPILÉES
+# commitées dans `build/classes` (130 classes, identiques au parc existant — c'est
+# précisément la référence « CSP legacy Java actuel » que le test doit valider).
+# Vérifié : CardServProxy 0.9.0 démarre et le ClusteredCache écoute en UDP avec ces classes.
+# ---------------------------------------------------------------------------------------------
+FROM eclipse-temurin:17-jre
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    procps netcat-openbsd iproute2 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /csp
+
+# Classes pré-compilées du legacy (build/classes commité)
+COPY build/classes /csp/build/classes
+
+# Bibliothèques du projet
+COPY lib /csp/lib
+
+# Ressources requises par CardServProxy (AGENTS.md)
+COPY src/com/bowman/cardserv/ca.properties /csp/build/classes/com/bowman/cardserv/
+COPY src/com/bowman/cardserv/web/*.xml /csp/build/classes/com/bowman/cardserv/web/
+
+# Configuration runtime du test (créée par l'agent, hors code source legacy)
+COPY csp_new/interop-test/config/proxy.xml /csp/config/proxy.xml
+COPY csp_new/interop-test/config/peers.txt /csp/config/peers.txt
+COPY csp_new/interop-test/config/users.xml /csp/config/users.xml
+
+RUN mkdir -p /csp/log
+
+COPY csp_new/interop-test/docker-entrypoint.csp-legacy.sh /csp/docker-entrypoint.sh
+RUN chmod +x /csp/docker-entrypoint.sh
+
+EXPOSE 9009/udp
+
+ENTRYPOINT ["/csp/docker-entrypoint.sh"]

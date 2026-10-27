@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1
+# ---------------------------------------------------------------------------------------------
+# Dockerfile.csp-new — nœud csp_new (Quarkus/Vert.x) pour le test d'interop L3b (plan §5.3)
+#
+# Contexte de build : racine du dépôt CSP-NG, dockerfile interop-test/Dockerfile.csp-new
+#
+# Le jar « runner » (uber-jar) est pré-buildé sur l'hôte par run-interop-test.sh :
+#   mvn -f csp_new/pom.xml -pl csp-app -am install -DskipTests -Dquarkus.package.type=uber-jar
+# (le build Maven complet dans le conteneur nécessiterait ~/.m2, 6 Go — évité volontairement,
+# le build hôte est déterministe et reproductible via le script).
+#
+# Le bootstrap du UdpClusterVerticle (InteropClusterBootstrap) est activé par la variable
+# d'environnement CSP_UDP_CLUSTER_ENABLED=true, posée dans docker-compose.yml.
+# ---------------------------------------------------------------------------------------------
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+COPY csp-app/target/csp-app-1.0.0-runner.jar /app/app.jar
+
+EXPOSE 8080 9009/udp
+
+ENV CSP_UDP_CLUSTER_ENABLED=true
+
+CMD ["java", "-jar", "/app/app.jar"]

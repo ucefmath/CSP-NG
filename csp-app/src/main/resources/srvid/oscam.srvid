@@ -1,0 +1,1532 @@
+# oscam.srvid généré depuis KingOfSat
+# PROVID=000000 (KingOfSat ne publie pas les provider-ids;
+# 000000 = catch-all, fonctionne avec les readers qui annoncent un provid réel)
+0B00@000000:1131|Orange Polska Platforma Canal+|Canal+ 360|TV|General
+0B00@000000:1133|Orange Polska Platforma Canal+ Polsat Box|BBC First HD|TV|Entertainment
+0B00@000000:1134|Orange Polska Platforma Canal+ Polsat Box|BBC Earth HD|TV|Documentaries
+1801@000000:1136|Platforma Canal+|Canal+ Extra 1|TV|General
+0B00@000000:1138|Orange Polska Platforma Canal+ Polsat Box|TVP HD|TV|General
+0B00@000000:113D|Orange Polska Platforma Canal+ Polsat Box|Canal+ Domo HD|TV|Lifestyle
+0B00@000000:113E|Orange Polska Platforma Canal+ Polsat Box|Canal+ Kuchnia HD|TV|Cooking
+0B00@000000:113F|Nova Platforma Canal+ Polsat Box|Hustler HD|TV|Adult
+0B00@000000:1140|Platforma Canal+ Polsat Box|Blue Hustler|TV|Erotic
+0B00@000000:1141|Platforma Canal+ Polsat Box|Private TV HD|TV|Adult
+0B00@000000:1142|Orange Polska Platforma Canal+ Polsat Box|TVP Seriale|TV|Series
+0600@000000:1147|Total TV|Hustler HD SBB|TV|
+0600@000000:1148|Nova|Hustler HD Nova|TV|
+0600@000000:1149|Total TV|Private HD SBB|TV|
+0600@000000:114A|Nova|Blue Hustler Nova|TV|
+0600@000000:114B|Nova|Private HD Nova|TV|
+0600@000000,09C4@000000:1154|Total TV|Blue Hustler SBB|TV|
+0B00@000000:1163|Orange Polska Platforma Canal+|Canal+ 360|TV|General
+1801@000000:1168|Platforma Canal+|Canal+ Extra 1|TV|General
+0B00@000000:116D|Orange Polska Platforma Canal+|Canal+ 360|TV|General
+0B00@000000:116F|Orange Polska Platforma Canal+ Polsat Box|Canal+ Domo HD|TV|Lifestyle
+0B00@000000:1170|Orange Polska Platforma Canal+ Polsat Box|Canal+ Kuchnia HD|TV|Cooking
+0B00@000000:1177|Orange Polska Platforma Canal+|Canal+ 360|TV|General
+0600@000000:11FB|Polsat Box|TravelXP 4K|TV|Travel
+0600@000000:11FC|Austriasat Polsat Box|Museum 4K|TV|Documentaries
+0600@000000:11FD|Austriasat Polsat Box|MyZen 4K|TV|Lifestyle
+0B00@000000:4279|Platforma Canal+ Polsat Box|wPolsce.pl|TV|News
+0B00@000000:427B|Orange Polska Platforma Canal+ Polsat Box|Stopklatka TV|TV|Various
+0B00@000000:427C|Orange Polska Platforma Canal+ Polsat Box|Stopklatka|TV|
+0600@000000:4280|Polsat Box|Da Vinci Learning|TV|Documentaries
+0B00@000000:4284|Orange Polska Platforma Canal+ Polsat Box|Polsat Games HD|TV|
+0B00@000000:4285|Platforma Canal+ Polsat Box|Polsat Games|TV|Game
+0B00@000000:4288|Orange Polska Platforma Canal+ Polsat Box|TVP Rozrywka|TV|Music
+0B00@000000:4289|Orange Polska Platforma Canal+ Polsat Box|TV Republika|TV|Politics
+0B00@000000:428A|Orange Polska Platforma Canal+ Polsat Box|Filmbox+ Festival Polska|TV|Movies
+0B00@000000:4290|Orange Polska Platforma Canal+ Polsat Box|Epic Drama HD|TV|Series
+0B00@000000:4291|Orange Polska Platforma Canal+ Polsat Box|Zoom TV (Poland)|TV|Various
+0B00@000000:4293|Orange Polska Platforma Canal+ Polsat Box|Polsat Music HD|TV|Music
+0B00@000000:4294|Orange Polska Platforma Canal+ Polsat Box|Polsat Music HD|TV|
+0B00@000000:429A|Orange Polska Platforma Canal+ Polsat Box|Polo TV|TV|Music
+0B00@000000:429C|Orange Polska Platforma Canal+ Polsat Box|Eska TV|TV|Music
+0B00@000000:429D|Orange Polska Platforma Canal+ Polsat Box|Fokus TV|TV|Cultural
+0B00@000000:429E|Orange Polska Platforma Canal+ Polsat Box|Nowa TV|TV|General
+0B00@000000:42C2|Platforma Canal+ Polsat Box|Polo TV|TV|
+0B00@000000:42C5|Platforma Canal+ Polsat Box|Fokus TV HD|TV|
+0DA0@000000:C9|KABELIO.CH|Tele Baern|TV|Regional
+0DA0@000000:CA|KABELIO.CH|Tele Basel|TV|Regional
+0DA0@000000:CB|KABELIO.CH|Tele1|TV|Regional
+0DA0@000000:CC|KABELIO.CH|TVO (Switzerland)|TV|Regional
+0DA0@000000:CD|KABELIO.CH|TV Suedost|TV|Regional
+0DA0@000000:CE|KABELIO.CH|Tele M1|TV|Regional
+0DA0@000000:CF|KABELIO.CH|Leman Bleu|TV|Regional
+0DA0@000000:D0|KABELIO.CH|Carac 1|TV|General
+0DA0@000000:D3|KABELIO.CH|Swiss 1|TV|General
+0DA0@000000:D4|KABELIO.CH|Auftanken.tv|TV|General
+0DA0@000000:D5|KABELIO.CH|Blue Zoom Deutsch|TV|General
+0DA0@000000:DD|KABELIO.CH|BBC One HD|TV|General
+0DA0@000000:DE|KABELIO.CH|BBC Two HD|TV|General
+0DA0@000000:DF|KABELIO.CH|BBC Three HD Nights|TV|General
+0DA0@000000:E0|KABELIO.CH|BBC Four HD Nights|TV|General
+0DA0@000000:E1|KABELIO.CH|ITV 1 London HD|TV|General
+0DA0@000000:E2|KABELIO.CH|ITV 2 HD|TV|General
+0DA0@000000:E3|KABELIO.CH|ITV 3 HD|TV|General
+0DA0@000000:E4|KABELIO.CH|ITV 4 HD|TV|General
+0DA0@000000:E5|KABELIO.CH|Channel 4 HD|TV|General
+0DA0@000000:E6|KABELIO.CH|Channel 5 HD|TV|General
+0DA0@000000:E7|KABELIO.CH|Film4 HD|TV|Movies
+0DA0@000000:F1|KABELIO.CH|TF 1|TV|General
+0DA0@000000:F2|KABELIO.CH|M6 Music|TV|Music
+0DA0@000000:F3|KABELIO.CH|RTL 9 HD|TV|Entertainment
+0DA0@000000:FB|KABELIO.CH|Canale 5 HD|TV|General
+0DA0@000000:FD|KABELIO.CH|Kabelio 3+ Focus|TV|
+0DA0@000000:FE|KABELIO.CH|TMC HD Suisse|TV|General
+0DA0@000000:100|KABELIO.CH|Sky News International|TV|News
+0DA0@000000:101|KABELIO.CH|TV8 HD (Italy)|TV|General
+1801@000000:3D55|Orange Polska Platforma Canal+|Canal+ 1 HD Polska|TV|General
+0B00@000000:3D56|Orange Polska Platforma Canal+ Polsat Box|Motowizja TV HD|TV|Sport
+1801@000000:3D57|Orange Polska Platforma Canal+|Canal+ Seriale HD|TV|Series
+1801@000000:3D58|Orange Polska Platforma Canal+|Canal+ Dokument HD|TV|Documentaries
+0B00@000000:3D5A|Orange Polska Platforma Canal+ Polsat Box|WP|TV|Various
+0B00@000000:3D5E|Orange Polska Platforma Canal+ Polsat Box|Puls 2 HD|TV|General
+0B00@000000:3D5F|Orange Polska Platforma Canal+ Polsat Box|TVP ABC|TV|Various
+0B00@000000:3D66|Orange Polska Platforma Canal+ Polsat Box|TV Puls HD|TV|General
+0B00@000000:3D67|Orange Polska Platforma Canal+ Polsat Box|TVP Historia|TV|History
+0B00@000000:3D69|Orange Polska Platforma Canal+ Polsat Box|Eleven Sports 1 HD|TV|Sport
+0B00@000000:3D6A|Orange Polska Platforma Canal+ Polsat Box|Eleven Sports 2 HD|TV|Sport
+0B00@000000:3D6B|Orange Polska Platforma Canal+ Polsat Box|Eleven Sports 3 HD|TV|Sport
+0B00@000000:3D6C|Orange Polska Platforma Canal+|Eleven Sports 4 HD|TV|Sport
+0B00@000000:3D6E|Platforma Canal+|StudioMed TV HD|TV|Health
+1801@000000:3D87|Orange Polska Platforma Canal+|CANAL+ 1 HD|TV|
+1801@000000:3D89|Orange Polska Platforma Canal+|Canal+ Seriale HD|TV|Series
+1801@000000:3D8A|Orange Polska Platforma Canal+|Canal+ Dokument HD|TV|Documentaries
+0100@000000:515|Austriasat Bis TeleSat|TF 1|TV|General
+0B00@000000:516|Austriasat Bis Platforma Canal+ TeleSat|France 2|TV|General
+0B00@000000:517|Austriasat Bis Platforma Canal+ TeleSat|France 3 Sat|TV|General
+0B00@000000:519|Austriasat Bis Platforma Canal+ TeleSat|France 5|TV|General
+0DA0@000000:51A|Bis|M6|TV|General
+0500@000000:51C|Bis|T18|TV|General
+0DA0@000000:51D|Bis|W9|TV|General
+0100@000000:51E|Austriasat Bis TeleSat|TMC (Télé Monte Carlo)|TV|General
+0100@000000:51F|Austriasat Bis TeleSat|TFX|TV|Entertainment
+0500@000000:520|Bis|Novo 19|TV|General
+0500@000000:521|Bis|LCP - La Chaîne Parlementaire|TV|Politics
+0B00@000000:522|Austriasat Bis Platforma Canal+ TeleSat|France 4|TV|General
+0500@000000:524|Bis|CNews|TV|News
+0500@000000:528|Bis|TF1 Séries Films|TV|Series
+0500@000000:529|Bis|L´Equipe TV|TV|Sport
+0DA0@000000:52A|Bis|6ter|TV|General
+0500@000000:52B|Bis|RMC Story|TV|General
+0500@000000:52C|Bis|RMC Découverte|TV|Documentaries
+0500@000000:52D|Bis|RMC Life|TV|General
+0500@000000:52E|Bis|LCI - La Chaîne Info|TV|News
+0B00@000000:3E1D|Orange Polska Platforma Canal+ Polsat Box|Sundance Channel HD|TV|Entertainment
+0B00@000000:3E1E|Orange Polska Platforma Canal+ Polsat Box|E! Polska|TV|Entertainment
+0600@000000,1801@000000:3E1F|Polsat Box|Polsat Film 2 HD|TV|Movies
+0B00@000000:3E20|Orange Polska Platforma Canal+ Polsat Box|SciFi HD Poland|TV|Series
+0600@000000:3E21|Polsat Box|Polsat Reality HD|TV|Real TV
+0B00@000000:3E22|Orange Polska Platforma Canal+ Polsat Box|H2 HD|TV|History
+0B00@000000:3E23|Platforma Canal+ Polsat Box|Golf Zone|TV|Sport
+0B00@000000:3E24|Orange Polska Platforma Canal+ Polsat Box|FightBOX HD|TV|Movies
+0B00@000000:3E26|Orange Polska Platforma Canal+ Polsat Box|13 Ulica HD|TV|Entertainment
+0600@000000:3E27|Polsat Box|SkyShowtime 1 HD|TV|Entertainment
+0600@000000:3E28|Polsat Box|SkyShowtime 2 HD|TV|Entertainment
+0600@000000:3E2B|Polsat Box|Polsat Sport Extra 3|TV|Sport
+0600@000000:3E2C|Polsat Box|PolsatSport Extra 4|TV|Sport
+0600@000000:3E30|Polsat Box|Cyfrowy Polsat PPV|TV|Pay per View
+0B00@000000:3E3E|Orange Polska Platforma Canal+ Polsat Box|SciFi HD|TV|
+0B00@000000:3E44|Orange Polska Platforma Canal+ Polsat Box|13 Ulica HD|TV|
+0B00@000000:4206|Bis Platforma Canal+ Polsat Box|Dorcel TV HD|TV|Adult
+0B00@000000:422B|Platforma Canal+|Mezzo|TV|Music
+0600@000000:422C|Polsat Box|Brazzers TV|TV|Adult
+1801@000000:422E|Sky Italia TivùSat|Horse TV HD|TV|Racing
+0600@000000:422F|Total TV|Brazzers HD SBB|TV|
+0600@000000:4230|Nova|Brazzers HD|TV|Adult
+1801@000000:4233|TivùSat|Super!|TV|Children
+0DA0@000000:4331|SSR/SRG|SRF 1 HD|TV|General
+0DA0@000000:4332|SSR/SRG|SRF zwei HD|TV|General
+0DA0@000000:4333|SSR/SRG|RTS Un HD|TV|General
+0DA0@000000:4334|SSR/SRG|RTS Deux HD|TV|General
+0DA0@000000:4337|Radiotelevisione svizzera|RSI La 1 HD|TV|General
+0DA0@000000:4338|Radiotelevisione svizzera|RSI La 2 HD|TV|General
+1801@000000:213F|RAI Sky Italia TivùSat|Rai YoYo HD|TV|Children
+1801@000000:214A|TivùSat|Rai Premium HD|TV|General
+1801@000000:4534|RAI TivùSat|Rai 5 HD|TV|General
+1801@000000:4543|RAI TivùSat|Rai 3 TGR Puglia|TV|Regional
+1801@000000:4544|RAI TivùSat|Rai 3 TGR Basilicata|TV|Regional
+1801@000000:4545|RAI TivùSat|Rai 3 TGR Calabria|TV|Regional
+1801@000000:4546|RAI TivùSat|Rai 3 TGR Sicilia|TV|Regional
+1801@000000:4547|RAI TivùSat|Rai 3 TGR Liguria|TV|Regional
+1801@000000:4548|RAI TivùSat|Rai 3 TGR Toscana|TV|Regional
+1801@000000:4549|RAI TivùSat|Rai 3 TGR Umbria|TV|Regional
+1801@000000:454A|RAI TivùSat|Rai 3 TGR Marche|TV|Regional
+1801@000000:454B|RAI TivùSat|Rai 3 TGR Piemonte|TV|Regional
+1801@000000:454C|RAI TivùSat|Rai 3 TGR Lombardia|TV|Regional
+1801@000000:454D|RAI TivùSat|Rai 3 TGR Emilia Romagna|TV|Regional
+1801@000000:454E|RAI TivùSat|Rai 3 TGR Veneto|TV|Regional
+1801@000000:454F|RAI TivùSat|Rai 3 TGR Südtirol|TV|Regional
+1801@000000:4550|RAI TivùSat|Rai 3 TGR Valle d'Aosta|TV|Regional
+1801@000000:4551|RAI TivùSat|Rai 3 TGR Sardegna|TV|Regional
+1801@000000:4552|RAI TivùSat|Rai 3 TGR Abruzzo|TV|Regional
+1801@000000:4553|RAI TivùSat|Rai 3 TGR Molise|TV|Regional
+1801@000000:4554|RAI TivùSat|Rai 3 TGR Campania|TV|Regional
+1801@000000:4555|RAI TivùSat|Rai 3 TGR Friuli Venezia Giulia|TV|Regional
+1801@000000:4556|RAI TivùSat|Rai 3 TGR Furlanija Julijska Krajina|TV|Regional
+1801@000000:4557|RAI TivùSat|Rai 3 TGR Trentino Alto Adige Trento|TV|Regional
+1801@000000:4558|RAI TivùSat|Rai 3 TGR Trentino Alto Adige Bolzano|TV|Regional
+1801@000000:4559|RAI TivùSat|Rai 3 TGR Lazio|TV|Regional
+2600@000000:1|Globecast|MDS 1|TV|
+0DA0@000000:64|KABELIO.CH|3+ HD|TV|General
+0DA0@000000:65|KABELIO.CH|4+ HD|TV|General
+0DA0@000000:66|KABELIO.CH|5+ HD|TV|General
+0DA0@000000:67|KABELIO.CH|TV 24 HD|TV|General
+0DA0@000000:68|KABELIO.CH|TV 25 HD|TV|General
+0DA0@000000:69|KABELIO.CH|6+ HD|TV|General
+0DA0@000000:6B|KABELIO.CH|TeleZüri HD|TV|Regional
+0DA0@000000:6C|KABELIO.CH|Acht HD|TV|General
+0DA0@000000:6D|KABELIO.CH|ORF 1 HD|TV|General
+0DA0@000000:6E|KABELIO.CH|ORF 2 HD|TV|General
+0DA0@000000:6F|KABELIO.CH|RTL Schweiz|TV|General
+0DA0@000000:70|KABELIO.CH|RTL 2 Schweiz|TV|General
+0DA0@000000:71|KABELIO.CH|VOX Schweiz|TV|General
+0DA0@000000:72|KABELIO.CH|Sat 1 Schweiz|TV|General
+0DA0@000000:73|KABELIO.CH|ProSieben Schweiz|TV|General
+0DA0@000000:74|KABELIO.CH|ORF 3|TV|General
+0DA0@000000:75|KABELIO.CH|Servus TV HD|TV|Regional
+0DA0@000000:76|KABELIO.CH|ORF Sport+ HD|TV|Sport
+0DA0@000000:7F|KABELIO.CH|Kabel 1 Schweiz|TV|General
+0DA0@000000:82|KABELIO.CH|Super RTL Schweiz|TV|General
+0DA0@000000:84|KABELIO.CH|Das Erste|TV|General
+0DA0@000000:85|KABELIO.CH|ZDF|TV|General
+0DA0@000000:87|KABELIO.CH|n-tv|TV|News
+0600@000000:709|Polsat Box|Polsat Sport Premium 1|TV|Sport
+0600@000000:70A|Polsat Box|Polsat Sport Premium 2|TV|Sport
+1801@000000:70B|Polsat Box|Test1803|TV|
+1801@000000:70C|Polsat Box|Test1804|TV|
+0600@000000:70F|Polsat Box|Eleven Sports 1 4K|TV|Sport
+1801@000000:710|Polsat Box|Test1808|TV|
+0600@000000:711|Polsat Box|Eleven Sports 4 HD|TV|Sport
+0B00@000000:3333|Orange Polska Platforma Canal+ Polsat Box|Polsat News 2|TV|News
+0B00@000000:3343|Orange Polska Platforma Canal+ Polsat Box|Polsat News 2 HD|TV|
+0B00@000000:3353|Orange Polska Platforma Canal+ Polsat Box|Polsat News 2 HD|TV|
+0B00@000000:3363|Orange Polska Platforma Canal+ Polsat Box|Polsat News 2 HD|TV|
+0B00@000000:3391|Orange Polska Platforma Canal+ Polsat Box|Polsat HD|TV|General
+0B00@000000:3392|Orange Polska Platforma Canal+ Polsat Box|Polsat Play HD|TV|Game
+0B00@000000:3393|Orange Polska Platforma Canal+ Polsat Box|TV 4 HD Poland|TV|General
+0B00@000000:3394|Orange Polska Platforma Canal+ Polsat Box|TV6 Polska|TV|General
+0B00@000000:3396|Orange Polska Platforma Canal+ Polsat Box|Polsat Cafe HD|TV|Entertainment
+0B00@000000:3398|Orange Polska Platforma Canal+ Polsat Box|Polsat Film HD|TV|Movies
+0B00@000000:3399|Orange Polska Platforma Canal+ Polsat Box|Polsat News HD|TV|News
+0B00@000000:339A|Orange Polska Platforma Canal+ Polsat Box|Polsat 2 HD|TV|General
+0B00@000000:339B|Orange Polska Platforma Canal+ Polsat Box|Superpolsat|TV|Various
+0B00@000000:33A1|Orange Polska Platforma Canal+ Polsat Box|Polsat HD|TV|
+0B00@000000:33A2|Orange Polska Platforma Canal+ Polsat Box|Polsat Play HD|TV|
+0B00@000000:33A3|Orange Polska Platforma Canal+ Polsat Box|TV4 HD|TV|
+0B00@000000:33A6|Orange Polska Platforma Canal+ Polsat Box|Polsat Cafe HD|TV|
+0B00@000000:33A8|Orange Polska Platforma Canal+ Polsat Box|Polsat Film HD|TV|
+0B00@000000:33A9|Orange Polska Platforma Canal+ Polsat Box|Polsat News HD|TV|
+0B00@000000:33AA|Orange Polska Platforma Canal+ Polsat Box|Polsat 2 HD|TV|
+0B00@000000:33AB|Orange Polska Platforma Canal+ Polsat Box|Super Polsat HD|TV|
+0B00@000000:33B1|Orange Polska Platforma Canal+ Polsat Box|Polsat HD|TV|
+0B00@000000:33B2|Orange Polska Platforma Canal+ Polsat Box|Polsat Play HD|TV|
+0B00@000000:33B6|Orange Polska Platforma Canal+ Polsat Box|Polsat Cafe HD|TV|
+0B00@000000:33B8|Orange Polska Platforma Canal+ Polsat Box|Polsat Film HD|TV|
+0B00@000000:33B9|Orange Polska Platforma Canal+ Polsat Box|Polsat News HD|TV|
+0B00@000000:33BA|Orange Polska Platforma Canal+ Polsat Box|Polsat 2 HD|TV|
+0B00@000000:33BB|Orange Polska Platforma Canal+ Polsat Box|Super Polsat HD|TV|General
+0B00@000000:33C2|Orange Polska Platforma Canal+ Polsat Box|Polsat Play HD|TV|
+0B00@000000:33C6|Orange Polska Platforma Canal+ Polsat Box|Polsat Cafe HD|TV|
+0B00@000000:33C8|Orange Polska Platforma Canal+ Polsat Box|Polsat Film HD|TV|
+0B00@000000:33C9|Orange Polska Platforma Canal+ Polsat Box|Polsat News HD|TV|
+0B00@000000:33D2|Orange Polska Platforma Canal+ Polsat Box|Polsat Play HD|TV|
+0B00@000000:33D6|Orange Polska Platforma Canal+ Polsat Box|Polsat Cafe HD|TV|
+0B00@000000:33D9|Orange Polska Platforma Canal+ Polsat Box|Polsat News HD|TV|
+0B00@000000:33E9|Orange Polska Platforma Canal+ Polsat Box|Polsat News HD|TV|
+0B00@000000:33F9|Orange Polska Platforma Canal+ Polsat Box|Polsat News HD|TV|
+0B00@000000:3B61|TivùSat|Real Time HD Italia|TV|Documentaries
+0B00@000000:3B62|TivùSat|DMAX HD Italia|TV|Entertainment
+0B00@000000:3B63|TivùSat|Food Network HD Italy|TV|Cooking
+0B00@000000:3B66|Orange Polska Platforma Canal+ Polsat Box|Animal Planet Poland HD|TV|Documentaries
+0B00@000000:3B67|Orange Polska Platforma Canal+ Polsat Box|Eurosport 1 Poland HD|TV|Sport
+0B00@000000:3B68|Orange Polska Platforma Canal+ Polsat Box|Eurosport 2 Poland HD|TV|Sport
+0B00@000000:3B69|Orange Polska Platforma Canal+ Polsat Box|Investigation Discovery Poland HD|TV|Documentaries
+0B00@000000:3B6A|Orange Polska Platforma Canal+ Polsat Box|Discovery Science Poland HD|TV|Documentaries
+0B00@000000:3B6B|Orange Polska Platforma Canal+ Polsat Box|Discovery Turbo Xtra Poland HD|TV|Documentaries
+0B00@000000:3B6C|TivùSat|Discovery Channel HD Italy|TV|Documentaries
+0B00@000000:3B6D|Nova Orange Polska Platforma Canal+ Polsat Box T|CNN International HD|TV|News
+0B00@000000:3B6E|TivùSat|Discovery Italy HD|TV|
+0B00@000000:32CB|Orange Polska Platforma Canal+ Polsat Box|Ale Kino+ HD|TV|Movies
+1801@000000:32CD|Orange Polska Platforma Canal+|Canal+ Now|TV|General
+1801@000000:32CE|Orange Polska Platforma Canal+|Canal+ Film HD Polska|TV|Movies
+0B00@000000:32D7|Orange Polska Platforma Canal+ Polsat Box|TVP Kultura HD|TV|Cultural
+1801@000000:32DB|CANAL+|CANAL+ 4K ULTRA HD|TV|
+1801@000000:32DC|Orange Polska Platforma Canal+|Canal+ HD Polska|TV|General
+1801@000000:32DE|Orange Polska Platforma Canal+|Canal+ Sport HD Polska|TV|Sport
+0B00@000000:32DF|Orange Polska Platforma Canal+ Polsat Box|National Geographic HD Polska|TV|Documentaries
+0B00@000000:32E0|Orange Polska Platforma Canal+ Polsat Box|MiniMini+ HD|TV|
+1801@000000:32E3|Platforma Canal+|CANAL+ EXTRA 3|TV|
+1801@000000:32E4|Platforma Canal+|Canal+ Extra 4|TV|General
+1801@000000:32F0|Orange Polska Platforma Canal+|CANAL+ PREMIUM HD|TV|
+1801@000000:32FA|Orange Polska Platforma Canal+|CANAL+ PREMIUM HD|TV|
+1801@000000:32FC|Platforma Canal+|CANAL+ SPORT HD|TV|
+0B00@000000:32FD|Orange Polska Platforma Canal+ Polsat Box|Ale Kino+ HD|TV|Movies
+0B00@000000:32FE|Orange Polska Platforma Canal+ Polsat Box|MiniMini+ HD|TV|Children
+1801@000000:3300|Orange Polska Platforma Canal+|Canal+ Film HD Polska|TV|Movies
+1801@000000:3304|Orange Polska Platforma Canal+|CANAL+ PREMIUM HD|TV|
+0B00@000000:3308|Orange Polska Platforma Canal+ Polsat Box|MiniMini+ HD|TV|Children
+1801@000000:330D|CANAL+|Canal+ 4K Ultra HD Poland|TV|General
+1801@000000:330E|CANAL+|CANAL+ 4K ULTRA HD|TV|
+1801@000000:3315|Platforma Canal+|CANAL+ EXTRA 3|TV|
+1801@000000:3316|Platforma Canal+|Canal+ Extra 4|TV|General
+0B00@000000:331B|Orange Polska Platforma Canal+ Polsat Box|Ale Kino+ HD|TV|Movies
+1801@000000:3322|Orange Polska Platforma Canal+|CANAL+ PREMIUM HD|TV|
+1801@000000:3324|Orange Polska Platforma Canal+|CANAL+ SPORT HD|TV|
+0600@000000:8B5|Polsat Box|Love Nature 4K|TV|Documentaries
+0600@000000:2BD|Nova Total TV|Eurosport 1 HD|TV|Sport
+0600@000000:2BE|Nova Total TV|Eurosport 2 HD|TV|Sport
+0600@000000:2EF|Nova Total TV|Eurosport 1 Greek HD|TV|Sport
+0600@000000:2F0|Nova Total TV|Eurosport 1 Serbian HD|TV|Sport
+0600@000000:2F1|Nova Total TV|Eurosport 2 Serbian HD|TV|Sport
+0600@000000:2F2|Nova Total TV|Eurosport 2 Greek HD|TV|
+0B00@000000:10DD|Orange Polska Platforma Canal+ Polsat Box|Discovery Poland HD|TV|Documentaries
+0B00@000000:10DE|Orange Polska Platforma Canal+ Polsat Box|TLC Poland HD|TV|Documentaries
+0B00@000000:10DF|Orange Polska Platforma Canal+ Polsat Box|Historia Poland|TV|History
+0B00@000000:10E0|Orange Polska Platforma Canal+ Polsat Box|Discovery Life HD Poland|TV|Documentaries
+0B00@000000:10E1|TivùSat|Discovery Turbo Italy|TV|Documentaries
+0B00@000000:10E2|TivùSat|Giallo HD|TV|General
+0B00@000000:10E3|TivùSat|Nove HD|TV|General
+0B00@000000:10E4|Orange Polska Platforma Canal+ Polsat Box|Cartoonito Poland HD|TV|Children
+0B00@000000:10E5|Orange Polska Platforma Canal+ Polsat Box|Cartoon Network Poland HD|TV|Children
+0B00@000000:10EA|Orange Polska Platforma Canal+ Polsat Box|TVN 24 Bizness HD|TV|Business
+0B00@000000:10EB|Orange Polska Platforma Canal+ Polsat Box|HGTV HD|TV|Lifestyle
+0B00@000000:10EE|TivùSat|HGTV Italy HD|TV|Lifestyle
+1801@000000:3783|Platforma Canal+|Canal+ Extra 2|TV|General
+0B00@000000:3784|Orange Polska Platforma Canal+ Polsat Box|Kino Polska HD|TV|Movies
+0B00@000000:3785|Orange Polska Platforma Canal+ Polsat Box|Kino Polska Muzyka|TV|Music
+0B00@000000:3786|Orange Polska Platforma Canal+ Polsat Box|Filmbox+ Action Polska|TV|Movies
+0B00@000000:3787|Orange Polska Platforma Canal+ Polsat Box|FILMBOX+ emotion|TV|
+0B00@000000:3788|Orange Polska Platforma Canal+ Polsat Box|Filmbox+ Comedy Polska|TV|Movies
+0B00@000000:3789|Orange Polska Platforma Canal+ Polsat Box|Filmbox+ Hits Polska|TV|Movies
+0B00@000000:378A|Orange Polska Platforma Canal+ Polsat Box|FILMBOX+ one|TV|
+1801@000000:378C|CANAL+|La Trois|TV|General
+1801@000000:378D|CANAL+|RTL TVI HD|TV|General
+0100@000000:378E|TV Vlaanderen|La Une HD|TV|General
+0100@000000:378F|TV Vlaanderen|Tipik|TV|General
+0100@000000:3790|TV Vlaanderen|RTL Club|TV|General
+0100@000000:3791|TV Vlaanderen|RTL Plug|TV|General
+0B00@000000:37A1|Austriasat Nova Platforma Canal+ Polsat Box|Hustler HD|TV|Adult
+0B00@000000:37A2|Austriasat Platforma Canal+ Polsat Box|Blue Hustler|TV|Erotic
+0B00@000000:37A3|Austriasat Platforma Canal+ Polsat Box|Private HD|TV|
+0600@000000:37A7|Total TV|Hustler HD SBB|TV|
+0600@000000:37A8|Nova|Hustler HD Nova|TV|
+0600@000000:37AA|Nova|Blue Hustler Nova|TV|
+0600@000000:37AB|Nova|Private TV HD|TV|Adult
+0600@000000:37AC|Total TV|Blue Hustler SBB|TV|
+1801@000000:37B5|Platforma Canal+|Canal+ Extra 2|TV|General
+0B00@000000:37B6|Orange Polska Platforma Canal+ Polsat Box|Kino Polska HD|TV|Movies
+0B00@000000:37BC|Orange Polska Platforma Canal+ Polsat Box|Filmbox+ One Polska|TV|Movies
+0100@000000:3792|TV Vlaanderen|Tipik radio|Radio|
+0100@000000:3793|TV Vlaanderen|Classic21|Radio|
+0100@000000:3794|TV Vlaanderen|VivaCite|Radio|
+0100@000000:3795|TV Vlaanderen|Musiq 3|Radio|
+0100@000000:3796|TV Vlaanderen|La Premiere|Radio|
+0100@000000:3797|TV Vlaanderen|Mint|Radio|
+0100@000000:3798|TV Vlaanderen|Bel RTL|Radio|
+0100@000000:3799|TV Vlaanderen|Radio Contact|Radio|
+1801@000000:6F|Mediaset TivùSat|Cine34|TV|Movies
+1801@000000:76|Mediaset TivùSat|Virgin Radio|TV|Music
+1801@000000:77|Mediaset TivùSat|Radio Monte Carlo|TV|General
+1801@000000:78|Mediaset TivùSat|20 Mediaset HD|TV|Entertainment
+1801@000000:79|Mediaset TivùSat|Italia 1 HD|TV|General
+1801@000000:7A|Mediaset TivùSat|Canale 5 HD|TV|General
+1801@000000:7B|Mediaset TivùSat|Rete 4 HD|TV|General
+1801@000000:7C|Mediaset TivùSat|Iris|TV|General
+1801@000000:7E|Mediaset TivùSat|Boing|TV|Children
+1801@000000:7F|Mediaset TivùSat|La5|TV|Lifestyle
+1801@000000:81|Mediaset TivùSat|Mediaset Extra|TV|General
+1801@000000:82|Mediaset TivùSat|Mediaset Italia Due|TV|Entertainment
+1801@000000:84|Mediaset TivùSat|TOPcrime|TV|Series
+1801@000000:85|Mediaset TivùSat|Cartoonito Italy|TV|Children
+1801@000000:86|Mediaset TivùSat|Focus|TV|General
+1801@000000:87|Mediaset TivùSat|27 Twentyseven HD|TV|Entertainment
+0B00@000000:3A99|Orange Polska Platforma Canal+ Polsat Box|Planete+ HD Polska|TV|Documentaries
+0B00@000000:3A9A|Orange Polska Platforma Canal+ Polsat Box|Novelas+|TV|Series
+0B00@000000:3A9B|Orange Polska Platforma Canal+ Polsat Box|Teletoon+ HD Polska|TV|Children
+1801@000000:3A9C|Orange Polska Platforma Canal+|CANAL+ SPORT 2 HD|TV|
+0B00@000000:3A9E|Orange Polska Platforma Canal+ Polsat Box|TVP Sport HD|TV|Sport
+0B00@000000:3A9F|Orange Polska Platforma Canal+ Polsat Box|Cinemax HD Eastern Europe|TV|Movies
+1801@000000:3AA0|Orange Polska Platforma Canal+|Canal+ Sport 3 HD Polska|TV|Sport
+1801@000000:3AA1|Orange Polska Platforma Canal+|Canal+ Sport 4 HD Polska|TV|Sport
+0B00@000000:3AA5|Platforma Canal+|CANAL+ SPORT 5 HD|TV|
+1801@000000:3AA6|Platforma Canal+|CANAL+ SPORT 6|TV|
+0B00@000000:3AB9|Orange Polska Platforma Canal+|Canal+ Sport 5 HD Poland|TV|Sport
+0B00@000000:3ABD|Orange Polska Platforma Canal+ Polsat Box|TVP 1 HD|TV|General
+0B00@000000:3ABE|Orange Polska Platforma Canal+ Polsat Box|Romance TV Polska|TV|Entertainment
+0B00@000000:3ACB|Platforma Canal+|Planete+ HD|TV|
+0B00@000000:3ACC|Platforma Canal+|Novelas+|TV|Series
+0B00@000000:3ACD|Orange Polska Platforma Canal+|teleTOON+ HD|TV|
+1801@000000:3ACE|Orange Polska Platforma Canal+|Canal+ Sport 2 HD|TV|Sport
+1801@000000:3AD2|Platforma Canal+|Canal+ Sport 3 HD Polska|TV|Sport
+1801@000000:3AD3|Platforma Canal+|Canal+ Sport 4 HD Polska|TV|Sport
+0B00@000000:3AD6|Platforma Canal+|Novelas+|TV|Series
+0B00@000000:3AD7|Orange Polska Platforma Canal+|teleTOON+ HD|TV|
+1801@000000:3AD8|Platforma Canal+|CANAL+ SPORT 6|TV|
+0B00@000000:3ADB|Platforma Canal+ Polsat Box|TVP 1 HD|TV|
+0B00@000000:3AE1|Platforma Canal+|CANAL+ SPORT 5 HD|TV|
+1801@000000:3AE2|Orange Polska Platforma Canal+|CANAL+ SPORT 2 HD|TV|
+1801@000000:3AEC|Platforma Canal+|CANAL+ SPORT 6|TV|
+1801@000000:3AF0|Platforma Canal+|Canal+ Sport 3 HD Polska|TV|Sport
+1801@000000:3AF1|Platforma Canal+|Canal+ Sport 4 HD Polska|TV|Sport
+0B00@000000:3AD4|Platforma Canal+|Faktura|Radio|
+0B00@000000:13F1|Orange Polska Platforma Canal+ Polsat Box|TV Puls HD|TV|General
+0B00@000000:13F2|Orange Polska Platforma Canal+ Polsat Box|Puls 2 HD|TV|General
+0B00@000000:13F3|Orange Polska Platforma Canal+ Polsat Box|WP|TV|Various
+0B00@000000:13F4|Orange Polska Platforma Canal+ Polsat Box|HBO 2 HD Polska|TV|Movies
+0B00@000000:13F6|Orange Polska Platforma Canal+ Polsat Box|National Geographic Wild HD Polska|TV|Documentaries
+0B00@000000:13F7|Orange Polska Platforma Canal+ Polsat Box|TVP 2|TV|General
+0B00@000000:13F9|Orange Polska Platforma Canal+ Polsat Box|HBO 3 HD Central Europe|TV|Movies
+0B00@000000:13FB|Platforma Canal+|StudioMed TV HD|TV|Health
+0B00@000000:13FC|Orange Polska Platforma Canal+ Polsat Box|TeenNick Poland|TV|Children
+0B00@000000:13FD|Platforma Canal+|Viasat True Crime|TV|Documentaries
+0B00@000000:13FE|Orange Polska Platforma Canal+ Polsat Box|AXN Spin HD|TV|Entertainment
+0B00@000000:1401|Orange Polska Platforma Canal+ Polsat Box|AMC Poland|TV|Movies
+0B00@000000:140B|Orange Polska Platforma Canal+|Adventure HD|TV|Documentaries
+0B00@000000:3DCD|Orange Polska Platforma Canal+ Polsat Box|TVN HD|TV|General
+0B00@000000:3DCE|Orange Polska Platforma Canal+ Polsat Box|TVN Style HD|TV|
+0B00@000000:3DCF|Platforma Canal+|TVN Style HD|TV|Lifestyle
+0B00@000000:3DD0|Orange Polska Platforma Canal+ Polsat Box|TVN Turbo HD|TV|
+0B00@000000:3DD1|Platforma Canal+|TVN Turbo HD|TV|Sport
+0B00@000000:3DD2|Orange Polska Platforma Canal+ Polsat Box|TVN 24 HD|TV|News
+0B00@000000:3DD3|Orange Polska Platforma Canal+ Polsat Box|TVN 7 HD|TV|General
+0B00@000000:3DD4|Orange Polska Platforma Canal+ Polsat Box|Metro HD|TV|Various
+0B00@000000:3DD5|Orange Polska Platforma Canal+ Polsat Box|Warner TV Poland HD|TV|Series
+0B00@000000:3DD6|Orange Polska Platforma Canal+ Polsat Box|TVN Fabula|TV|Entertainment
+0B00@000000:3DD7|Orange Polska Platforma Canal+ Polsat Box|TTV HD|TV|General
+0B00@000000:3DD8|Orange Polska Platforma Canal+ Polsat Box|Travel Channel HD|TV|Travel
+0B00@000000:3DD9|Orange Polska Platforma Canal+ Polsat Box|The Food Network EMEA HD|TV|Cooking
+1801@000000:3DEA|Polsat Box|TVN HD_|TV|
+0600@000000:3DEB|Polsat Box|TVN 7 HD_|TV|
+0B00@000000:3DEC|Platforma Canal+|Food Network HD_|TV|
+0B00@000000:3DED|Platforma Canal+|TVN 24 HD_|TV|
+0B00@000000:4224|Nova Platforma Canal+ Polsat Box Total TV|Redlight HD|TV|Adult
+0600@000000:423D|Polsat Box|Water Planet V1|TV|Documentaries
+0600@000000:423E|Polsat Box|Water Planet|TV|Documentaries
+0600@000000:423F|Polsat Box|Novela Tv V1|TV|
+0600@000000:4240|Polsat Box|Novela TV|TV|Series
+1801@000000:D4D|TivùSat|Rai 4 HD|TV|General
+1801@000000:D4E|TivùSat|Rai Movie HD|TV|Movies
+1801@000000:D4F|RAI|Rai 4K|TV|General
+0600@000000:191|Nova|Mad Vibes HD|TV|Entertainment
+0600@000000:192|Nova|Mad Rewind HD|TV|Entertainment
+0600@000000:193|Nova|Magenta Sport Highlights|TV|Sport
+0600@000000:194|Nova Total TV|Travel Channel HD|TV|Travel
+0600@000000:195|Nova Total TV|Nat Geo Wild Europe HD|TV|Documentaries
+0600@000000:197|Nova|Nova Sports HD|TV|Sport
+0600@000000:198|Nova|Novasports Extra 2 HD|TV|Sport
+0600@000000:199|Nova|Novasports 6 HD|TV|Sport
+0600@000000:19A|Nova|Novasports6HD CY|TV|
+0600@000000:19B|Nova|Novasports Start HD|TV|Sport
+0600@000000:19C|Nova|Novasports Start HD CY|TV|
+0600@000000:19D|Nova Total TV|IDJ Kids HD|TV|Children
+0600@000000:19E|Nova Total TV|Disney Junior Greece|TV|Children
+0600@000000:19F|Nova Total TV|Novasports Premier League|TV|Sport
+0600@000000:1A0|Nova|Novasports 5 HD|TV|Sport
+0600@000000:1A1|Nova|Disney Channel Greece|TV|Children
+0600@000000:1A2|Nova Total TV|Animal Planet HD|TV|Documentaries
+0600@000000:1A4|Nova|Novasports Prime HD|TV|Sport
+0600@000000:1A5|Nova|Novasports Prime HD CY|TV|
+0600@000000:1A6|Nova|Novasports5HD Cy|TV|
+0600@000000:1A7|Nova|Smile TV (Greece)|TV|Various
+0600@000000:1A8|Nova|Novasportsextra2HD Cy|TV|
+0600@000000:12E|Nova|Magenta Sport 3 League|TV|Sport
+0600@000000:12F|Nova|Magenta Sport 1 League|TV|Sport
+0600@000000:130|Nova|Magenta Sport 2 League|TV|Sport
+0600@000000:134|Nova|ANT 1 HD|TV|General
+0600@000000:13A|Nova|Magenta Sport 4 League|TV|Sport
+0600@000000:13B|Nova|Mad Greekz|TV|Music
+0600@000000:13E|Nova|Mega HD|TV|General
+0600@000000:149|Nova|Mak TV HD|TV|Various
+0600@000000:151|Nova|Alpha TV HD|TV|General
+0600@000000:135|Nova|Love Radio|Radio|
+0600@000000:137|Nova|Skai Radio|Radio|
+0600@000000:138|Nova|Melodi Radio|Radio|
+09C4@000000:DEA|Sky Italia|Sky Sport Business 2|TV|Sport
+09C4@000000:DEC|Sky Italia|Sky Cinema Stories|TV|Movies
+09C4@000000:DEE|Sky Italia|DAZN 1 Italia|TV|Sport
+09C4@000000:1016|Sky Italia|Prime Video Sportsbar|TV|Sport
+09C4@000000:106A|Sky Italia|Sky Cinema Uno|TV|Movies
+09C4@000000:106B|Sky Italia|Sky Cinema Uno|TV|
+09C4@000000:1E54|Sky Italia|Sky Sport Basket|TV|Sport
+09C4@000000:1E5F|Sky Italia|Sky Sport Italia|TV|Sport
+09C4@000000:2C29|Sky Italia|Supertennis HD|TV|Sport
+09C4@000000:2D5D|Sky Italia|Sky Sport Italia|TV|Sport
+09C4@000000:2DA4|Sky Italia|Sky Serie HD|TV|Series
+09C4@000000:2DA6|Sky Italia|Sky Investigation HD|TV|Documentaries
+09C4@000000:3792|Sky Italia|Sky Atlantic HD Italia|TV|Entertainment
+0DA0@000000:64|KABELIO.CH|3+ HD|TV|General
+0DA0@000000:65|KABELIO.CH|3+ Movies|TV|Movies
+0DA0@000000:66|KABELIO.CH|3+ Series|TV|Series
+0DA0@000000:67|KABELIO.CH|3+ Adrenalin|TV|Entertainment
+0DA0@000000:68|KABELIO.CH|3+ Emotion|TV|Series
+0DA0@000000:69|KABELIO.CH|3+ Crime|TV|Series
+0DA0@000000:6B|KABELIO.CH|Tele Züri|TV|Regional
+0DA0@000000:6C|KABELIO.CH|Acht HD|TV|General
+0DA0@000000:6D|KABELIO.CH|ORF 1 HD|TV|General
+0DA0@000000:6E|KABELIO.CH|ORF 2 Tirol|TV|Regional
+0DA0@000000:6F|KABELIO.CH|RTL Schweiz|TV|General
+0DA0@000000:70|KABELIO.CH|RTL 2 Schweiz|TV|General
+0DA0@000000:71|KABELIO.CH|VOX Schweiz|TV|General
+0DA0@000000:72|KABELIO.CH|Sat 1 Schweiz|TV|General
+0DA0@000000:73|KABELIO.CH|ProSieben Schweiz|TV|General
+0DA0@000000:74|KABELIO.CH|ORF III HD|TV|General
+0DA0@000000:75|KABELIO.CH|Servus TV HD|TV|Regional
+0DA0@000000:76|KABELIO.CH|ORF Sport+ HD|TV|Sport
+0DA0@000000:7F|KABELIO.CH|Kabel 1 Schweiz|TV|General
+0DA0@000000:82|KABELIO.CH|Super RTL Schweiz|TV|General
+0DA0@000000:84|KABELIO.CH|Das Erste HD|TV|General
+0DA0@000000:85|KABELIO.CH|ZDF HD|TV|General
+0DA0@000000:87|KABELIO.CH|n-tv Schweiz|TV|News
+0DA0@000000:89|KABELIO.CH|SAT.1 Gold HD|TV|Entertainment
+0DA0@000000:8A|KABELIO.CH|3+ Family|TV|Entertainment
+09C4@000000:DBF|Sky Italia|Sky TG24 HD|TV|News
+09C4@000000:DC1|Sky Italia|Sky TG24 HD|TV|News
+09C4@000000:DCC|Sky Italia|Sky TG24 HD|TV|News
+09C4@000000:DE9|Sky Italia|Sky Sport Business 1|TV|Sport
+0500@000000:587|Bis|BFM TV|TV|News
+0100@000000:589|Bis TeleSat|CStar|TV|Entertainment
+0100@000000:58A|Austriasat Bis TeleSat|Gulli|TV|Children
+0100@000000:58B|Austriasat Bis TeleSat|franceinfo:|TV|News
+0100@000000:58C|Bis|Ushuaia TV|TV|Documentaries
+0500@000000:58D|Bis|Equidia|TV|Racing
+0500@000000:5AB|AB Sat|RTL 9|TV|General
+0100@000000:5AC|TeleSat|AB 1|TV|Series
+0100@000000:5AD|TeleSat|Automoto La Chaine|TV|Sport
+0100@000000:5AE|TeleSat|Animaux|TV|Documentaries
+0100@000000:5AF|TeleSat|Chasse et Pêche|TV|Documentaries
+0100@000000:5B0|AB Sat|TV Breizh|TV|Entertainment
+0100@000000:5B1|TeleSat|Crime District|TV|Movies
+0100@000000:5B2|Bis TeleSat|Trek|TV|Documentaries
+0100@000000:5B3|TeleSat|Toute l´Histoire|TV|Documentaries
+0100@000000:5B5|TeleSat|Action|TV|Movies
+0100@000000:5B6|TeleSat|Mangas|TV|Children
+0100@000000:5B7|TeleSat|Science et Vie|TV|Documentaries
+0500@000000:5BA|Bis|Téva|TV|General
+0600@000000:5BC|TeleSat|XXL|TV|Adult
+0100@000000:5BE|TeleSat|Padel Time TV|TV|Sport
+1801@000000:49|TivùSat|La7 Cinema|TV|Movies
+1801@000000:4F|TivùSat|La 7 HD|TV|General
+0600@000000:1BBD|Nova|ERT News|TV|News
+0600@000000:1BBE|Nova|Novasports Extra 4 HD|TV|Sport
+0600@000000:1BBF|Nova|Viasat True Crime HD Czech|TV|Real TV
+0600@000000:1BC0|Nova|Duck TV|TV|Children
+0600@000000:1BC1|Nova|Adult Pack Info|TV|
+0600@000000:1BC2|Nova|Nova Cinema 3|TV|Movies
+0600@000000:1BC4|Nova|Novasports News HD|TV|Sport
+0600@000000:1BC5|Nova|One Channel HD|TV|Various
+0600@000000:1BC8|Nova|Epic Drama HD|TV|Series
+0600@000000:1BC9|Nova|MEGA News HD|TV|News
+0600@000000:1BCA|Nova|Nova Cinema 2 HD|TV|Movies
+0600@000000:1BCB|Nova|Magenta Sport 4|TV|Sport
+0600@000000:1BCC|Nova|Magenta Sport 5|TV|Sport
+0600@000000:1BCE|Nova|Magenta Sport 6|TV|Sport
+0600@000000:1BD0|Nova|Novasportsextra4HD Cy|TV|
+0600@000000:1BD2|Nova|Cartoonito HD EMEA|TV|Children
+0600@000000:1BD3|Nova|Magenta Sport 2|TV|Sport
+0600@000000:1BD4|Nova|Adult Pack Info|TV|
+0600@000000:1BD5|Nova|Novacinema2HD Cy|TV|
+0600@000000:1BD6|Nova|Novacinema3HD Cy|TV|
+0600@000000:1BCD|Nova|Mad Radio|Radio|
+09C4@000000:DE7|Sky Italia|Sky Sport Tennis|TV|Sport
+09C4@000000:1C29|Sky Italia|Sky Sport Calcio HD|TV|Sport
+09C4@000000:1C3E|Sky Italia|Sky Sport Calcio HD|TV|Sport
+09C4@000000:2505|Sky Italia|Sky Uno HD|TV|Entertainment
+09C4@000000:2B0F|Sky Italia|Sky Sport 1 HD Italia|TV|Sport
+09C4@000000:2B1B|Sky Italia|Sky Sport 24|TV|Sport
+09C4@000000:2B1D|Sky Italia|Sky Sport24|TV|
+09C4@000000:2B20|Sky Italia|Sky Sport24|TV|
+09C4@000000:2506|Sky Italia|Sky Sport F1|TV|Sport
+09C4@000000:250B|Sky Italia|Sky Sport MotoGP|TV|Sport
+09C4@000000:2B10|Sky Italia|Sky Sport Arena|TV|Sport
+09C4@000000:2D6C|Sky Italia|Sky Sport 4k Italia|TV|Sport
+0B00@000000:3|Orange Polska Platforma Canal+ Polsat Box|Nick Jr Polska|TV|Children
+0B00@000000:9|Orange Polska Platforma Canal+ Polsat Box|Nickelodeon Polska|TV|Children
+0B00@000000:C|Orange Polska Platforma Canal+ Polsat Box|Comedy Central Poland HD|TV|Comedy
+0B00@000000:D|Orange Polska Platforma Canal+ Polsat Box|Paramount Channel HD Poland|TV|Movies
+0B00@000000:E|Orange Polska Platforma Canal+ Polsat Box|Nick Toons HD Poland|TV|Children
+0B00@000000:F|Orange Polska Platforma Canal+ Polsat Box|MTV Polska HD|TV|Music
+0B00@000000:10|Orange Polska Platforma Canal+ Polsat Box|Polsat Comedy Central Extra|TV|Comedy
+0600@000000:20|Polsat Box|Comedy Central HD|TV|
+0600@000000:21|Platforma Canal+ Polsat Box|Paramount Network Polska|TV|
+0600@000000:3D|Polsat Box|Eurosport 3 HD Poland|TV|Sport
+0600@000000:3E|Polsat Box|Eurosport 4 HD Poland|TV|Sport
+0600@000000:3F|Polsat Box|VOD 205|TV|
+0600@000000:40|Polsat Box|VOD 206|TV|
+0600@000000:41|Polsat Box|VOD 207|TV|
+0600@000000:42|Polsat Box|VOD 208|TV|
+0B00@000000:45|Platforma Canal+ Polsat Box|Nicktoons HD|TV|
+09C4@000000:57C|Sky Italia|Comedy Central Italia|TV|Comedy
+09C4@000000:590|Sky Italia|Nick Junior Italia|TV|Children
+09C4@000000:597|Sky Italia|Sky Collection|TV|Entertainment
+09C4@000000:598|Sky Italia|Sky Uno +|TV|Entertainment
+09C4@000000:599|Sky Italia|Class CNBC|TV|Business
+09C4@000000:F79|Sky Italia|Sky Adventure Italia|TV|Movies
+09C4@000000:F7A|Sky Italia|Sky Adventure|TV|
+09C4@000000:104A|Sky Italia|Classica Italy|TV|Music
+09C4@000000:10E8|Sky Italia|TG24 PrimoPiano|TV|News
+09C4@000000:1C38|Sky Italia|Sky Cinema Uno +24|TV|Movies
+09C4@000000:1C3F|Sky Italia|Sky Cinema Romance|TV|Movies
+09C4@000000:1FAC|Sky Italia|Sky News International|TV|News
+09C4@000000:2B42|Sky Italia|Sky Arte HD|TV|Cultural
+09C4@000000:2B43|Sky Italia|Sky Arte|TV|
+09C4@000000:2BCB|Sky Italia|CNN International Europe|TV|News
+09C4@000000:2C31|Sky Italia|DeA Junior|TV|Children
+09C4@000000:2CC4|Sky Italia|DeA Kids|TV|Children
+09C4@000000:37B5|Sky Italia|Milan Channel|TV|Sport
+09C4@000000:3BF0|Sky Italia|Caccia e Pesca|TV|Documentaries
+09C4@000000:3C07|Sky Italia|Boomerang Italia|TV|Children
+09C4@000000:DB9|Sky Italia|History Channel Italia|TV|History
+09C4@000000:DC2|Sky Italia|History|TV|
+09C4@000000:DCF|Sky Italia|Zona DAZN 2|TV|Sport
+09C4@000000:DFB|Sky Italia|Sky Sport Mix|TV|Sport
+09C4@000000:F4D|Sky Italia|Sky Sport Italia|TV|Sport
+1801@000000:1018|Sky Italia TivùSat|Cielo|TV|Various
+1801@000000:1019|Sky Italia TivùSat|cielo|TV|
+09C4@000000:1089|Sky Italia|Sky Sport Italia|TV|Sport
+09C4@000000:108A|Sky Italia|Sky Sport Italia|TV|Sport
+09C4@000000:1C50|Sky Italia|Sky Sport Max|TV|Sport
+1801@000000:1C5C|Sky Italia TivùSat|TV8 HD (Italy)|TV|General
+1801@000000:1C66|Sky Italia TivùSat|TV8 HD|TV|
+09C4@000000:2B16|Sky Italia|Sky Cinema Comedy|TV|Movies
+0600@000000:3C8D|Nova|Novacinema1HD Cy|TV|
+0600@000000:3C8E|Nova|Nova Summer HD|TV|Movies
+0600@000000:3C90|Nova|Nova Sports 2 HD|TV|Sport
+0600@000000:3C91|Nova|Star Channel HD|TV|General
+0600@000000:3C92|Nova|TLC Greece|TV|Documentaries
+0600@000000:3C93|Nova|Cosmote Sport 7 HD|TV|Sport
+0600@000000:3C94|Nova|Cosmote Sport 8 HD|TV|Sport
+0600@000000:3C95|Nova|Nova Cinema 1 HD|TV|Movies
+0600@000000:3C96|Nova|Cosmote Sport 9 HD|TV|Sport
+0600@000000:3C97|Nova Total TV|E! Eastern Europe HD|TV|Entertainment
+0600@000000:3C98|Nova|Attica TV|TV|Various
+0600@000000:3C99|Nova|Novasports2HD Cy|TV|
+0600@000000:3C9A|Nova|The Food Network EMEA HD|TV|Cooking
+0600@000000:3C9C|Nova|Euronews Greek|TV|News
+0600@000000:3C9F|Nova|Blue Sky|TV|Various
+0600@000000:15F|Nova Total TV|Discovery Channel Greece|TV|Documentaries
+0600@000000:160|Nova|Naftemporiki HD|TV|Business
+0600@000000:162|Nova|NovaSports 4|TV|Sport
+0600@000000:163|Nova|Novasports4HD Cy|TV|
+0600@000000:165|Nova|Cosmote Sport 3 HD|TV|Sport
+0600@000000:166|Nova|Open Beyond HD|TV|Various
+0600@000000:169|Nova|Novasports Extra 1 HD|TV|Sport
+0600@000000:16A|Nova Total TV|History Channel HD Greece|TV|History
+0600@000000:16B|Nova|Kontra Channel|TV|General
+0600@000000:16E|Nova|Nova Cinema 4 HD|TV|Movies
+0600@000000:16F|Nova|Novacinema4HD Cy|TV|
+0600@000000:170|Nova|Nova Life|TV|Various
+0600@000000:171|Nova|NOVALIFE Cy|TV|
+0600@000000:172|Nova|Da Vinci HD|TV|Documentaries
+0600@000000:175|Nova|Action 24|TV|Movies
+0600@000000:179|Nova|Mad TV|TV|Music
+0600@000000:17D|Nova|Nova Sports Extra 3 HD|TV|Sport
+0600@000000:182|Nova|Nickelodeon Europe|TV|Children
+0600@000000:183|Nova|EPT3 HD|TV|
+0600@000000:186|Nova Total TV|Da Vinci HD UG|TV|
+0600@000000:16C|Nova|REAL FM|Radio|
+0600@000000:174|Nova|ΣΤΟ ΚΟΚΚΙΝΟ 105,5|Radio|
+0600@000000:176|Nova|ΠΑΡΑΠΟΛΙΤΙΚΑ FM 90,1|Radio|
+0600@000000:17B|Nova|SPORT FM 94,6|Radio|
+0B00@000000:1C86|Orange Polska Platforma Canal+ Polsat Box|AXN White Poland|TV|Series
+0B00@000000:1C87|Orange Polska Platforma Canal+ Polsat Box|AXN Black Poland|TV|Series
+0600@000000:1C8B|Polsat Box|Polsat X|TV|General
+0B00@000000:1C8C|Orange Polska Platforma Canal+ Polsat Box|Disco Polo Music|TV|Music
+0600@000000:1C8E|Polsat Box|Disco Polo Music|TV|Music
+0B00@000000:1C8F|Platforma Canal+ Polsat Box|Polsat Rodzina|TV|Various
+1801@000000:1C96|Polsat Box|AXN Polska|TV|Series
+0B00@000000:1CAC|Orange Polska Platforma Canal+ Polsat Box|Polsat Seriale HD|TV|Series
+0B00@000000:1CAD|Platforma Canal+|Polsat Seriale HD|TV|Series
+0B00@000000:1CB5|Orange Polska Platforma Canal+ Polsat Box|Disney XD Polska|TV|Children
+0B00@000000:1CB6|Orange Polska Platforma Canal+ Polsat Box|Disney Channel HD Poland|TV|Children
+0B00@000000:1CB7|Orange Polska Platforma Canal+ Polsat Box|Polsat Jim Jam|TV|Children
+0B00@000000:1CBE|Orange Polska Platforma Canal+ Polsat Box|Polsat News Polityka|TV|Politics
+0B00@000000:1CBF|Orange Polska Platforma Canal+ Polsat Box|Polsat News Polityka|TV|Politics
+0600@000000:1CC5|Polsat Box|Disney Channel HD|TV|
+0B00@000000:1CCA|Orange Polska Platforma Canal+ Polsat Box|Polsat Viasat Explore HD|TV|Documentaries
+0B00@000000:1C98|Platforma Canal+ Polsat Box|RMF FM|Radio|
+0600@000000:1C9B|Polsat Box|Jedynka - PR|Radio|
+0600@000000:1C9C|Polsat Box|Trójka - PR|Radio|
+0B00@000000:1CA2|Platforma Canal+ Polsat Box|RMF FM|Radio|
+0600@000000:1CA5|Polsat Box|Jedynka - PR|Radio|
+0600@000000:1CA6|Polsat Box|Trójka - PR|Radio|
+0600@000000:1CD4|Polsat Box|Strefa Abonenta|Radio|
+0600@000000:1CD7|Polsat Box|Ap|Radio|
+0600@000000:C1D|Polsat Box|Polsat Sport 1|TV|Sport
+0B00@000000:C1F|Orange Polska Platforma Canal+ Polsat Box|Fx Comedy HD|TV|
+0B00@000000:C20|Orange Polska Platforma Canal+ Polsat Box|Polsat Viasat History HD|TV|History
+0B00@000000:C22|Orange Polska Platforma Canal+ Polsat Box|TVP 2 HD|TV|General
+0B00@000000:C23|Platforma Canal+ Polsat Box|Polsat Doku HD|TV|
+0600@000000:C24|Polsat Box|Polsat Sport 2|TV|Sport
+0B00@000000:C25|Orange Polska Platforma Canal+ Polsat Box|AXN HD|TV|
+0B00@000000:C26|Orange Polska Platforma Canal+ Polsat Box|Cinemax 2 HD|TV|Movies
+0B00@000000:C27|Orange Polska Platforma Canal+ Polsat Box|FX HD|TV|
+0600@000000:C28|Polsat Box|Polsat Sport 2|TV|
+0600@000000:C29|Orange Polska Platforma Canal+ Polsat Box|Cinemax 2 HD|TV|Movies
+0600@000000:C2A|Orange Polska Platforma Canal+ Polsat Box|AXN HD Polska|TV|Series
+0600@000000:C2B|Orange Polska Platforma Canal+ Polsat Box|Fx Comedy HD Polska|TV|Comedy
+0B00@000000:C2C|Orange Polska Platforma Canal+ Polsat Box|TVP 2 HD|TV|
+0600@000000:C2D|Orange Polska Platforma Canal+ Polsat Box|FX HD Polska|TV|Entertainment
+0600@000000:C2E|Polsat Box|Polsat Sport 1|TV|
+0B00@000000:C2F|Orange Polska Platforma Canal+ Polsat Box|History Channel HD Polska|TV|History
+0B00@000000:C30|Orange Polska Platforma Canal+ Polsat Box|CI Polsat HD|TV|
+0B00@000000:C31|Orange Polska Platforma Canal+ Polsat Box|CI Polsat HD|TV|Documentaries
+0600@000000:C32|Orange Polska Platforma Canal+ Polsat Box|History HD|TV|
+0600@000000:C33|Polsat Box|Polsat Sport Extra 1|TV|Sport
+0600@000000:C34|Polsat Box|Polsat Sport Extra 2|TV|Sport
+0600@000000:C37|Polsat Box|Polsat Doku HD|TV|Documentaries
+0B00@000000:2907|Orange Polska Platforma Canal+ Polsat Box|Nat Geo People HD Poland|TV|Documentaries
+0B00@000000:2908|Orange Polska Platforma Canal+ Polsat Box|Viasat Nature CEE|TV|Documentaries
+0B00@000000:2909|Orange Polska Platforma Canal+ Polsat Box|Eska Rock HD|TV|Music
+0B00@000000:290A|Orange Polska Platforma Canal+ Polsat Box|Extreme Sports HD|TV|Sport
+0B00@000000:290C|Platforma Canal+ Polsat Box|Wydarzenia 24|TV|News
+0B00@000000:290D|Orange Polska Platforma Canal+ Polsat Box|Eska TV Extra HD|TV|Entertainment
+0B00@000000:290E|Orange Polska Platforma Canal+ Polsat Box|HBO HD Polska|TV|Movies
+0B00@000000:290F|Orange Polska Platforma Canal+ Polsat Box|HBO HD Polska|TV|Movies
+0B00@000000:2910|Orange Polska Platforma Canal+ Polsat Box|Vox Music TV HD|TV|Music
+0600@000000:2911|Polsat Box|Polsat Sport Fight HD|TV|Sport
+0600@000000:2913|Polsat Box|Polsat Sport 3|TV|Sport
+0B00@000000:2938|Orange Polska Platforma Canal+ Polsat Box|Disney Junior Middle-East & Africa|TV|Children
+09C4@000000:DED|Sky Italia|Sky Sport Business 3|TV|Sport
+09C4@000000:DFA|Sky Italia|Sky Sport Legend|TV|Sport
+09C4@000000:F46|Sky Italia|Sky Sport Italia|TV|Sport
+09C4@000000:F48|Sky Italia|Sky Sport Italia|TV|Sport
+09C4@000000:F6F|Sky Italia|Sky Sport Italia|TV|Sport
+09C4@000000:106E|Sky Italia|Sky Cinema Action|TV|Movies
+09C4@000000:10E1|Sky Italia|Sky Meteo24|TV|Weather
+09C4@000000:1C57|Sky Italia|Sky Cinema Family HD|TV|Movies
+09C4@000000:1E58|Sky Italia|Sky Sport Golf|TV|Sport
+09C4@000000:1E59|Sky Italia|Sky Cinema Drama|TV|Movies
+09C4@000000:2B27|Sky Italia|Sky Cinema Suspense HD|TV|Movies
+09C4@000000:2DAF|Sky Italia|Sky Nature Italia|TV|Documentaries
+09C4@000000:2DBE|Sky Italia|Sky Nature|TV|
+0B00@000000:BEA|Polsat Box|Insight UHD|TV|Presentations
+09C4@000000:DFD|Sky Italia|Disney Jr. Central Europe|TV|Children
+09C4@000000:1020|Sky Italia|Sky Crime Italia|TV|Series
+09C4@000000:106C|Sky Italia|Fast & Furious Collection HD|TV|Movies
+09C4@000000:10FE|Sky Italia|Caccia e Pesca|TV|Documentaries
+09C4@000000:1E53|Sky Italia|MTV Italia HD|TV|Music
+09C4@000000:1E5C|Sky Italia|Sky Sport Italia|TV|Sport
+09C4@000000:250F|Sky Italia|Inter TV Shop|TV|Teleshopping
+09C4@000000:2C38|Sky Italia|Nickelodeon Italia|TV|Children
+09C4@000000:2DB1|Sky Italia|Sky Documentaries HD|TV|Documentaries
+09C4@000000:2DB2|Sky Italia|Sky Documentaries HD|TV|Documentaries
+09C4@000000:2FC4|Sky Italia|Gambero Rosso HD|TV|Cooking
+09C4@000000:2FC5|Sky Italia|Gambero Rosso HD|TV|Cooking
+09C4@000000:37A9|Sky Italia|Sky Crime|TV|
+09C4@000000:37B2|Sky Italia|Cartoon Network|TV|Children
+0B00@000000:7D6|Orange Polska Platforma Canal+ Polsat Box|BBC Brit|TV|Entertainment
+0B00@000000:7D9|Orange Polska Platforma Canal+ Polsat Box|BBC CBeebies Poland|TV|Children
+0B00@000000:7DB|Orange Polska Platforma Canal+ Polsat Box|BBC Lifestyle HD Poland|TV|Lifestyle
+0B00@000000:7E0|Orange Polska Platforma Canal+ Polsat Box|BBC Brit|TV|
+0B00@000000:7E3|Orange Polska Platforma Canal+ Polsat Box|BBC CBeebies|TV|
+0B00@000000:7E5|Orange Polska Platforma Canal+ Polsat Box|BBC Lifestyle HD|TV|
+0B00@000000:7E6|Orange Polska Platforma Canal+ Polsat Box|BBC Brit|TV|
+0500@000000:830|GLOBECAST|Equidia PRO1 HD|TV|Racing
+0500@000000:831|GLOBECAST|Equidia PRO2 HD|TV|Racing
+2600@000000:7|Globecast|MDS 7|TV|
+2600@000000:8|Globecast|MDS 8|TV|
+2600@000000:9|Globecast|OCN|TV|
+0600@000000:65|Vivacom|Travel Channel|TV|Travel
+0600@000000:67|Vivacom|BNT 1|TV|General
+0600@000000:68|Vivacom|Dizi TV|TV|Movies
+0600@000000:69|Vivacom|Diema|TV|General
+0600@000000:6B|Vivacom|Diema Family|TV|Entertainment
+0600@000000:6C|Vivacom|Kino Nova|TV|Movies
+0600@000000:6F|Vivacom|Balkanika|TV|Music
+0600@000000:71|Vivacom|Investigation Discovery Europe|TV|Documentaries
+0600@000000:72|Vivacom|BNT 2|TV|General
+0600@000000:74|Vivacom|Diema|TV|General
+0600@000000:75|Vivacom|Diema Family|TV|Entertainment
+0600@000000:78|Vivacom|Fantazzy TV|TV|Various
+0600@000000:78|Vivacom|Viasat Explore Time sharing|TV|Documentaries
+0600@000000:7A|Vivacom|Epic Drama|TV|Movies
+0600@000000:7C|Vivacom|Gametoon HD|TV|Game
+0600@000000:7E|Vivacom|TV 1000 East|TV|Movies
+0600@000000:7F|Vivacom|Hustler TV|TV|Adult
+0600@000000:80|Vivacom|Nickelodeon Bulgaria|TV|Children
+0600@000000:82|Vivacom|Disney Channel Bulgaria|TV|Children
+0600@000000:83|Vivacom|Disney Junior Bulgaria|TV|Children
+0600@000000:86|Vivacom|Vivacom Arena|TV|Presentations
+0600@000000:87|Vivacom|Dom Kino Premium|TV|Movies
+0600@000000:88|Vivacom|Kino Nova|TV|Movies
+0600@000000:8B|Vivacom|Chasse et Pêche|TV|Documentaries
+0600@000000:8C|Vivacom|Jim Jam|TV|General
+0600@000000:8D|Vivacom|DW-TV (Deutsche Welle)|TV|News
+0600@000000:8E|Vivacom|Peretz International|TV|General
+0600@000000:8F|Vivacom|Extreme Sports|TV|Sport
+0600@000000:92|Vivacom|Nova News HD|TV|News
+0600@000000:93|Vivacom|CineStar TV Bulgaria|TV|Movies
+0600@000000:94|Vivacom|CineStar Action and Thriller|TV|Movies
+0600@000000:E2|Vivacom|Cinemax East Europe|TV|Movies
+0600@000000:E5|Vivacom|HBO Bulgaria|TV|Movies
+0600@000000:E6|Vivacom|HBO 2 Bulgaria|TV|Movies
+0600@000000:1|Vivacom|BTV Bulgaria|TV|General
+0600@000000:2|Vivacom|Nova TV|TV|General
+0600@000000:3|Vivacom|bTV Comedy|TV|Comedy
+0600@000000:4|Vivacom|BTV Cinema|TV|Movies
+0600@000000:5|Vivacom|Nova HD Bulgaria|TV|Entertainment
+0600@000000:6|Vivacom|bTV Story|TV|Entertainment
+0600@000000:7|Vivacom|bTV Action|TV|Entertainment
+0600@000000:10|Vivacom|Ring BG|TV|General
+0600@000000:15|Vivacom|Star Life Bulgaria|TV|Entertainment
+0600@000000:16|Vivacom|Star Crime Bulgaria|TV|Series
+0600@000000:1C|Vivacom|24 Kitchen|TV|Cooking
+0600@000000:1D|Vivacom|VTK|TV|General
+0600@000000:20|Vivacom|Star Channel Bulgaria|TV|Entertainment
+0600@000000:22|Vivacom|Bulgaria On Air|TV|Business
+0600@000000:23|Vivacom|Bloomberg BG|TV|Business
+0600@000000:24|Vivacom|National Geographic Bulgaria|TV|Documentaries
+0600@000000:2A|Vivacom|Nat Geo Wild Bulgaria|TV|Documentaries
+0600@000000:6A|Vivacom|DSTV|TV|Music
+0600@000000:76|Vivacom|AMC Eastern Europe|TV|Movies
+0600@000000:7B|Vivacom|TLC Bulgaria|TV|Documentaries
+0600@000000:C8|Vivacom|Agro TV|TV|Entertainment
+0600@000000:C9|Vivacom|Cartoon Network|TV|Children
+0600@000000:CA|Vivacom|Filmbox Stars|TV|Movies
+0600@000000:CB|Vivacom|Food Network|TV|Cooking
+0600@000000:CC|Vivacom|Tiankov Folk|TV|Music
+0600@000000:D0|Vivacom|Nova Sport Bulgaria|TV|Sport
+0600@000000:D1|Vivacom|Planeta Folk|TV|Music
+0600@000000:D2|Vivacom|7/8 TV|TV|Various
+0600@000000:D3|VIVACOM|Folklor TV|TV|Cultural
+0600@000000:D4|Vivacom|Viasat Nature CEE|TV|Documentaries
+0600@000000:D5|Vivacom|Russian Travel Guide|TV|Travel
+0600@000000:D6|Vivacom|Fashion TV|TV|Lifestyle
+0600@000000:D7|Vivacom|Eurosport 2|TV|Sport
+09C4@000000:D8|Vivacom|Evrokom|TV|General
+0600@000000:DB|Vivacom|TV 1000 Russkoe Kino|TV|Movies
+0600@000000:DC|Vivacom|Nostalgia Bulgaria|TV|Entertainment
+0600@000000:DF|Vivacom|Animal Planet Eastern Europe|TV|Documentaries
+0600@000000:E0|Vivacom|HBO 3 Bulgaria|TV|Movies
+0600@000000:E1|Vivacom|Pickbox TV|TV|Entertainment
+0600@000000:E3|Vivacom|Ohota & Rybalka|TV|Documentaries
+0600@000000:E4|Vivacom|Cartoonito Balkans|TV|Children
+0600@000000:E8|Vivacom|Baby TV|TV|Children
+0600@000000:E9|Vivacom|Eurosport 1|TV|Sport
+0600@000000:EA|Vivacom|Skat TV|TV|General
+0600@000000:ED|Vivacom|Box TV Bulgaria|TV|Various
+0600@000000:F0|Vivacom|MTV Europe|TV|Music
+0600@000000:F1|Vivacom|AMS|TV|Various
+0600@000000:F5|Vivacom|Fan TV|TV|Music
+0600@000000:F7|Vivacom|Movie Star|TV|Movies
+0600@000000:F8|Vivacom|Mezzo|TV|Music
+0600@000000:104|Vivacom|EKids|TV|Children
+0600@000000:105|Vivacom|Cinemax 2 Europe|TV|Movies
+0600@000000:106|Vivacom|Euronews Bulgaria|TV|News
+0600@000000:109|Vivacom|Bulgaria 24|TV|News
+0600@000000:10A|Vivacom|The Voice Bulgaria|TV|Music
+0600@000000:10B|Vivacom|Magic TV (Bulgaria)|TV|Music
+0600@000000:10D|Vivacom|History HD Europe|TV|History
+0600@000000:10E|Vivacom|Nicktoons Bulgaria|TV|Children
+0600@000000:10F|VIVACOM|Alfa TV Bulgaria|TV|General
+0600@000000:110|Vivacom|Vivid TV|TV|Adult
+0600@000000:12E|Vivacom|Crime & Investigation Network|TV|Documentaries
+0600@000000:136|Vivacom|DM Sat|TV|General
+0600@000000:DE|Vivacom|Fight Klub HD|TV|Sport
+0600@000000:130|Vivacom|Diema Sport HD|TV|Sport
+0600@000000:137|Vivacom|HGTV HD|TV|Lifestyle
+0600@000000:138|Vivacom|BNT 3 HD|TV|General
+0600@000000:139|Vivacom|MAX Sport 3 HD|TV|Sport
+0600@000000:13B|Vivacom|NatGeo Wild HD|TV|Documentaries
+0600@000000:13C|Vivacom|National Geographic HD East Europe|TV|Documentaries
+0600@000000:13D|Vivacom|Planeta HD|TV|Music
+0600@000000:13E|Vivacom|BTV HD Bulgaria|TV|General
+0600@000000:13F|Vivacom|bTV Action HD|TV|Series
+0600@000000:140|Vivacom|Ring HD|TV|Game
+0600@000000:144|Vivacom|STS International|TV|General
+0600@000000:145|Vivacom|Diema Sport 3 HD|TV|Sport
+0600@000000:146|Vivacom|Domashniy|TV|General
+0600@000000:147|Vivacom|STS Kids|TV|Children
+0600@000000:14A|Vivacom|Diema Sport 2 HD|TV|Sport
+0600@000000:1389|Vivacom|TV1 Bulgaria|TV|General
+0600@000000:138A|Vivacom|MAX Sport 4 HD|TV|Sport
+0600@000000:138B|Vivacom|CNN International Europe|TV|News
+0600@000000:138C|Vivacom|beIN Movies Türk|TV|Movies
+0600@000000:138D|Vivacom|Show Türk|TV|General
+0600@000000:138F|Vivacom|VIVACOM Arena HD|TV|Various
+0600@000000:1390|Vivacom|Mediaset Italia|TV|General
+0600@000000:1392|Vivacom|Nick Junior|TV|Children
+0600@000000:1393|Vivacom|Da Vinci Learning|TV|Documentaries
+0600@000000:1394|Vivacom|English Club|TV|Entertainment
+0600@000000:1396|Vivacom|Freedom|TV|General
+0600@000000,09C4@000000:1397|Vivacom|XYPlus|TV|Adult
+0600@000000,09C4@000000:1398|Vivacom|Cinemania TV|TV|Movies
+0600@000000,09C4@000000:139A|Vivacom|BG+|TV|General
+0600@000000,09C4@000000:139B|Vivacom|Fen Folk TV|TV|Music
+0600@000000,09C4@000000:139C|Vivacom|BG Music Channel|TV|Music
+0600@000000,09C4@000000:139D|Vivacom|The World|TV|Various
+0600@000000,09C4@000000:139E|Vivacom|Travel TV Bulgaria|TV|Travel
+0600@000000,09C4@000000:139F|Vivacom|Code Health|TV|Health
+0600@000000,09C4@000000:13A0|Vivacom|Dorcel TV|TV|Adult
+0600@000000,09C4@000000:13A1|Vivacom|Hit Mix|TV|Music
+0600@000000,09C4@000000:13A3|Vivacom|Wness TV|TV|Lifestyle
+0600@000000,09C4@000000:13A4|Vivacom|FilmBox Extra|TV|Movies
+0600@000000,09C4@000000:13A5|Vivacom|Filmbox Arthouse|TV|Movies
+0600@000000,09C4@000000:13A6|Vivacom|Antena 3|TV|General
+0600@000000,09C4@000000:13A8|Vivacom|Private TV|TV|Adult
+0600@000000,09C4@000000:13A9|Vivacom|FilmBox|TV|Movies
+0600@000000,09C4@000000:13AA|Vivacom|TV5 Monde Europe|TV|General
+0600@000000,09C4@000000:13AB|Vivacom|RTL Television|TV|General
+0600@000000,09C4@000000:13AC|Vivacom|MAX Sport 1 HD|TV|Sport
+0600@000000,09C4@000000:13AD|Vivacom|MAX Sport 2 HD|TV|Sport
+0600@000000,09C4@000000:13AE|Vivacom|Kanal 7 Avrupa|TV|General
+0600@000000,09C4@000000:13AF|Vivacom|Showmax|TV|General
+0600@000000,09C4@000000:13B0|Vivacom|Haber Turk TV|TV|News
+0600@000000,09C4@000000:13B1|Vivacom|Yaban TV|TV|Documentaries
+0600@000000,09C4@000000:13B2|Vivacom|CurrentTime|TV|News
+0600@000000,09C4@000000:13B3|Vivacom|Discovery Channel Bulgaria|TV|Documentaries
+0600@000000:13B4|Vivacom|Soul & Pepper|TV|Cooking
+1801@000000:2C88|Boobles|La 1 UHD|TV|General
+1801@000000:2C89|Boobles|La 2|TV|General
+1801@000000:2C8A|Boobles|Canal 24 Horas|TV|News
+1801@000000:2C8B|Boobles|Clan TVE|TV|Children
+1801@000000:2C8C|Boobles|Teledeporte|TV|Sport
+1801@000000:2C8D|Boobles|Trece|TV|Religious
+1801@000000:2C8E|Boobles|Dkiss|TV|Entertainment
+1801@000000:2C8F|Boobles|A Punt HD|TV|General
+1801@000000:2C90|Boobles|ETB 1 HD|TV|Regional
+1801@000000:2C91|Boobles|TPA Asturias HD|TV|Regional
+1801@000000:2C92|Boobles|Canal Sur Andalucia|TV|Regional
+1801@000000:749A|Movistar+|Movistar Plus+ HD|TV|Various
+1801@000000:749B|Movistar+|LaLiga TV Hypermotion|TV|Sport
+1801@000000:749D|Movistar+|DAZN LaLiga 2 HD|TV|Sport
+1801@000000:749E|Movistar+|Canal+ Liga Campeones 2 HD|TV|Sport
+1801@000000:749E|Movistar+|Movistar Liga Campeones 2|TV|Sport
+1801@000000:749F|Movistar+|Movistar Liga Campeones 3|TV|Sport
+1801@000000:74A2|Movistar+|Mezzo Live HD|TV|Music
+1801@000000:74A3|Movistar+|Movistar LaLiga 3 HD|TV|Sport
+1801@000000:74A8|Movistar+|Movistar Vamos 2 HD|TV|Sport
+0600@000000:5274|HD + Sky Deutschland|Welt HD|TV|News
+0600@000000:527E|Austriasat Sky Deutschland|WELT HD Austria|TV|
+1801@000000:768E|Movistar+|Movistar Baloncesto|TV|Sport
+1801@000000:7691|Movistar+|DAZN LaLiga 2|TV|Sport
+1801@000000:7692|Movistar+|Multideporte|TV|Sport
+1801@000000:7695|Movistar+|DAZN Baloncesto 3|TV|Sport
+1801@000000:7696|Movistar+|Movistar Romance|TV|Series
+1801@000000:7697|Movistar+|Nick Junior Spain|TV|Children
+1801@000000:7699|Movistar+|Mezzo|TV|Music
+1801@000000:769A|Movistar+|LaLiga TV Bar 3|TV|Sport
+1801@000000:769B|Movistar+|Movistar Deportes 6|TV|Sport
+1801@000000:769D|Movistar+|Movistar LaLiga 2|TV|Sport
+1801@000000:769E|Movistar+|La Sexta|TV|General
+1801@000000:769F|Movistar+|Movistar Liga Campeones 3|TV|Sport
+1801@000000:76A3|Movistar+|Multideporte|TV|Sport
+1801@000000:76A4|Movistar+|DAZN 1 Spain|TV|Sport
+1801@000000:76A5|Movistar+|Eurosport 2 Spain|TV|Sport
+0600@000000:1581|Austriasat HD + Sky Deutschland|Sport 1 HD (Germany)|TV|Sport
+0600@000000:1586|Austriasat Sky Deutschland|Disney Channel HD Austria|TV|Children
+0600@000000:1589|Austriasat Sky Deutschland|Deluxe Music HD Austria|TV|Business
+1801@000000:74FF|Movistar+|LaLiga TV Bar HD|TV|Sport
+1801@000000:7504|Movistar+|1“ Federacion HD|TV|Sport
+1801@000000:7508|Movistar+|#Vamos HD|TV|Sport
+1801@000000:7509|Movistar+|Movistar Accion HD|TV|Movies
+1801@000000:750A|Movistar+|M+ VAMOSHD|TV|
+1801@000000:750B|Movistar+|Movistar Drama HD|TV|Movies
+1801@000000:750C|Movistar+|Movistar+ Originales HD|TV|Movies
+1801@000000:750D|Movistar+|Movistar LaLiga 2 HD|TV|Sport
+1801@000000:750F|Movistar+|Movistar LaLiga HD|TV|Sport
+0600@000000:EF14|Austriasat HD + Sky Deutschland|n-tv HD|TV|News
+1801@000000:7789|Movistar+|Movistar Golf|TV|Sport
+1801@000000:778A|Movistar+|Baby TV|TV|Children
+1801@000000:778B|Movistar+|Playboy TV|TV|Erotic
+1801@000000:778C|Movistar+|Telecinco|TV|General
+1801@000000:778D|Movistar+|National Geographic Spain|TV|Documentaries
+1801@000000:778E|Movistar+|#Vamos Bar|TV|Various
+1801@000000:778F|Movistar+|Movistar Deportes 1|TV|Sport
+1801@000000:7790|Movistar+|Calle 13|TV|Series
+1801@000000:7792|Movistar+|Cuatro|TV|General
+1801@000000:7793|Movistar+|LaLiga TV Bar 1|TV|Sport
+1801@000000:7795|Movistar+|BBC Top Gear|TV|Entertainment
+1801@000000:7796|Movistar+|SyFy Universal Spain|TV|Entertainment
+1801@000000:7797|Movistar+|Movistar LaLiga|TV|Sport
+1801@000000:7798|Movistar+|TEST TXP60|TV|
+1801@000000:7531|Movistar+|DAZN F1 HD|TV|Sport
+1801@000000:7532|Movistar+|Movistar Deportes 2 HD|TV|Sport
+1801@000000:7533|Movistar+|Movistar+ Indie HD|TV|Movies
+1801@000000:7534|Movistar+|DAZN LaLiga HD|TV|Sport
+1801@000000:7535|Movistar+|Eurosport 1 Spain HD|TV|Sport
+1801@000000:7536|Movistar+|Movistar Baloncesto HD|TV|Sport
+1801@000000:7537|Movistar+|Movistar Comedia HD|TV|Movies
+1801@000000:7539|Movistar+|Movistar Estrenos HD|TV|Movies
+1801@000000:7820|Movistar+|Movistar Liga Campeones 11|TV|Sport
+1801@000000:7821|Movistar+|Movistar Liga Campeones 12|TV|Sport
+1801@000000:7822|Movistar+|Movistar Liga Campeones 7|TV|Sport
+1801@000000:7824|Movistar+|Movistar Liga Campeones 8|TV|Sport
+1801@000000:7825|Movistar+|LaLiga TV Hypermotion|TV|Sport
+1801@000000:7827|Movistar+|DAZN Baloncesto 1|TV|Sport
+1801@000000:7829|Movistar+|Movistar Liga Campeones 6|TV|Sport
+1801@000000:782A|Movistar+|LaLiga TV Hypermotion 3|TV|Sport
+1801@000000:782B|Movistar+|Movistar Liga Campeones 13|TV|Sport
+1801@000000:782C|Movistar+|Movistar Liga Campeones 9|TV|Sport
+1801@000000:782D|Movistar+|Movistar Baloncesto 4|TV|Sport
+1801@000000:782F|Movistar+|Movistar Liga Campeones 10|TV|Sport
+1801@000000:7830|Movistar+|LaLiga TV Bar 4|TV|Sport
+1801@000000:7831|Movistar+|LaLiga TV Hypermotion 2|TV|Sport
+0600@000000:277E|BetaDigital|TLC Austria|TV|Documentaries
+1801@000000:77BC|Movistar+|Factoria de Ficcion|TV|Series
+1801@000000:77BD|Movistar+|Movistar LaLiga 3|TV|Sport
+1801@000000:77BE|Movistar+|DAZN 3 Spain|TV|Sport
+1801@000000:77BF|Movistar+|Movistar Deportes 4|TV|Sport
+1801@000000:77C0|Movistar+|DAZN 4 Spain|TV|Sport
+1801@000000:77C1|Movistar+|BBC Series|TV|Series
+1801@000000:77C2|Movistar+|Movistar Deportes 3|TV|Sport
+1801@000000:77C3|Movistar+|Movistar Liga Campeones 2|TV|Sport
+1801@000000:77C4|Movistar+|Movistar Liga Campeones 5|TV|Sport
+1801@000000:77C6|Movistar+|Movistar Clasicos|TV|Movies
+1801@000000:77C7|Movistar+|DreamWorks|TV|Movies
+1801@000000:77C8|Movistar+|Movistar Deportes 5|TV|Sport
+1801@000000:77C9|Movistar+|Movistar Baloncesto 5|TV|Sport
+1801@000000:77D8|Movistar+|Movistar Liga Campeones 4|TV|Sport
+1801@000000:2BC0|Spain|Antena 3|TV|General
+1801@000000:2BC1|Spain|Neox|TV|General
+1801@000000:2BC2|Spain|Nova|TV|General
+1801@000000:2BC3|Spain|Atreseries|TV|Series
+1801@000000:2BC4|Spain|La Sexta|TV|General
+1801@000000:2BC5|Spain|Mega (Spain)|TV|Entertainment
+1801@000000:2BC6|Spain|Telecinco|TV|General
+1801@000000:2BC7|Spain|FDF Telecinco|TV|Entertainment
+1801@000000:2BC8|Spain|Boing Spain|TV|Children
+1801@000000:2BC9|Spain|Cuatro|TV|General
+1801@000000:2BCA|Spain|Divinity|TV|Lifestyle
+1801@000000:2BCB|Spain|Energy|TV|Lifestyle
+1801@000000:2BCC|Spain|Be Mad|TV|Entertainment
+1801@000000:2BCD|Spain|Real Madrid TV|TV|Sport
+1801@000000:76C0|Movistar+|Movistar Estrenos|TV|Movies
+1801@000000:76C1|Movistar+|Clan TVE|TV|Children
+1801@000000:76C2|Movistar+|La 1|TV|General
+1801@000000:76C3|Movistar+|BBC Lifestyle Spain|TV|Lifestyle
+1801@000000:76C4|Movistar+|BBC Earth Spain|TV|Documentaries
+1801@000000:76C5|Movistar+|LaLiga TV Bar 2|TV|Sport
+1801@000000:76C7|Movistar+|TCM Spain|TV|Movies
+1801@000000:76C8|Movistar+|Comedy Central Spain|TV|Comedy
+1801@000000:76C9|Movistar+|DAZN LaLiga|TV|Sport
+1801@000000:76CA|Movistar+|Movistar Hits|TV|Movies
+1801@000000:76CB|Movistar+|Warner TV Spain|TV|Series
+1801@000000:76CC|Movistar+|Teledeporte|TV|Sport
+1801@000000:76CE|Movistar+|BBC Food Spain|TV|Cooking
+1801@000000:76CF|Movistar+|Movistar+ Indie|TV|Movies
+0600@000000:2E87|Austriasat Sky Deutschland|RTL HD Österreich|TV|General
+0600@000000:2E91|Austriasat Sky Deutschland|VOX HD Österreich|TV|General
+0600@000000:2EA5|Austriasat Sky Deutschland|RTL 2 HD Österreich|TV|General
+1801@000000:7568|Movistar+|DAZN Baloncesto 2|TV|Sport
+1801@000000:7569|Movistar+|DAZN Moto GP|TV|Sport
+1801@000000:756B|Movistar+|Movistar Baloncesto 2|TV|Sport
+1801@000000:756C|Movistar+|#Vamos Bar2|TV|Sport
+1801@000000:756D|Movistar+|Movistar Golf 2|TV|Sport
+1801@000000:7574|Movistar+|DAZN 1 Bar HD|TV|Sport
+1801@000000:7577|Movistar+|Classica|TV|Music
+1801@000000:7579|Movistar+|Movistar Vamos 2|TV|Sport
+1801@000000:757B|Movistar+|Movistar Liga Campeones|TV|Sport
+1801@000000:757F|Movistar+|AXN Movies|TV|Movies
+1801@000000:7582|Movistar+|DAZN 2 Bar HD|TV|Sport
+1801@000000:7584|Movistar+|1'' Federacion|TV|Sport
+1801@000000:7587|Movistar+|Neox|TV|General
+1801@000000:7588|Movistar+|Movistar Plus+|TV|Various
+0600@000000:30EA|SES ASTRA|Eurosport 1 HD Austria|TV|
+1801@000000:7882|Movistar+|TEST 4 TXP 44|TV|
+1801@000000:7884|Movistar+|TEST 6 TXP 44|TV|
+1801@000000:7885|Movistar+|Movistar Terror|TV|Movies
+1801@000000:7888|Movistar+|Boing Spain|TV|Children
+1801@000000:7889|Movistar+|Energy|TV|Lifestyle
+1801@000000:788B|Movistar+|Divinity|TV|Lifestyle
+1801@000000:788C|Movistar+|TEST 2 TXP 44|TV|
+1801@000000:788D|Movistar+|TEST 1 TXP 44|TV|
+1801@000000:788F|Movistar+|MTV Spain|TV|Music
+1801@000000:7890|Movistar+|Gol Play|TV|Sport
+1801@000000:7891|Movistar+|Be Mad|TV|Entertainment
+1801@000000:7892|Movistar+|Movistar LaLiga 4|TV|Sport
+1801@000000:7893|Movistar+|Mundial Baloncesto 3|TV|Sport
+1801@000000:7894|Movistar+|TEST 5 TXP 44|TV|
+1801@000000:772A|Movistar+|DAZN 2 Spain|TV|Sport
+1801@000000:772B|Movistar+|LaLiga TV Bar 5|TV|Sport
+1801@000000:772C|Movistar+|Antena 3|TV|General
+1801@000000:772D|Movistar+|Eurosport 1 Spain|TV|Sport
+1801@000000:772E|Movistar+|Nickelodeon Spain|TV|Children
+1801@000000:772F|Movistar+|Discovery Channel Spain & Portugal|TV|Documentaries
+1801@000000:7730|Movistar+|Cosmopolitan TV|TV|Various
+1801@000000:7731|Movistar+|BBC History Spain|TV|History
+1801@000000:7732|Movistar+|DAZN F1|TV|Sport
+1801@000000:7733|Movistar+|#Vamos|TV|Sport
+1801@000000:7734|Movistar+|M+ VAMOS|TV|
+1801@000000:7736|Movistar+|Movistar Cine Español|TV|Movies
+1801@000000:7738|Movistar+|Canal 24 Horas|TV|News
+1801@000000:7739|Movistar+|Movistar Deportes 2|TV|Sport
+0600@000000:126E|HD +|.1.|TV|
+1801@000000:1270|BetaDigital|.3.|TV|
+0600@000000:10CC|Austriasat Boobles HD + Sky Deutschland|Sport Digital Fussball HD|TV|Sport
+1801@000000:13BA|Boobles|Aragon TV HD|TV|Regional
+1801@000000:13BB|Boobles|IB Sat|TV|General
+1801@000000:13BC|Boobles|La 7 Castillaleon|TV|Regional
+1801@000000:13BD|Boobles|Extremadura TV|TV|Regional
+1801@000000:13BE|Boobles|TVG 1|TV|Regional
+0D00@000000:33A7|Austriasat Sky Deutschland|ATV 2 Austria|TV|General
+0D00@000000:33AC|Austriasat Sky Deutschland|ATV HD (Austria)|TV|General
+1801@000000:78B4|Movistar+|Movistar Liga Campeones|TV|Sport
+1801@000000:78B5|Movistar+|Movistar Vamos 3 HD|TV|Sport
+1801@000000:78B6|Movistar+|Movistar Hits HD|TV|Movies
+1801@000000:78B7|Movistar+|Movistar Golf HD|TV|Sport
+1801@000000:78B8|Movistar+|Caza y Pesca HD|TV|Documentaries
+1801@000000:78BE|Movistar+|Movistar+ Documentales HD|TV|Documentaries
+1801@000000:78BF|Movistar+|Movistar Clasicos HD|TV|Movies
+1801@000000:78C0|Movistar+|Movistar Deportes 1 HD|TV|Sport
+0D00@000000:33F5|Austriasat ORF Digital Sky Deutschland|ORF 2 Steiermark|TV|Regional
+0D00@000000:33F6|Austriasat ORF Digital Sky Deutschland|ORF 2 Kärnten|TV|Regional
+0D00@000000:33F7|Austriasat ORF Digital Sky Deutschland|ORF 2 Burgenland|TV|Regional
+0D00@000000:33F8|Austriasat ORF Digital Sky Deutschland|ORF 2 OberÖsterreich|TV|Regional
+0D00@000000:33F9|Austriasat ORF Digital Sky Deutschland|ORF 2 Salzburg|TV|Regional
+0D00@000000:33FA|Austriasat ORF Digital Sky Deutschland|ORF 2 Tirol|TV|Regional
+0D00@000000:33FB|Austriasat ORF Digital Sky Deutschland|ORF 2 Vorarlberg|TV|Regional
+0D00@000000:33FC|Austriasat ORF Digital Sky Deutschland|ORF III HD|TV|General
+0D00@000000:33FD|Austriasat ORF Digital Sky Deutschland|ORF Sport+ HD|TV|Sport
+1801@000000:109A|Boobles|La 7 HD|TV|General
+1801@000000:109B|Boobles|TV3 Cataluna HD|TV|Regional
+1801@000000:109C|Boobles|TeleMadrid Sat|TV|Regional
+1801@000000:109D|Boobles|Television Canaria|TV|Regional
+1801@000000:109E|Boobles|CMM|TV|Various
+0D00@000000:132F|Austriasat ORF Digital Sky Deutschland|ORF 1 HD|TV|General
+0D00@000000:1330|Austriasat ORF Digital Sky Deutschland|ORF 2 HD|TV|General
+0D00@000000:1331|Austriasat Sky Deutschland|Servus TV HD|TV|Regional
+0D00@000000:1334|Austriasat ORF Digital Sky Deutschland|ORF2N HD|TV|
+1801@000000:7468|Movistar+|Movistar Vamos 3|TV|Sport
+1801@000000:7469|Movistar+|Nova|TV|General
+1801@000000:746A|Movistar+|Canal Iberalia|TV|General
+1801@000000:746B|Movistar+|Disney Channel Spain|TV|Children
+1801@000000:746C|Movistar+|Movistar Accion|TV|Movies
+1801@000000:746D|Movistar+|Movistar Comedia|TV|Movies
+1801@000000:746E|Movistar+|Movistar Drama|TV|Series
+1801@000000:746F|Movistar+|Star Channel Spain|TV|Entertainment
+1801@000000:7471|Movistar+|Movistar+ Documentales|TV|Documentaries
+1801@000000:7472|Movistar+|NatGeo Wild Spain|TV|Documentaries
+1801@000000:7474|Movistar+|La 2|TV|General
+1801@000000:7477|Movistar+|AXN Spain|TV|General
+1801@000000:7478|Movistar+|Movistar+ Originales|TV|Movies
+0600@000000:EF8A|Austriasat Sky Deutschland|Kabel eins HD Austria|TV|Entertainment
+0600@000000:EF8B|Austriasat Sky Deutschland|sixx HD Austria|TV|
+0600@000000:EF8C|Austriasat Sky Deutschland|Pro7 MAXX HD Austria|TV|
+0600@000000:EF8D|Austriasat Sky Deutschland|Kabel 1 Doku HD Austria|TV|Documentaries
+0600@000000:EF8E|Austriasat Sky Deutschland|SAT.1 GOLD HD Austria|TV|
+0600@000000:14B4|Austriasat Sky Deutschland|Sat 1 HD Austria|TV|General
+0600@000000:14B5|Austriasat Sky Deutschland|ProSieben HD Austria|TV|General
+0600@000000:14B7|Austriasat Sky Deutschland|Puls 4 HD Austria|TV|Talk shows
+0D00@000000:14B8|Austriasat Sky Deutschland|Puls 24 HD|TV|Talk shows
+0500@000000:16|Austriasat Sky Deutschland|Heimatkanal|TV|Series
+09C4@000000:85|Sky Deutschland|Beate-Uhse.TV|TV|Erotic
+09C4@000000:8B|Sky Deutschland|Sky Cinema Feelgood|TV|Movies
+09C4@000000:8D|Sky Deutschland|Sky Sport Mix HD|TV|Sport
+09C4@000000:93|Sky Deutschland|Sky 1 HD Germany|TV|Entertainment
+09C4@000000:115|Sky Deutschland|Sky Sport Bundesliga 2 HD|TV|Business
+09C4@000000:116|Sky Deutschland|Sky Sport 2 Germany|TV|Sport
+09C4@000000:153|Sky Deutschland|Sky Sport Austria 3 HD|TV|Sport
+0500@000000:192|Austriasat Sky Deutschland|Crime + Investigation Germany|TV|Documentaries
+0500@000000:206|Austriasat Sky Deutschland|Romance TV HD|TV|Movies
+09C4@000000:65|Sky Deutschland|Universal HD Germany|TV|Movies
+09C4@000000:7B|Sky Deutschland|Warner TV Serie HD|TV|Series
+09C4@000000:151|Sky Deutschland|Sky Sport Bundesliga 8 HD Occasional|TV|Sport
+09C4@000000:152|Sky Deutschland|Sky Sport 8 HD Germany|TV|Sport
+09C4@000000:156|Sky Deutschland|Sky Sport Austria 6 HD|TV|Sport
+09C4@000000:228|Sky Deutschland|Sky Sport Bundesliga UHD|TV|Sport
+09C4@000000:229|Sky Deutschland|Sky Sport UHD|TV|Sport
+09C4@000000:320|Sky Deutschland|STEST1|TV|
+2600@000000:1|MX1|Astra 1 Service 1|TV|
+2600@000000:2|MX1|Astra 1 Service 2|TV|
+2600@000000:3|MX1|Astra 1 Service 3|TV|
+1801@000000:200C|Canal+ France|NRJ Hits|TV|Music
+1801@000000:200D|Canal+ France|Golf+ HD|TV|Sport
+1801@000000:200F|Canal+ France TNTSAT|France 3 Bretagne|TV|Regional
+1801@000000:2011|Canal+ France TNTSAT|RMC Découverte|TV|Documentaries
+1801@000000:2012|Bis Canal+ France|beIN Sport 2 HD|TV|Sport
+1801@000000:2013|Bis Canal+ France|beIN Sports 3 HD France|TV|Sport
+0100@000000:2014|Austriasat Canal+ France TeleSat TNTSAT|TFX|TV|Entertainment
+0100@000000:2015|Austriasat Canal+ France TeleSat TNTSAT|TMC HD|TV|General
+1801@000000:2016|Canal+ France|France 2 UHD HDR|TV|General
+1801@000000:206D|Canal+ France TNTSAT|BFM TV HD|TV|News
+1801@000000:2071|Canal+ France|Canal+ Live 7|TV|Sport
+1801@000000:2072|Canal+ France|Canal+ Live 8|TV|Sport
+1801@000000:2073|Canal+ France|Canal+ Live 9|TV|Sport
+1801@000000:2075|Canal+ France TNTSAT|RMC Story|TV|General
+1801@000000:2076|Canal+ France TNTSAT|L´Equipe TV|TV|Sport
+1801@000000:207A|Canal+ France|Canal+ Grand Ecran|TV|Movies
+1801@000000:207B|Canal+ France TNTSAT|France 3 Aquitaine|TV|Regional
+1801@000000:207C|Canal+ France|Canal+ Live 10|TV|Sport
+1801@000000:207D|Canal+ France|Canal+ Box Office UHD|TV|Movies
+1801@000000:207E|Canal+ France|Canal+ Live 6|TV|Sport
+1801@000000:2081|Canal+ France TNTSAT|Arte HD|TV|Cultural
+0100@000000:2083|Austriasat Canal+ France TeleSat TNTSAT|Gulli HD|TV|Children
+09C4@000000:D|Sky Deutschland|Sky Crime HD Germany|TV|Series
+09C4@000000:11|Sky Deutschland|Sky Sport F1 HD Germany|TV|Sport
+09C4@000000:76|Sky Deutschland|Sky Nature HD Germany|TV|Documentaries
+09C4@000000:81|Sky Deutschland|Sky Sport Top Event HD|TV|Sport
+09C4@000000:82|Sky Deutschland|National Geographic HD Germany|TV|Documentaries
+09C4@000000:83|Sky Deutschland|Sky Cinema Premieren HD|TV|Movies
+09C4@000000:106|SKY|Sky Sport Austria 8|TV|Sport
+09C4@000000:10B|Sky Deutschland|Sky Sport Bundesliga 1 HD|TV|Sport
+09C4@000000:10C|Sky Deutschland|Sky Sport 1 HD Germany|TV|Sport
+09C4@000000:13D|Sky Deutschland|Sky Sport Bundesliga 6|TV|Sport
+09C4@000000:13E|Sky Deutschland|Sky Sport 6 HD Germany|TV|Sport
+0100@000000:22C5|Austriasat Canal+ France TeleSat|MTV HD France|TV|Music
+1801@000000:22C9|Canal+ France TNTSAT|France 3 Picardie|TV|Regional
+1801@000000:22CA|Canal+ France TNTSAT|France 3 Paris Ile-de-France|TV|Regional
+1801@000000:22CC|Canal+ France TNTSAT|France 3 Poitou-Charentes|TV|Regional
+1801@000000:22CE|Canal+ France|Canal+ Docs|TV|Documentaries
+1801@000000:22CF|Canal+ France TNTSAT|France 3 Champagne-Ardennes|TV|Regional
+1801@000000:22D0|Canal+ France TNTSAT|France 3 Haute-Normandie|TV|Regional
+1801@000000:22D1|Canal+ France TNTSAT|France 3 Alsace|TV|Regional
+1801@000000:22D2|Canal+ France TNTSAT|France 3 Midi-Pyrénées|TV|Regional
+0100@000000:22D4|Austriasat Canal+ France TeleSat|Comédie+ HD|TV|Comedy
+0100@000000:22D6|Austriasat Canal+ France TeleSat|Mezzo|TV|Music
+1801@000000:22D9|Canal+ France TNTSAT|France 3 Franche-Comté|TV|Regional
+1801@000000:22DA|Canal+ France TNTSAT|France 3 Bourgogne|TV|Regional
+1801@000000:22DB|Canal+ France TNTSAT|France 3 Alpes|TV|Regional
+1801@000000:22DC|Canal+ France TNTSAT|France 3 Limousin|TV|Regional
+1801@000000:22DD|Canal+ France TNTSAT|France 3 Lorraine|TV|Regional
+1801@000000:22DE|Canal+ France TNTSAT|Novo 19|TV|General
+1801@000000:22DF|Canal+ France TNTSAT|France 3 Nouvelle Aquitaine|TV|Regional
+1801@000000:22E0|Canal+ France TNTSAT|France 3 Orléans|TV|Regional
+1801@000000:22E1|Canal+ France TNTSAT|France 3 Nice|TV|Regional
+0600@000000:6FED|Austriasat MTV Networks|Comedy Central HD AT|TV|
+0600@000000:6FEF|Austriasat MTV Networks|MTV HD AT|TV|
+0D00@000000:6FF7|Austriasat Canal Digitaal MTV Networks|Nick Jr..|TV|
+0500@000000:6FF9|MTV Networks|Nick Junior Global|TV|
+09C4@000000:6FFB|Sky Deutschland|Nick.Jr.|TV|
+09C4@000000:1B|Sky Deutschland|Nicktoons Germany|TV|Children
+09C4@000000:6E|Sky Deutschland|Sky Atlantic HD Germany|TV|Entertainment
+09C4@000000:6F|Sky Deutschland|Sky Cinema Blockbuster|TV|Movies
+09C4@000000:70|Sky Deutschland|Sky Documentaries HD Germany|TV|Documentaries
+09C4@000000:72|Sky Deutschland|Sky Sport Tennis HD Germany|TV|Sport
+09C4@000000:7F|Sky Deutschland|13th Street HD|TV|Series
+09C4@000000:90|Sky Deutschland|Sky Sport Golf HD|TV|Sport
+09C4@000000:149|Sky Deutschland|Sky Sport Austria 2|TV|Sport
+1801@000000:2263|Canal+ France|Canal+ Cinéma(s) HD|TV|Movies
+1801@000000:2265|Canal+ France|Canal+ Kids|TV|Children
+1801@000000:2267|Canal+ France|Cine+ Frisson HD|TV|Movies
+1801@000000:2269|Canal+ France|Cine+ Classic HD|TV|Movies
+1801@000000:226A|Canal+ France|Canal+ Box Office|TV|Movies
+1801@000000:2270|Canal+ France TNTSAT|France 3 Corse Via Stella|TV|Regional
+1801@000000:2271|Canal+ France|Canal+ Foot|TV|Sport
+09C4@000000:17|Sky Deutschland|Sky Krimi HD|TV|Series
+09C4@000000:74|Sky Deutschland|Sky Cinema Action HD Germany|TV|Movies
+09C4@000000:77|Sky Deutschland|NatGeo Wild HD Germany|TV|Documentaries
+09C4@000000:8C|Sky Deutschland|Warner TV Film HD|TV|Movies
+09C4@000000:8F|Sky Deutschland|Sky Sport Austria 1 HD|TV|Sport
+09C4@000000:91|Sky Deutschland|Sky Sport Premier League HD|TV|Business
+09C4@000000:129|Sky Deutschland|Sky Sport Bundesliga 4 HD|TV|Sport
+09C4@000000:12A|Sky Deutschland|Sky Sport 4 Germany|TV|Sport
+09C4@000000:133|Sky Deutschland|Sky Sport Bundesliga 5 HD|TV|Sport
+09C4@000000:134|Sky Deutschland|Sky Sport 5 HD Germany|TV|Sport
+09C4@000000:155|Sky Deutschland|Prime Sportsbar|TV|Sport
+0D00@000000:4E27|Austriasat Sky Deutschland|Puls 4 Austria|TV|Talk shows
+1801@000000:24BD|Canal+ France TNTSAT|France 3 Provence-Alpes|TV|Regional
+1801@000000:24BE|Canal+ France|Eurosport 2 HD|TV|Sport
+0100@000000:24C1|Austriasat Canal+ France TeleSat|Planète+ C.I. HD|TV|Documentaries
+0100@000000:24C6|Austriasat Canal+ France TeleSat|Trace Urban HD|TV|Music
+1801@000000:24C8|Canal+ France|Canal+ Sport 360|TV|Sport
+1801@000000:24C9|Canal+ France TNTSAT|France 3 Auvergne|TV|Regional
+0100@000000:24CC|Austriasat Canal+ France TeleSat|Melody HD|TV|Music
+0100@000000:24CD|Austriasat Canal+ France TeleSat|Nickelodeon HD France|TV|Children
+1801@000000:24CE|Austriasat Canal+ France|Dorcel XXX HD|TV|Adult
+1801@000000:24CF|Austriasat Canal+ France|Dorcel TV HD|TV|Adult
+1801@000000:24D0|Canal+ France|Canal+ Live 5|TV|Sport
+1801@000000:24D1|Canal+ France|Canal+ Live 4|TV|Sport
+0100@000000:24D2|Austriasat Canal+ France TeleSat|Piwi+ HD|TV|Children
+0100@000000:24D3|Austriasat Canal+ France TeleSat|RFM TV HD|TV|Music
+1801@000000:24D4|Canal+ France|TV BREIZH|TV|
+0100@000000:24D5|Austriasat Canal+ France TeleSat|Planète+ A&E HD|TV|Documentaries
+1801@000000:2456|Canal+ France|OCS|TV|Movies
+1801@000000:2457|Canal+ France TNTSAT|M6 HD|TV|General
+1801@000000:2458|Canal+ France TNTSAT|W9 HD|TV|General
+1801@000000:2459|Canal+ France|USHUAIA TV|TV|
+0100@000000:245A|Austriasat Canal+ France TNTSAT TV Vlaanderen|France 2 HD|TV|General
+0100@000000:245D|Austriasat Canal+ France TeleSat TNTSAT|France 3 Sat HD|TV|General
+0100@000000:2460|Austriasat Canal+ France TeleSat TNTSAT|TF 1|TV|General
+1801@000000:2461|Canal+ France|Eurosport 1 HD|TV|Sport
+1801@000000:2462|Bis Canal+ France|BeIN Sport 1 HD|TV|Sport
+1801@000000:2464|Canal+ France TNTSAT|France 3 Languedoc Roussillon|TV|Regional
+0100@000000:2468|Austriasat Canal+ France TeleSat TNTSAT|France 4 HD|TV|Entertainment
+1801@000000:2469|Canal+ France TNTSAT|France 3 Rhone-Alpes|TV|Regional
+1801@000000:246A|Canal+ France TNTSAT|France 3 Nord Pas-de-Calais|TV|Regional
+1801@000000:232A|Canal+ France TNTSAT|T18|TV|General
+0100@000000:232D|Austriasat Canal+ France TeleSat|Teletoon+ HD|TV|Children
+0100@000000:232E|Austriasat Canal+ France TeleSat|Planète+ HD|TV|Documentaries
+1801@000000:232F|Canal+ France TNTSAT|France 3 Caen|TV|Regional
+0100@000000:2330|Austriasat Canal+ France TeleSat TNTSAT|France 5 HD|TV|Documentaries
+1801@000000:2331|Canal+ France TNTSAT|LCI HD|TV|News
+0100@000000:2332|Austriasat Canal+ France TeleSat|Infosport+ HD|TV|Sport
+1801@000000:2333|Canal+ France TNTSAT|France 3 Nantes|TV|Regional
+0100@000000:2335|Austriasat Canal+ France TeleSat TNTSAT|CStar HD|TV|Entertainment
+1801@000000:2338|Bis Canal+ France|XXL|TV|Adult
+1801@000000:2339|Canal+ France|Canal+ Foot UHD HDR|TV|Sport
+1801@000000:427C|Canal+ France|Automoto La Chaine|TV|Sport
+1801@000000:427D|Canal+ France|AB 1|TV|Series
+0100@000000:427E|Canal+ France|Animaux HD|TV|Documentaries
+1801@000000:4282|Canal+ France|Toute l´Histoire|TV|Documentaries
+0100@000000:4285|Austriasat Canal+ France|Seasons HD|TV|Documentaries
+0100@000000:4286|Canal+ France|Action HD|TV|Movies
+1801@000000:428B|Canal+ France|RTL 9|TV|General
+1801@000000:428C|Canal+ France|Chasse et Pêche|TV|Documentaries
+1801@000000:428D|Bis|Histoire|TV|
+0100@000000:428E|Austriasat TeleSat|Canal J HD|TV|Children
+1801@000000:428F|Canal+ France TNTSAT|6ter|TV|General
+0100@000000:4290|Austriasat Canal+ France TeleSat TNTSAT|Franceinfo: HD|TV|News
+1801@000000:4291|Canal+ France TNTSAT|TF1 Séries Films|TV|Series
+09C4@000000:1C|Sky Deutschland|Cartoonito Germany|TV|Children
+09C4@000000:69|Sky Deutschland|Sky Sport Bundesliga|TV|Sport
+09C4@000000:6B|Sky Deutschland|Sky Cinema Classics HD Germany|TV|Movies
+09C4@000000:6C|Sky Deutschland|Sky Sport News HD Germany|TV|Sport
+09C4@000000:7E|Sky Deutschland|Sky Sci-Fi Germany|TV|Series
+09C4@000000:105|Sky Deutschland|Sky Sport Austria 7 HD|TV|Sport
+09C4@000000:120|Sky Deutschland|Sky Sport 3 Germany|TV|Sport
+09C4@000000:147|Sky Deutschland|Sky Sport Bundesliga 7|TV|Sport
+09C4@000000:148|SKY|Sky Sport 7 HD Germany|TV|Sport
+09C4@000000:321|Sky Deutschland|STEST2|TV|
+09C4@000000:7EB|Sky Deutschland|AXN Black Germany|TV|Series
+1801@000000:2582|Canal+ France|BeIN Sport Max 4|TV|Sport
+1801@000000:2583|Canal+ France|BeIN Sport Max 5|TV|Sport
+1801@000000:2584|Canal+ France|BeIN Sport Max 6|TV|Sport
+1801@000000:2585|Canal+ France|BeIN Sport Max 7|TV|Sport
+1801@000000:2586|Canal+ France|BeIN Sport Max 8|TV|Sport
+1801@000000:2587|Canal+ France|BeIN Sport Max 9|TV|Sport
+1801@000000:2588|Canal+ France|BeIN Sport Max 10|TV|Sport
+1801@000000:2589|Canal+ France|Cine+ Festival|TV|Movies
+1801@000000:258A|Canal+ France|Cine+ Family|TV|Movies
+1801@000000:258B|Canal+ France|Ciné+ Emotion HD|TV|Movies
+1801@000000:258C|Canal+ France|Série Club HD|TV|Series
+1801@000000:258D|Canal+ France|Vixen HD|TV|Adult
+1801@000000:258E|Canal+ France|Union TV|TV|Adult
+1801@000000:2590|Canal+ France|Novelas TV|TV|Series
+1801@000000:2591|Canal+ France|La chaîne Météo HD|TV|Weather
+1801@000000:2593|Canal+ France|Canal+ Live 3|TV|Sport
+0600@000000:7D2|KingOfSat|Eurosport 1 HD Austria|TV|
+0600@000000:7E6|Sky Deutschland|DMAX HD Austria|TV|Entertainment
+0600@000000:7F0|Sky Deutschland|TELE 5 HD Austria|TV|General
+0600@000000:7FA|KingOfSat|TLC HD Austria|TV|
+1801@000000:23A4|Canal+ France|ASSOCIATION MATERIEL|TV|
+09C4@000000:71|Sky Deutschland|History Channel HD Germany|TV|History
+09C4@000000:7A|Sky Deutschland|DAZN 2 HD Germany|TV|Sport
+09C4@000000:84|Sky Deutschland|DAZN 1 HD Germany|TV|Sport
+09C4@000000:88|Sky Deutschland|Warner TV Comedy HD|TV|Comedy
+09C4@000000:8E|Sky Deutschland|Sky Showcase Germany|TV|Presentations
+09C4@000000:A8|Sky Deutschland|Motorvision|TV|Sport
+09C4@000000:101|Sky Deutschland|Sky Sport Bundesliga 9 HD Occasional|TV|Sport
+09C4@000000:102|Sky Deutschland|Sky Sport 9 HD|TV|Sport
+09C4@000000:103|SKY|Sky Sport Austria 4|TV|Sport
+09C4@000000:10F|Sky Deutschland|Sky Sport Bundesliga 10|TV|Sport
+09C4@000000:146|SKY|Sky Sport Austria 5 HD|TV|Sport
+09C4@000000:191|Sky Deutschland|Jukebox|TV|Music
+09C4@000000:194|Sky Deutschland|Cartoon Network Germany|TV|Children
+09C4@000000:7EC|Sky Deutschland|AXN White Germany|TV|Series
+1801@000000:2711|Canal+ France|Canal+ Live 1|TV|Sport
+1801@000000:2714|Canal+ France|Polar+|TV|Series
+1801@000000:2715|Canal+ France|Nicktoons France|TV|Children
+1801@000000:2716|Canal+ France|Nick Jr HD France|TV|Children
+1801@000000:2717|Canal+ France|Equidia|TV|Racing
+1801@000000:2718|Canal+ France|Mezzo Live HD|TV|Music
+1801@000000:2719|Canal+ France|Man X|TV|Adult
+1801@000000:271A|Canal+ France|Téva HD|TV|General
+1801@000000:271B|Canal+ France|Pink X HD|TV|Adult
+1801@000000:271C|Canal+ France|Canal Evenement Metropole|TV|Various
+1801@000000:271D|Canal+ France|Canal+ Live 2|TV|Sport
+1801@000000:271E|Canal+ France|Europe 2 Pop TV|TV|Music
+0100@000000:1006|Bis TeleSat|AB 3|TV|General
+09C4@000000:1009|Sky Deutschland|Inplus|TV|Entertainment
+0B00@000000:100A|M7|Inplus|TV|Entertainment
+0D00@000000:100B|Austriasat Canal Digitaal Orange TeleSat TV Vlaa|Hustler TV|TV|Adult
+0B00@000000:100D|M7 Group|Hustler TV CZ|TV|
+0600@000000:1013|Austriasat Canal Digitaal|Bergblick|TV|Documentaries
+0600@000000:101C|M7 Group|Canal+ Action Nederland|TV|Movies
+1801@000000:101F|M7 Group|Canal+ Action Nederland|TV|Movies
+0600@000000:1020|Austriasat|Canal+ Golf Austria|TV|Sport
+0100@000000:1012|Austriasat Canal Digitaal TeleSat TV Vlaanderen|Nostalgie|Radio|
+0100@000000:101A|Canal Digitaal TV Vlaanderen|VRT Radio1|Radio|
+0100@000000:101B|Canal Digitaal TV Vlaanderen|VRT Radio2|Radio|
+0100@000000:103F|TeleSat TV Vlaanderen|NRJ|Radio|
+1801@000000:2F6C|Canal+ France TNTSAT|RMC Life|TV|General
+1801@000000:2F6D|Canal+ France TNTSAT|RMC LIFE|TV|
+0600@000000:1519|HD + Sky Deutschland|Tele 5 HD|TV|Entertainment
+0600@000000:152D|Austriasat|TELE 5 HD Austria|TV|General
+0600@000000:152E|Austriasat|DMAX HD Austria|TV|Entertainment
+0600@000000,09C4@000000:6F|Al Dawri Al Kass|Alkass Five HD|TV|General
+0600@000000:70|Al Dawri Al Kass|Alkass Six HD|TV|General
+0600@000000:71|AL KASS|Alkass Seven HD|TV|General
+0600@000000:72|Al Dawri Al Kass|Alkass Eight HD|TV|Various
+0600@000000:20D1|beIN SPORTS|beIN Sports 1 HD|TV|Sport
+0600@000000:20D2|beIN SPORTS|beIN Sports 2 HD|TV|Sport
+0600@000000:20D3|beIN SPORTS|beIN Sports 3 HD|TV|Sport
+0600@000000:20D4|beIN SPORTS|beIN Sports 5 HD|TV|Sport
+0600@000000:20D9|beIN|beIN Sports Xtra 1 HD|TV|Sport
+0600@000000:219B|beIN SPORTS|beIN Sports 8 HD|TV|Sport
+0600@000000:219D|beIN SPORTS|beIN Sports Max 1 HD|TV|Sport
+0600@000000:21A6|beIN|beIN Sports Xtra 4|TV|Sport
+0600@000000:21A7|beIN|beIN Sports Max 6 HD Arabic|TV|Sport
+0600@000000:21A8|beIN|beIN Movies 1|TV|Movies
+0600@000000:4FB8|beIN|beIN Sports Xtra 2 HD|TV|Sport
+0600@000000:4FC2|beIN|beIN Sports Max 3 HD|TV|Sport
+0600@000000:4FC3|beIN|beIN Sports Max 4 HD|TV|Sport
+0600@000000:4FCB|beIN Sports|beIN Sports Xtra 5|TV|Sport
+0600@000000:4FCC|beIN Sports|beIN Sports Xtra 6|TV|Sport
+0600@000000:2261|beIN SPORTS|beIN Sports 7 HD|TV|Sport
+0600@000000:2262|beIN SPORTS|beIN Sports 9 HD|TV|Sport
+0600@000000:2263|beIN SPORTS|beIN SPORTS EN 1|TV|
+0600@000000:2264|beIN SPORTS|beIN Sport 2 HD|TV|Sport
+0600@000000:2265|beIN SPORTS|beIN SPORTS Max 2 HD|TV|Sport
+0600@000000:2268|beIN Sports|beIN Sports Xtra 7|TV|Sport
+0600@000000:9E35|beIN Sports|National Geographic HD Middle-East|TV|Documentaries
+0600@000000:9E37|beIN Sports|AD NatGeo Wild HD|TV|Documentaries
+0600@000000:9E40|beIN|The Food Network EMEA HD|TV|Cooking
+0600@000000:9E41|beIN|BBC Earth HD|TV|Documentaries
+0600@000000:9E42|beIN|beIN Movies 2HD|TV|Movies
+0600@000000:9E43|beIN|beIN Movies 4 HD|TV|Movies
+0600@000000:9CB4|beIN|beIN Drama|TV|Series
+0600@000000:9CB5|beIN|beIN 4K|TV|Entertainment
+0600@000000:9D0B|beIN Sports|Star Movies HD|TV|Movies
+0600@000000:9D0C|beIN Sports|Star World HD|TV|Entertainment
+0600@000000:9D0D|beIN Sports|Baby TV HD Europe|TV|Children
+0600@000000:9D0E|beIN Sports|Star Action HD Arabic|TV|Movies
+0600@000000:9D0F|beIN SPORTS|beIN Movies 3 HD|TV|Movies
+0600@000000:9D11|beIN Sports|Disney Channel HD Middle-East & Africa|TV|Children
+0600@000000:9D12|beIN Sports|Disney Junior Middle-East & Africa|TV|Children
+0600@000000:9D6D|beIN Sports|Jeem|TV|Children
+0600@000000:9D6E|beIN Sports|Baraem|TV|Children
+0600@000000:9D70|beIN Sports|be Junior|TV|Children
+0600@000000:9D72|beIN Sports|Bloomberg Africa|TV|Business
+0600@000000:9D73|beIN Sports|HGTV|TV|Lifestyle
+0600@000000:9D74|beIN SPORTS|beIN Series 1|TV|Series
+0600@000000:21FD|beIN SPORTS|BeIN Sport 1 HD|TV|Sport
+0600@000000:21FE|beIN SPORTS|beIN Sports 2 HD|TV|Sport
+0600@000000:2201|beIN SPORTS|beIN Series 2 Turkey|TV|Series
+0600@000000:2204|beIN|beIN Sports 6 HD|TV|Sport
+0600@000000:2205|beIN|beIN Sports 4 HD|TV|Sport
+0600@000000:9DD1|beIN Sports|Cartoonito HD EMEA|TV|Children
+0600@000000:9DD2|beIN Sports|Cartoon Network Arabic HD|TV|Children
+0600@000000:9DD3|beIN Sports|CNN International HD|TV|News
+0600@000000:9DD4|beIN|Discovery Channel HD Middle-East & Africa|TV|Documentaries
+0600@000000:9DDA|beIN|Cartoon Network Arabic HD|TV|Children
+0600@000000:9DDB|beIN|beIN Gourmet HD|TV|Cooking
+0600@000000:9DDC|40412|Channel 999|TV|Various
+0600@000000:1|Hellas SAT|FilmBox Basic|TV|Movies
+0600@000000:2|Hellas Sat|Filmbox Action HD|TV|Movies
+0600@000000:3|Hellas SAT|Fastnfunbox HD|TV|Entertainment
+0600@000000:4|Hellas SAT|Dizi TV HD|TV|Presentations
+0600@000000:5|Hellas SAT|Gametoon HD|TV|Game
+0600@000000:6|Hellas SAT|FightBOX HD|TV|Movies
+0600@000000:7|Hellas SAT|FunBox HD|TV|Various
+0600@000000:8|Hellas SAT|DocuBOX HD|TV|Documentaries
+0600@000000:9|Hellas SAT|Filmbox Family|TV|Movies
+0600@000000:A|Hellas SAT|FashionBOX HD|TV|Lifestyle
+0600@000000:B|Hellas SAT|FilmBox Arthouse HD|TV|Movies
+0600@000000:C|Hellas SAT|360 TuneBox HD|TV|Music
+0600@000000:12D|MBC|MBC 1 HD|TV|General
+0600@000000:12E|MBC|MBC 2 HD|TV|Movies
+0600@000000:12F|MBC|MBC 4 HD|TV|Entertainment
+0600@000000:130|MBC|MBC Action HD|TV|Entertainment
+0600@000000:131|MBC|MBC Max HD|TV|Movies
+0600@000000:132|MBC|Al Arabiya HD|TV|News
+0600@000000:133|MBC|MBC Drama HD|TV|Series
+0600@000000:134|MBC|MBC Variety HD|TV|Entertainment
+0600@000000:135|MBC|MBC 3 HD|TV|Children
+0600@000000:136|MBC|MBC+ Drama HD|TV|Series
+0600@000000:137|MBC|MBC Bollywood HD|TV|Movies
+0600@000000:138|MBC|Gobx Marhaba|TV|Various
+0600@000000:5|ALMAJD|Almajd News|TV|News
+0600@000000:6|ALMAJD|Al Wathaeqya|TV|Various
+0600@000000:7|ALMAJD|Taabeaa Channel|TV|Various
+0600@000000:9|ALMAJD|Almajd Kids|TV|Children
+0600@000000:A|ALMAJD|Basmah|TV|Various
+0600@000000:B|ALMAJD|Roda Channel|TV|Various
+0600@000000:C|ALMAJD|Fakir wa Ela´ab|TV|Various
+0600@000000:D|ALMAJD|Masat Al Majd|TV|Various
+0600@000000:F|ALMAJD|Al Ajaweed|TV|Various
+0600@000000:18|ALMAJD|Almajd Kids|TV|Children
+0600@000000:19|ALMAJD|Almajd 10 SD|TV|
+0600@000000:1A|ALMAJD|Roda Channel|TV|Various
+0600@000000:1B|ALMAJD|Fakir wa Ela´ab|TV|Various
+0600@000000:1D|ALMAJD|Masat Al Majd|TV|Various
+0600@000000:1F|ALMAJD|Almajd Feeds|TV|
+2600@000000:1|TDA DZ|ENTV HD|TV|General
+2600@000000:6D|MBC|TEST|TV|
+2600@000000:19|DU|TEST_CB|TV|
+1801@000000:12C|ECLUTCH|Ginx|TV|Children
+1801@000000:12E|ECLUTCH|Gametoon|TV|Children
+1801@000000:12F|ECLUTCH|eClutch Arabic|TV|Game
+1801@000000:130|ECLUTCH|eClutch Access|TV|Entertainment
+1801@000000:131|ECLUTCH|ESport 24|TV|Entertainment
+1801@000000:132|ECLUTCH|eClutch Live|TV|Game
+1801@000000:133|ECLUTCH|Padel TV|TV|Various
+1801@000000:134|ECLUTCH|eClutch Live 2|TV|Various
+2600@000000:1|TDA|ENTV HD|TV|General
+1801@000000:161D|Orbit Showtime Network|History Channel HD Middle-East|TV|History
+1801@000000:161E|Orbit Showtime Network|OSN Showcase Classics|TV|Movies
+1801@000000:161F|Orbit Showtime Network|Nickelodeon Asia HD|TV|Children
+1801@000000:1620|Orbit Showtime Network|OSN TV iqiyi|TV|Various
+1801@000000:1621|Orbit Showtime Network|Discovery Channel HD Middle-East & Africa|TV|Documentaries
+1801@000000:1622|OSN|OSN Movies Family|TV|Movies
+1801@000000:1623|Orbit Showtime Network|OSN Movies Horror|TV|Movies
+1801@000000:1624|Orbit Showtime Network|Investigation Discovery HD|TV|Documentaries
+1801@000000:1625|Orbit Showtime Network|OSN Movies Comedy HD|TV|Movies
+1801@000000:1626|Orbit Showtime Network|Nick Jr HD Arabia|TV|Children
+1801@000000:1627|Orbit Showtime Network|Nick Toons HD Middle-East|TV|Children
+1801@000000:1628|Orbit Showtime Network|OSN TV Pop up|TV|Entertainment
+0D04@000000:1629|Bahrain Emirates|Al Yawm|TV|General
+0D04@000000:162A|Bahrain Emirates|Al Safwa|TV|Cultural
+0D04@000000:162B|Bahrain Emirates|Cinema 1|TV|Movies
+0D04@000000:162C|Bahrain Emirates|Cinema 2|TV|Movies
+0600@000000:9C7|Qatar|Al Kass HD Three|TV|General
+0D04@000000:1195|OSN|OSN TV Mezze|TV|Music
+0D04@000000:1196|OSN|OSN TV Now|TV|Entertainment
+0D04@000000:1197|OSN|OSN TV Movies Hollywood|TV|Movies
+0D04@000000:1198|OSN|CNN International HD|TV|News
+0D04@000000:1199|Orbit Showtime Network|Animal Planet HD|TV|Documentaries
+0D04@000000:119A|OSN|OSN TV Kids|TV|Children
+0D04@000000:119B|Orbit Showtime Network|Cartoon Network Arabic HD|TV|Children
+0D04@000000:119C|OSN|OSN Comedy HD|TV|Movies
+0D04@000000:119D|OSN|OSN Ya Hala! HD|TV|Entertainment
+0D04@000000:119E|Orbit Showtime Network|Fatafeat|TV|Cooking
+1801@000000:161D|Orbit Showtime Network|History Channel HD Middle-East|TV|History
+1801@000000:161E|Harmonic|OSN Showcase Classics|TV|Movies
+1801@000000:161F|Harmonic|Nickelodeon Arabia|TV|Children
+1801@000000:1620|Harmonic|OSN TV iqiyi|TV|Various
+1801@000000:1621|Harmonic|Discovery Channel HD Middle-East & Africa|TV|Documentaries
+1801@000000:1622|Harmonic|OSN Movies Family|TV|Movies
+1801@000000:1623|Harmonic|OSN Movies Horror|TV|Movies
+1801@000000:1624|Harmonic|ID Xtra HD MEA|TV|Documentaries
+1801@000000:1625|Harmonic|OSN Movies Comedy HD|TV|Movies
+1801@000000:1626|Harmonic|Nick Jr HD Arabia|TV|Children
+1801@000000:1627|Harmonic|Nick Toons HD Middle-East|TV|Children
+1801@000000:1628|Harmonic|OSN TV Pop up|TV|Entertainment
+0D04@000000:1629|Harmonic|Al Yawm|TV|General
+0D04@000000:162A|Harmonic|Al Safwa|TV|Cultural
+0D04@000000:162B|Harmonic|Cinema 1|TV|Movies
+0D04@000000:162C|Harmonic|Cinema 2|TV|Movies
+0600@000000:8FD|beIN|beIN Sports 11 HD EN|TV|Sport
+0600@000000:8FE|beIN|beIN Sports 12 HD EN|TV|Sport
+0600@000000:8FF|beIN|BeIN Sport 1 HD|TV|Sport
+0600@000000:900|beIN|beIN Sport 2 HD|TV|Sport
+0600@000000:90F|beIN|beIN Sports 9 HD|TV|Sport
+0600@000000:911|beIN|beIN Sports Xtra 2 HD|TV|Sport
+0600@000000:912|beIN|beIN Sports 5 HD|TV|Sport
+0600@000000:913|beIN|beIN Sports 7 HD|TV|Sport
+0600@000000:915|beIN|beIN Sports Xtra 4|TV|Sport
+0500@000000:16C|GLOBECAST|Equidia Pro 1 Afrique|TV|Racing
+0600@000000:C9|Vivacom|ESPN Africa|TV|Sport
+0600@000000:CA|Vivacom|ESPN 2 Africa|TV|Sport
+0600@000000:CB|South Africa|National Geographic Channel Africa|TV|Documentaries
+0600@000000:CC|Italy|NatGeo Wild Africa|TV|Documentaries
+0600@000000:D7|iChannel LTD|Nina TV|TV|Series
+0600@000000:D8|iChannel LTD|Nina TV|TV|Series
+0600@000000:7D1|beIN SPORTS|beIN Sports 1 HD|TV|Sport
+0600@000000:7D2|beIN SPORTS|beIN Sports 2 HD|TV|Sport
+0600@000000:7D3|beIN SPORTS|beIN Sports 3 HD|TV|Sport
+0600@000000:7D5|beIN SPORTS|beIN Sports Max 3 HD|TV|Sport
+0600@000000:7D8|beIN|beIN Sports Xtra 5|TV|Sport
+0600@000000:7DA|beIN|beIN SPORTS Max 2 HD|TV|Sport
+0600@000000:835|beIN SPORTS|beIN Sports 6 HD|TV|Sport
+0600@000000:836|beIN SPORTS|beIN Sports 4 HD|TV|Sport
+0600@000000:837|beIN SPORTS|beIN Sports 8 HD|TV|Sport
+0600@000000:838|beIN SPORTS|beIN Sports Xtra 3|TV|Sport
+0600@000000:83B|beIN|beIN Sports Max 5 HD Arabic|TV|Sport
+0600@000000:899|beIN|beIN 4K|TV|Entertainment
+0600@000000:89D|beIN|beIN Sports Xtra 6|TV|Sport
+0600@000000:8A4|beIN|beIN Sports Xtra 1 HD|TV|Sport
+0600@000000:8B1|beIN|beIN Sports Max 1 HD|TV|Sport
+2600@000000:1|ELETTRONICA INDUSTRIALE TOWERS|EUTELSAT 8W A M6-05 CH1 RM|TV|

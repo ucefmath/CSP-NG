@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.bowman.cspng</groupId>
+    <artifactId>csp-new-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>csp-sessions</artifactId>
+  <name>CSP-NG — Sessions entrantes</name>
+  <description>
+    SessionRegistry et gestion des sessions entrantes Newcamd/Radegast/GHttp/CspV2.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-domain</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-codec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-cache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-connectors</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-users</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.bowman.cspng</groupId>
+      <artifactId>csp-config</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-vertx</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

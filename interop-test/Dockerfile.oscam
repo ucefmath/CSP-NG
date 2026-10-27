@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1
+# ---------------------------------------------------------------------------------------------
+# Dockerfile.oscam — nœud OSCam pour le test d'interop L3b (plan §5.3)
+#
+# Contexte de build : interop-test/context-oscam (copie de staging des sources
+# $OSCAM_SRC, créée par run-interop-test.sh) — le dépôt source OSCam reste en LECTURE SEULE.
+#
+# La configuration de build (config.h) est RÉGÉNÉRÉE dans le conteneur via
+# `./config.sh --enable CS_CACHEEX CS_CACHEEX_AIO MODULE_CONSTCW CW_CYCLE_CHECK` :
+# c'est une étape de configuration de build (artefact généré), aucune source C n'est modifiée.
+# Le Makefile compile module-csp.c sous CONFIG_CS_CACHEEX (vérifié dans le Makefile).
+# ---------------------------------------------------------------------------------------------
+FROM debian:bookworm-slim AS build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /oscam-src
+COPY . /oscam-src/
+
+RUN ./config.sh --enable CS_CACHEEX CS_CACHEEX_AIO MODULE_CONSTCW CW_CYCLE_CHECK \
+    && make -j"$(nproc)" \
+    && find Distribution -maxdepth 1 -type f -name 'oscam-*' ! -name '*debug*' -exec cp {} /oscam.bin \; \
+    && test -s /oscam.bin
+
+# ---- étage runtime ----
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    procps ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /oscam.bin /usr/bin/oscam
+
+WORKDIR /oscam
+RUN mkdir -p /oscam/config /oscam/log
+
+# Configuration runtime du test (créée par l'agent, hors code source OSCam)
+COPY config/oscam.conf /oscam/config/oscam.conf
+COPY config/oscam.server /oscam/config/oscam.server
+COPY config/constant.cw /oscam/constant.cw
+
+EXPOSE 12346/udp
+
+CMD ["/usr/bin/oscam", "-c", "/oscam/config", "-t", "/oscam"]

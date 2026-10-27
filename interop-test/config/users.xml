@@ -1,0 +1,5 @@
+<xml-user-manager ver="1.0">
+
+  <user name="test" password="test" admin="true"/>
+
+</xml-user-manager>

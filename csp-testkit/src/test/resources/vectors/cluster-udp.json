@@ -1,0 +1,279 @@
+{
+  "generator": "LegacyVectorGenerator compiled against CardServProxy legacy (Java 17)",
+  "method": "ClusteredCache.writeCacheReq / writeCacheRpl for REQUEST/REPLY; analytical re-implementation of sendPing/sendPingReply/sendResendReq for PINGREQ/PINGRPL/RESENDREQ",
+  "count": 34,
+  "vectors": [
+    {
+      "id": "req-onid0",
+      "type": "REQUEST",
+      "length": 12,
+      "hex": "0180123400000B008FE1EA45",
+      "description": "REQUEST 12o, onid=0 (pas de FAKE_ONID côté Java legacy)",
+      "fields": {"commandTag": 128, "serviceId": 4660, "networkId": 0, "caId": 2816, "dataHash": -1881019835, "arbiterNumber": null, "extra": false}
+    },
+    {
+      "id": "req-caid0",
+      "type": "REQUEST",
+      "length": 12,
+      "hex": "018012340001000009BECD7F",
+      "description": "REQUEST 12o, caid=0",
+      "fields": {"commandTag": 128, "serviceId": 4660, "networkId": 1, "caId": 0, "dataHash": 163499391, "arbiterNumber": null, "extra": false}
+    },
+    {
+      "id": "req-basic-80",
+      "type": "REQUEST",
+      "length": 12,
+      "hex": "0180123400010B003D254866",
+      "description": "REQUEST 12o, commandTag=0x80",
+      "fields": {"commandTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 1025853542, "arbiterNumber": null, "extra": false}
+    },
+    {
+      "id": "req-basic-81",
+      "type": "REQUEST",
+      "length": 12,
+      "hex": "0181567800020B0139C60D46",
+      "description": "REQUEST 12o, commandTag=0x81",
+      "fields": {"commandTag": 129, "serviceId": 22136, "networkId": 2, "caId": 2817, "dataHash": 969280838, "arbiterNumber": null, "extra": false}
+    },
+    {
+      "id": "req-arbiter",
+      "type": "REQUEST",
+      "length": 20,
+      "hex": "0180123400010B0075025C07400921FB54442D18",
+      "description": "REQUEST 20o, arbitre présent (ignoré par OSCam)",
+      "fields": {"commandTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 1963088903, "arbiterNumber": 3.141592653589793, "extra": true}
+    },
+    {
+      "id": "req-arbiter-neg",
+      "type": "REQUEST",
+      "length": 20,
+      "hex": "0181567800020B018FE1EA45BFF0000000000000",
+      "description": "REQUEST 20o, hash négatif, arbitre présent",
+      "fields": {"commandTag": 129, "serviceId": 22136, "networkId": 2, "caId": 2817, "dataHash": -1881019835, "arbiterNumber": -1.0, "extra": true}
+    },
+    {
+      "id": "req-arbiter-zero",
+      "type": "REQUEST",
+      "length": 20,
+      "hex": "0180000000000000000000000000000000000000",
+      "description": "REQUEST 20o, sid/onid/caid tous à 0, ECM vide (hash 0), arbitre 0.0",
+      "fields": {"commandTag": 128, "serviceId": 0, "networkId": 0, "caId": 0, "dataHash": 0, "arbiterNumber": 0.0, "extra": true}
+    },
+    {
+      "id": "reply-empty-80",
+      "type": "REPLY",
+      "length": 13,
+      "hex": "0280123400010B00761A5F8D80",
+      "description": "REPLY 13o (CW vide), ecmTag=0x80, rplTag=0x80",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 1981439885, "cw": null, "connectorName": null, "extra": true}
+    },
+    {
+      "id": "reply-empty-81",
+      "type": "REPLY",
+      "length": 13,
+      "hex": "0281123800030B025C87952881",
+      "description": "REPLY 13o (CW vide), ecmTag=0x81, rplTag=0x81",
+      "fields": {"ecmCommandTag": 129, "rplTag": 129, "serviceId": 4664, "networkId": 3, "caId": 2818, "dataHash": 1552389416, "cw": null, "connectorName": null, "extra": true}
+    },
+    {
+      "id": "reply-empty-tagdiff",
+      "type": "REPLY",
+      "length": 13,
+      "hex": "0280123400010B0096997DF281",
+      "description": "REPLY 13o (CW vide), ecmTag=0x80, rplTag=0x81",
+      "fields": {"ecmCommandTag": 128, "rplTag": 129, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": -1768325646, "cw": null, "connectorName": null, "extra": true}
+    },
+    {
+      "id": "reply-cw-empty-name",
+      "type": "REPLY",
+      "length": 29,
+      "hex": "0280123400010B000FD5345480111C27323D48535E69747F8A95A0ABB6",
+      "description": "REPLY 29o, CW valide, connectorName vide",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 265630804, "cw": "111C27323D48535E69747F8A95A0ABB6", "connectorName": "", "extra": false}
+    },
+    {
+      "id": "reply-cw-no-name",
+      "type": "REPLY",
+      "length": 29,
+      "hex": "0280123400010B006E23A2C980222D38434E59646F7A85909BA6B1BCC7",
+      "description": "REPLY 29o, CW valide, pas de connectorName (extra=false)",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 1847829193, "cw": "222D38434E59646F7A85909BA6B1BCC7", "connectorName": null, "extra": false}
+    },
+    {
+      "id": "reply-cw-name-32",
+      "type": "REPLY",
+      "length": 63,
+      "hex": "0280123400010B0038CFFB9B80333E49545F6A75808B96A1ACB7C2CDD800206161616161616161616161616161616161616161616161616161616161616161",
+      "description": "REPLY 63o (29+2+32), connectorName 32 octets ASCII",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 953154459, "cw": "333E49545F6A75808B96A1ACB7C2CDD8", "connectorName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "extra": true}
+    },
+    {
+      "id": "reply-cw-name-utf8",
+      "type": "REPLY",
+      "length": 48,
+      "hex": "0281567800020B012AC397EA81444F5A65707B86919CA7B2BDC8D3DEE9001168C3A96C6C6F5FE282AC5FE6B58BE8AF95",
+      "description": "REPLY 48o (29+2+17), connectorName non-ASCII (Modified UTF-8 Java)",
+      "fields": {"ecmCommandTag": 129, "rplTag": 129, "serviceId": 22136, "networkId": 2, "caId": 2817, "dataHash": 717461482, "cw": "444F5A65707B86919CA7B2BDC8D3DEE9", "connectorName": "héllo_€_测试", "extra": true}
+    },
+    {
+      "id": "reply-cw-neg-hash",
+      "type": "REPLY",
+      "length": 39,
+      "hex": "0280123400010B00CAD5BD388055606B76818C97A2ADB8C3CED9E4EFFA00086E65672D68617368",
+      "description": "REPLY 39o (29+2+8), dataHash négatif, CW valide",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": -891962056, "cw": "55606B76818C97A2ADB8C3CED9E4EFFA", "connectorName": "neg-hash", "extra": true}
+    },
+    {
+      "id": "reply-cw-zeros",
+      "type": "REPLY",
+      "length": 36,
+      "hex": "0280000000000000000000008066717C87929DA8B3BEC9D4DFEAF5000B00057A65726F73",
+      "description": "REPLY 36o (29+2+5), sid/onid/caid tous à 0",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 0, "networkId": 0, "caId": 0, "dataHash": 0, "cw": "66717C87929DA8B3BEC9D4DFEAF5000B", "connectorName": "zeros", "extra": true}
+    },
+    {
+      "id": "reply-cw-halfzero",
+      "type": "REPLY",
+      "length": 39,
+      "hex": "0280123400010B00C6A62462800000000000000000A8A9AAABACADAEAF000868616C667A65726F",
+      "description": "REPLY 39o (29+2+8), demi-CW tout zéros (legacy tolère 8 zéros exacts)",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": -962190238, "cw": "0000000000000000A8A9AAABACADAEAF", "connectorName": "halfzero", "extra": true}
+    },
+    {
+      "id": "req-tag-7f",
+      "type": "REQUEST",
+      "length": 12,
+      "hex": "017F123400010B005C5FA57E",
+      "description": "REQUEST 12o, commandTag=0x7F (hors plage 0x80/0x81, écrit tel quel par le legacy Java)",
+      "fields": {"commandTag": 127, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 1549772158, "arbiterNumber": null, "extra": false}
+    },
+    {
+      "id": "req-extra-no-arbiter",
+      "type": "REQUEST",
+      "length": 12,
+      "hex": "0180BEEF00DE0C00B79F1E0F",
+      "description": "REQUEST 12o, extra=true mais arbitre null (taille 12, pas 20)",
+      "fields": {"commandTag": 128, "serviceId": 48879, "networkId": 222, "caId": 3072, "dataHash": -1214308849, "arbiterNumber": null, "extra": true}
+    },
+    {
+      "id": "reply-empty-extra",
+      "type": "REPLY",
+      "length": 13,
+      "hex": "0281123400010B00A6F4EAC581",
+      "description": "REPLY 13o (CW vide), extra=true",
+      "fields": {"ecmCommandTag": 129, "rplTag": 129, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": -1493898555, "cw": null, "connectorName": null, "extra": true}
+    },
+    {
+      "id": "reply-cw-midname",
+      "type": "REPLY",
+      "length": 44,
+      "hex": "0280123400010B001E8903308077828D98A3AEB9C4CFDAE5F0FB06111C000D636F6E6E6563746F722D313762",
+      "description": "REPLY 44o (29+2+13), connectorName 13 octets ASCII",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 512295728, "cw": "77828D98A3AEB9C4CFDAE5F0FB06111C", "connectorName": "connector-17b", "extra": true}
+    },
+    {
+      "id": "reply-cw-checksum",
+      "type": "REPLY",
+      "length": 39,
+      "hex": "0280123400010B009F41738C80112233661122336611223366112233660008636865636B73756D",
+      "description": "REPLY 39o, CW dont les 4e et 8e octets sont la somme des 3 précédents (checksum legacy)",
+      "fields": {"ecmCommandTag": 128, "rplTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": -1623100532, "cw": "11223366112233661122336611223366", "connectorName": "checksum", "extra": true}
+    },
+    {
+      "id": "pingreq-basic",
+      "type": "PINGREQ",
+      "length": 13,
+      "hex": "03000000001234567800003039",
+      "description": "PINGREQ 13o, timestamp + localPort",
+      "fields": {"timestamp": 305419896, "localPort": 12345}
+    },
+    {
+      "id": "pingreq-port0",
+      "type": "PINGREQ",
+      "length": 13,
+      "hex": "03000000000000000000000000",
+      "description": "PINGREQ 13o, timestamp et port nuls",
+      "fields": {"timestamp": 0, "localPort": 0}
+    },
+    {
+      "id": "pingrpl-basic",
+      "type": "PINGRPL",
+      "length": 9,
+      "hex": "040000000012345678",
+      "description": "PINGRPL 9o, echo des 8 octets bruts",
+      "fields": {"echoBytes": "0000000012345678"}
+    },
+    {
+      "id": "pingrpl-zeros",
+      "type": "PINGRPL",
+      "length": 9,
+      "hex": "040000000000000000",
+      "description": "PINGRPL 9o, timestamp et port nuls",
+      "fields": {"echoBytes": "0000000000000000"}
+    },
+    {
+      "id": "resendreq-basic",
+      "type": "RESENDREQ",
+      "length": 16,
+      "hex": "050000303980123400010B00270CFDD1",
+      "description": "RESENDREQ 16o, localPort + CacheReq",
+      "fields": {"localPort": 12345, "commandTag": 128, "serviceId": 4660, "networkId": 1, "caId": 2816, "dataHash": 655162833}
+    },
+    {
+      "id": "resendreq-caid0",
+      "type": "RESENDREQ",
+      "length": 16,
+      "hex": "050000FFFF8100000000000000000000",
+      "description": "RESENDREQ 16o, caid=0/onid=0/sid=0/hash=0",
+      "fields": {"localPort": 65535, "commandTag": 129, "serviceId": 0, "networkId": 0, "caId": 0, "dataHash": 0}
+    },
+    {
+      "id": "resendreq-maxport",
+      "type": "RESENDREQ",
+      "length": 16,
+      "hex": "050000FFFF80BEEF00DE0C001DEAAED3",
+      "description": "RESENDREQ 16o, localPort=65535",
+      "fields": {"localPort": 65535, "commandTag": 128, "serviceId": 48879, "networkId": 222, "caId": 3072, "dataHash": 501919443}
+    },
+    {
+      "id": "truncated-req",
+      "type": "RAW",
+      "length": 5,
+      "hex": "0112340001",
+      "description": "REQUEST tronqué : seulement 5 octets au lieu de 12",
+      "fields": {"rawHex": "0112340001"}
+    },
+    {
+      "id": "oversized-req",
+      "type": "RAW",
+      "length": 15,
+      "hex": "01123400010B001C9AC0A9DEADBEEF",
+      "description": "REQUEST surdimensionné : type 01 + CacheReq + 4 octets en trop",
+      "fields": {"rawHex": "01123400010B001C9AC0A9DEADBEEF"}
+    },
+    {
+      "id": "unknown-type",
+      "type": "RAW",
+      "length": 9,
+      "hex": "FF0102030405060708",
+      "description": "Type inconnu 0xFF suivi de 8 octets",
+      "fields": {"rawHex": "FF0102030405060708"}
+    },
+    {
+      "id": "empty",
+      "type": "RAW",
+      "length": 0,
+      "hex": "",
+      "description": "Paquet vide (0 octet)",
+      "fields": {"rawHex": ""}
+    },
+    {
+      "id": "single-byte",
+      "type": "RAW",
+      "length": 1,
+      "hex": "05",
+      "description": "Paquet d'un seul octet (type inconnu)",
+      "fields": {"rawHex": "05"}
+    }
+  ]
+}

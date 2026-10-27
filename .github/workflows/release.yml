@@ -1,0 +1,253 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-jvm:
+    name: Build JVM JARs (csp-app & csp-worker)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'csp-web/frontend/package-lock.json'
+
+      - name: Build csp-app (Quarkus fast-jar) and csp-worker (shaded JAR)
+        run: |
+          mvn -B clean package -pl csp-app,csp-worker -am -DskipTests -Dskip.frontend.e2e=true
+
+      - name: Package csp-app quarkus-app distribution archive
+        run: |
+          TAG="${{ steps.meta.outputs.tag }}"
+          mkdir -p dist/csp-app-${TAG}
+          cp -r csp-app/target/quarkus-app dist/csp-app-${TAG}/
+          cp -r deploy LICENSE NOTICE README.md dist/csp-app-${TAG}/
+          tar -C dist -czf "dist/csp-app-${TAG}-quarkus-app.tar.gz" "csp-app-${TAG}"
+          cp csp-worker/target/csp-worker-[0-9]*.jar "dist/csp-worker-${TAG}-shaded.jar"
+
+      - name: Build csp-app standalone runner uber-jar
+        run: |
+          TAG="${{ steps.meta.outputs.tag }}"
+          mvn -B package -pl csp-app -am -DskipTests -Dskip.frontend.e2e=true -Dquarkus.package.jar.type=uber-jar
+          cp csp-app/target/*-runner.jar "dist/csp-app-${TAG}-runner.jar"
+
+      - name: Upload JVM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-artifacts
+          path: |
+            dist/csp-app-*-quarkus-app.tar.gz
+            dist/csp-app-*-runner.jar
+            dist/csp-worker-*-shaded.jar
+          if-no-files-found: error
+
+  build-worker-native:
+    name: Build Native Worker (${{ matrix.arch }}-${{ matrix.glibc }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: linux-x86_64
+            runner: ubuntu-24.04
+            glibc: glibc2.31
+            distro: debian:bullseye
+          - arch: linux-x86_64
+            runner: ubuntu-24.04
+            glibc: glibc2.36
+            distro: debian:bookworm
+          - arch: linux-x86_64
+            runner: ubuntu-24.04
+            glibc: glibc2.41
+            distro: debian:trixie
+          - arch: linux-arm64
+            runner: ubuntu-24.04-arm
+            glibc: glibc2.31
+            distro: debian:bullseye
+          - arch: linux-arm64
+            runner: ubuntu-24.04-arm
+            glibc: glibc2.36
+            distro: debian:bookworm
+          - arch: linux-arm64
+            runner: ubuntu-24.04-arm
+            glibc: glibc2.41
+            distro: debian:trixie
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up GraalVM CE 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          cache: 'maven'
+
+      - name: Build native csp-worker inside ${{ matrix.distro }} (${{ matrix.glibc }})
+        run: |
+          MVN_HOME="$(dirname "$(dirname "$(readlink -f "$(which mvn)")")")"
+          mkdir -p "$HOME/.m2"
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -v "$HOME/.m2:/root/.m2" \
+            -v "$JAVA_HOME:/graal:ro" \
+            -v "$MVN_HOME:/maven:ro" \
+            -w /workspace \
+            -e JAVA_HOME=/graal \
+            -e PATH="/graal/bin:/maven/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            "${{ matrix.distro }}" \
+            bash -exc '
+              sed -i "s|http://deb.debian.org/debian-security|http://archive.debian.org/debian-security|g" /etc/apt/sources.list 2>/dev/null || true &&
+              apt-get -o Acquire::Check-Valid-Until=false update &&
+              apt-get install -y --no-install-recommends build-essential zlib1g-dev libz-dev ca-certificates file binutils &&
+              ldd --version | head -n 1 &&
+              mvn -B -pl csp-worker -am package -Pnative -DskipTests &&
+              file csp-worker/target/csp-worker &&
+              MAX_GLIBC=$(objdump -T csp-worker/target/csp-worker | grep -oE "GLIBC_[0-9.]+" | sort -V | tail -n 1) &&
+              echo "Max required symbol: ${MAX_GLIBC}" &&
+              chown -R '"$(id -u):$(id -g)"' csp-worker/target /root/.m2
+            '
+
+      - name: Package native worker archive (${{ matrix.arch }}-${{ matrix.glibc }})
+        run: |
+          TAG="${{ steps.meta.outputs.tag }}"
+          ARCH="${{ matrix.arch }}"
+          GLIBC="${{ matrix.glibc }}"
+          PKG_DIR="dist/csp-worker-${TAG}-${ARCH}-${GLIBC}"
+          mkdir -p "${PKG_DIR}"
+          cp csp-worker/target/csp-worker "${PKG_DIR}/csp-worker"
+          chmod 0755 "${PKG_DIR}/csp-worker"
+          cp deploy/csp-worker.service "${PKG_DIR}/csp-worker.service"
+          cp LICENSE NOTICE README.md "${PKG_DIR}/"
+          tar -C dist -czf "dist/csp-worker-${TAG}-${ARCH}-${GLIBC}.tar.gz" "csp-worker-${TAG}-${ARCH}-${GLIBC}"
+
+      - name: Upload native worker artifact (${{ matrix.arch }}-${{ matrix.glibc }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-worker-${{ matrix.arch }}-${{ matrix.glibc }}
+          path: dist/csp-worker-*-${{ matrix.arch }}-${{ matrix.glibc }}.tar.gz
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-jvm, build-worker-native]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Download all release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS.txt
+        working-directory: release-assets
+        run: |
+          sha256sum csp-app-* csp-worker-* | sort -k2 | tee SHA256SUMS.txt
+
+      - name: Remove legacy un-versioned glibc assets if present
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.meta.outputs.tag }}"
+          gh release delete-asset "${TAG}" "csp-worker-${TAG}-linux-x86_64.tar.gz" --yes 2>/dev/null || true
+          gh release delete-asset "${TAG}" "csp-worker-${TAG}-linux-arm64.tar.gz" --yes 2>/dev/null || true
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: "CSP-NG ${{ steps.meta.outputs.tag }}"
+          generate_release_notes: true
+          files: |
+            release-assets/csp-app-*-quarkus-app.tar.gz
+            release-assets/csp-app-*-runner.jar
+            release-assets/csp-worker-*-shaded.jar
+            release-assets/csp-worker-*-linux-x86_64-glibc2.31.tar.gz
+            release-assets/csp-worker-*-linux-x86_64-glibc2.36.tar.gz
+            release-assets/csp-worker-*-linux-x86_64-glibc2.41.tar.gz
+            release-assets/csp-worker-*-linux-arm64-glibc2.31.tar.gz
+            release-assets/csp-worker-*-linux-arm64-glibc2.36.tar.gz
+            release-assets/csp-worker-*-linux-arm64-glibc2.41.tar.gz
+            release-assets/SHA256SUMS.txt
+          body: |
+            ## CardServProxy NG (CSP-NG) ${{ steps.meta.outputs.tag }}
+
+            ### Artefacts JVM (Serveur central & Worker)
+
+            | Fichier | Description |
+            |---|---|
+            | `csp-app-${{ steps.meta.outputs.tag }}-quarkus-app.tar.gz` | Distribution complète `quarkus-app` (serveur central + UI d'administration Web `/admin/*` + unités systemd / Nginx / Fail2ban) |
+            | `csp-app-${{ steps.meta.outputs.tag }}-runner.jar` | Uber-JAR autonome du serveur central (`java -jar csp-app-${{ steps.meta.outputs.tag }}-runner.jar`) |
+            | `csp-worker-${{ steps.meta.outputs.tag }}-shaded.jar` | Fat-JAR JVM du worker relais headless (`java -jar csp-worker-${{ steps.meta.outputs.tag }}-shaded.jar`) |
+
+            ### Images Natives `csp-worker` (GraalVM CE 21, par version de `glibc` et architecture)
+
+            | Fichier | Architecture | Cible `glibc` | Distributions compatibles |
+            |---|---|---|---|
+            | `csp-worker-${{ steps.meta.outputs.tag }}-linux-x86_64-glibc2.31.tar.gz` | `x86_64` (`amd64`) | `glibc 2.31` (Debian 11 Bullseye) | Debian 11 / 12 / 13+, Ubuntu 20.04 / 22.04 / 24.04+, RHEL / Rocky / Alma 9+ |
+            | `csp-worker-${{ steps.meta.outputs.tag }}-linux-x86_64-glibc2.36.tar.gz` | `x86_64` (`amd64`) | `glibc 2.36` (Debian 12 Bookworm) | Debian 12 / 13+, Ubuntu 23.04 / 24.04+ |
+            | `csp-worker-${{ steps.meta.outputs.tag }}-linux-x86_64-glibc2.41.tar.gz` | `x86_64` (`amd64`) | `glibc 2.41` (Debian 13 Trixie) | Debian 13 (Trixie)+, Ubuntu 25.04+ |
+            | `csp-worker-${{ steps.meta.outputs.tag }}-linux-arm64-glibc2.31.tar.gz` | `arm64` (`aarch64`) | `glibc 2.31` (Debian 11 Bullseye) | Debian 11 / 12 / 13+, Ubuntu 20.04 / 22.04 / 24.04+, RHEL / Rocky / Alma 9+ |
+            | `csp-worker-${{ steps.meta.outputs.tag }}-linux-arm64-glibc2.36.tar.gz` | `arm64` (`aarch64`) | `glibc 2.36` (Debian 12 Bookworm) | Debian 12 / 13+, Ubuntu 23.04 / 24.04+ |
+            | `csp-worker-${{ steps.meta.outputs.tag }}-linux-arm64-glibc2.41.tar.gz` | `arm64` (`aarch64`) | `glibc 2.41` (Debian 13 Trixie) | Debian 13 (Trixie)+, Ubuntu 25.04+ |
+            | `SHA256SUMS.txt` | Toutes | — | Empreintes SHA-256 de tous les artefacts |
+
+            ---
+            > **Écosystème — [M3U Bridge](https://m3ubridge.com)** : Unifiez vos sources M3U et Xtream derrière un endpoint unique stable avec matching EPG automatique, enrichissement VOD et failover multi-sources.

@@ -1,0 +1,4 @@
+# Liste de pairs ClusteredCache (format hostname:udp_port)
+csp-legacy:9009
+csp-new:9009
+oscam:12346
