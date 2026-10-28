@@ -1,5 +1,6 @@
 package com.bowman.cspng.sessions;
 
+import com.bowman.cspng.cache.CacheListener;
 import com.bowman.cspng.cache.CacheVerticle;
 import com.bowman.cspng.codec.camd35.Camd35CacheExCodec;
 import com.bowman.cspng.codec.camd35.Camd35Constants;
@@ -59,6 +60,8 @@ class Camd35TcpSessionCacheExTest {
   private ProtocolAuthResolver.Fake authResolver;
   private CacheVerticle cacheVerticle;
   private CacheExStatsRegistry statsRegistry;
+  /** T5 : dernier CwReply réellement injecté dans le cache (via CacheListener). */
+  private final AtomicReference<CwReply> injectedReply = new AtomicReference<>();
 
   static byte[] validCw(int seed) {
     byte[] cw = new byte[16];
@@ -75,6 +78,12 @@ class Camd35TcpSessionCacheExTest {
   void setUp() throws Exception {
     vertx = Vertx.vertx();
     cacheVerticle = new CacheVerticle();
+    cacheVerticle.addListener(new CacheListener() {
+      @Override
+      public void onReply(EcmRequest request, CwReply reply) {
+        if (reply != null) injectedReply.set(reply);
+      }
+    });
     CountDownLatch deployLatch = new CountDownLatch(1);
     vertx.deployVerticle(cacheVerticle, ar -> deployLatch.countDown());
     assertTrue(deployLatch.await(5, TimeUnit.SECONDS));
@@ -211,6 +220,22 @@ class Camd35TcpSessionCacheExTest {
     assertEquals(3, pair.mode());
     assertEquals(1, pair.receivedCw());
     assertEquals(0, pair.droppedCw());
+
+    // T5 — identité du pair, stats par SID et provenance du CwReply injecté.
+    CwReply injected = injectedReply.get();
+    assertNotNull(injected, "CwReply du PUSH 0x3F injecté dans cacheVerticle");
+    var sidList = pair.sids();
+    String firstServiceKey = sidList.isEmpty() ? null : sidList.get(0).serviceKey();
+    long firstSidReceived = sidList.isEmpty() ? -1 : sidList.get(0).receivedCw();
+    assertAll("T5 identité du pair, stats par SID et provenance",
+        () -> assertFalse(pair.remoteIp() == null || pair.remoteIp().isEmpty(),
+            "IP distante du pair renseignée dans le snapshot"),
+        () -> assertFalse(sidList.isEmpty(), "stats par SID présentes après le PUSH"),
+        () -> assertTrue(firstSidReceived >= 1, "CW reçue comptée pour ce SID"),
+        () -> assertEquals(String.format("%04X@%06X:%04X", CAID, PRID, SRVID),
+            firstServiceKey, "clé de service CAID@PROVID:SID"),
+        () -> assertEquals("L9:" + USER, injected.connectorName(),
+            "provenance = pair L<listenerId>:<user>, pas l'utilisateur seul"));
   }
 
   @Test

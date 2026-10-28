@@ -39,6 +39,29 @@ class CacheHitAttributionTest {
   }
 
   @Test
+  @DisplayName("hit servi relayé au registry CacheEx avec le SID (compteurs par service)")
+  void relaysServedHitToCacheExStatsRegistryWithSid() {
+    CacheExStatsRegistry reg = new CacheExStatsRegistry();
+    reg.registerInbound("L3:@STB@", "cs378x", 3, "default", 10, 2000);
+
+    CacheHitAttribution attr = new CacheHitAttribution();
+    attr.setCacheExStatsRegistry(reg);
+
+    attr.recordServedHit("77.90.60.222", "L3:@STB@", 0x1884, 0x000000, 0x32DC);
+
+    var served = attr.snapshot();
+    assertEquals(1, served.size(), "le hit servi reste compté dans l'attribution d'origine");
+    assertEquals(1L, served.get(0).hits());
+
+    CacheExStatsRegistry.PairStats peer = reg.snapshot().get(0);
+    assertEquals(1L, peer.hits(), "le hit servi est aussi compté sur la paire CacheEx");
+    assertEquals(1, peer.sids().size());
+    var sid = peer.sids().get(0);
+    assertEquals("1884@000000:32DC", sid.serviceKey());
+    assertEquals(1L, sid.hits());
+  }
+
+  @Test
   @DisplayName("concurrence et saturation (B3) : éviction hors computeIfAbsent")
   void concurrentSaturationNoRecursiveUpdate() throws Exception {
     CacheHitAttribution a = new CacheHitAttribution();

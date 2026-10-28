@@ -145,6 +145,27 @@ class AdminDcwResourceTest {
   }
 
   @Test
+  @DisplayName("Mapping global entre couples CAID:Provider (sourceSid=targetSid=0) accepté et restitué")
+  void caidProviderGlobalMapping() {
+    // Ordre des champs aligné sur DcwServiceMappingConfig :
+    // profile, caid, provider, targetCaid, targetProvider, sourceSid, targetSid, approved, enabled, expiresAtMs
+    Response created = resource.createMapping(
+        new CreateDcwServiceMappingRequest("p", 0x1884, 0x000000, 0x1813, 0x000068, 0, 0, true, true, 0L))
+        .await().indefinitely();
+    assertEquals(201, created.getStatus());
+    var m = (DcwServiceMappingResponse) created.getEntity();
+    assertEquals(0x1813L, (long) m.targetCaid(), "CAID cible explicite conservé");
+    assertEquals(0x000068L, (long) m.targetProvider(), "provider cible explicite conservé");
+    assertEquals(0, m.sourceSid(), "mapping global : sourceSid = 0");
+    assertEquals(0, m.targetSid(), "mapping global : targetSid = 0");
+
+    Response updated = resource.updateMapping(200L,
+        new UpdateDcwServiceMappingRequest("p", 0x1884, 0x000000, 0x1818, 0x00006C, 0, 0, true, true, 0L, 1L))
+        .await().indefinitely();
+    assertEquals(200, updated.getStatus());
+  }
+
+  @Test
   @DisplayName("GET /candidates et /stats sérialisables JSON (DTO, pas d'objet interne)")
   void observationsSerializable() throws Exception {
     long now = System.currentTimeMillis();

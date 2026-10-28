@@ -675,6 +675,9 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
       statsRegistry.registerInbound(cacheExPeerId(), "cccam", policy.mode(),
           profileName != null ? profileName : "", policy.maxHop(), MAX_SEND_QUEUE);
       statsRegistry.updateState(cacheExPeerId(), true, "connected", false);
+      String hexNodeId = clientNodeId != null && clientNodeId.length == 8
+          ? java.util.HexFormat.of().withUpperCase().formatHex(clientNodeId) : null;
+      statsRegistry.updatePeerIdentity(cacheExPeerId(), remoteAddress, hexNodeId);
     }
     if (policy.mode() == 3) {
       // Mode 3 : NOUS recevons du client — annoncer NOTRE filtre (gate d'acceptation).
@@ -721,17 +724,27 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
       countDrop("invalid");
       return;
     }
+    if (clientNodeId == null && !push.nodeIds().isEmpty()) {
+      byte[] first = push.nodeIds().get(0);
+      if (first != null && first.length == 8) {
+        this.clientNodeId = Arrays.copyOf(first, 8);
+        if (statsRegistry != null && cacheexPolicy.enabled()) {
+          String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(this.clientNodeId);
+          statsRegistry.updatePeerIdentity(cacheExPeerId(), remoteAddress, hexNodeId);
+        }
+      }
+    }
     if (!CcCacheExCodec.isPushValid(push)) {
-      countDrop("invalid");
+      countDrop("invalid", push.caid(), push.prid(), push.srvid());
       return;
     }
     // Anti-boucle : notre serverNodeId dans le chemin
     if (CcCacheExCodec.containsNode(push.nodeIds(), serverNodeId)) {
-      countDrop("loop");
+      countDrop("loop", push.caid(), push.prid(), push.srvid());
       return;
     }
     if (push.nodeIds().size() > cacheexPolicy.maxHop()) {
-      countDrop("hop");
+      countDrop("hop", push.caid(), push.prid(), push.srvid());
       return;
     }
     // Gate : NOTRE filtre configuré (mode 3)
@@ -747,19 +760,19 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
           }
         }
         if (!matches) {
-          countDrop("filtered");
+          countDrop("filtered", push.caid(), push.prid(), push.srvid());
           return;
         }
       }
     } catch (IllegalArgumentException e) {
-      countDrop("invalid");
+      countDrop("invalid", push.caid(), push.prid(), push.srvid());
       return;
     }
     // R2: Validation parité (0, 0x80, 0x81) AVANT toute allocation ou suivi quorum
     // Compat OSCam : 0 = INCONNU accepté (bypass cycle compté IGNORED, servable) ;
     // autres valeurs => rejet AVANT tout traitement (ni cycle, ni store, ni injection).
     if (push.oddEven() != 0x80 && push.oddEven() != 0x81 && push.oddEven() != 0) {
-      countDrop("invalid");
+      countDrop("invalid", push.caid(), push.prid(), push.srvid());
       logger.fine("CCcam session CacheEx PUSH dropped — invalid oddEven 0x"
           + Integer.toHexString(push.oddEven()));
       return;
@@ -775,7 +788,7 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
           profileName, push.caid(), push.prid(), push.srvid(), oe, cw,
           push.cycleTimeSec(), push.nextCwCycle(), System.currentTimeMillis());
       if (cwCycleChecker.shouldReject(cycleVerdict)) {
-        countDrop("invalid");
+        countDrop("invalid", push.caid(), push.prid(), push.srvid());
         logger.fine("CCcam session CacheEx PUSH dropped — cw-cycle " + cycleVerdict);
         return;
       }
@@ -790,16 +803,16 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
           oe, push.dataHash(), cw, peerId, realOrigin,
           com.bowman.cspng.domain.dcw.LegacyGuard.CHECKSUM_REQUIRED);
       if (!verdict.accept()) {
-        countDrop(verdict.dropReason());
+        countDrop(verdict.dropReason(), push.caid(), push.prid(), push.srvid());
         return;
       }
     } else {
       if (!DcwValidator.checksumDcw(cw)) {
-        countDrop("checksum");
+        countDrop("checksum", push.caid(), push.prid(), push.srvid());
         return;
       }
       if (DcwValidator.hasFiveZeroes(cw) || DcwValidator.hasZeroDcw(cw)) {
-        countDrop("invalid");
+        countDrop("invalid", push.caid(), push.prid(), push.srvid());
         return;
       }
     }
@@ -809,7 +822,7 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
     noteUpstreamPath(push.dataHash(), push.nodeIds(), push.cycleTimeSec(), push.nextCwCycle());
 
     EcmKey key = new EcmKey(oe, push.srvid(), 0, push.caid(), push.dataHash());
-    CwReply reply = new CwReply(key, oe, cw.clone(), username, remoteAddress,
+    CwReply reply = new CwReply(key, oe, cw.clone(), peerId, remoteAddress,
         System.currentTimeMillis());
     String peerProfile = profileName != null ? profileName : "default";
     if (cacheVerticle != null) {
@@ -817,16 +830,16 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
           peerProfile, remoteAddress, username,
           System.currentTimeMillis(), null, 5000);
       cacheVerticle.handleReply(synthetic, reply);
-      if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId());
+      if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId(), push.caid(), push.prid(), push.srvid());
       if (gate != null) gate.postInjected(peerId);
     } else if (cacheExBridge != null && cacheExBridge.feedReceived(
         peerProfile, listenerId, push.caid(), push.prid(), push.srvid(), oe, cw,
         push.dataHash(), push.cycleTimeSec(), push.nextCwCycle(),
-        push.nodeIds(), remoteAddress, username)) {
-      if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId());
+        push.nodeIds(), remoteAddress, peerId)) {
+      if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId(), push.caid(), push.prid(), push.srvid());
       if (gate != null) gate.postInjected(peerId);
     } else {
-      countDrop("invalid");
+      countDrop("invalid", push.caid(), push.prid(), push.srvid());
       logger.fine("CCcam session CacheEx PUSH dropped — no routable cache (worker bridge absent?)");
     }
   }
@@ -888,7 +901,7 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
         }
       }
       if (!caidMatch) {
-        countDrop("filtered");
+        countDrop("filtered", reply.key().caId(), 0, reply.key().serviceId());
         return;
       }
     }
@@ -897,7 +910,7 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
     for (;;) {
       int pending = pendingPushQueue.get();
       if (pending >= MAX_SEND_QUEUE) {
-        countDrop("queue");
+        countDrop("queue", reply.key().caId(), 0, reply.key().serviceId());
         return;
       }
       if (pendingPushQueue.compareAndSet(pending, pending + 1)) break;
@@ -915,7 +928,7 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
       if (!Arrays.equals(n, serverNodeId)) allNodes.add(n);
     }
     if (allNodes.size() > cacheexPolicy.maxHop()) {
-      countDrop("hop");
+      countDrop("hop", reply.key().caId(), 0, reply.key().serviceId());
       logger.fine("CCcam session CacheEx PUSH(OUT) skipped — hop count "
           + allNodes.size() + " > max " + cacheexPolicy.maxHop());
       return;
@@ -957,7 +970,7 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
     } else {
       pendingPushQueue.decrementAndGet();
     }
-    if (statsRegistry != null) statsRegistry.countPushed(cacheExPeerId());
+    if (statsRegistry != null) statsRegistry.countPushed(cacheExPeerId(), reply.key().caId(), 0, reply.key().serviceId());
   }
 
   @Override
@@ -1007,6 +1020,10 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
 
   private void countDrop(String reason) {
     if (statsRegistry != null) statsRegistry.countDropped(cacheExPeerId(), reason);
+  }
+
+  private void countDrop(String reason, int caid, int provid, int srvid) {
+    if (statsRegistry != null) statsRegistry.countDropped(cacheExPeerId(), reason, caid, provid, srvid);
   }
 
   private void processEcmRequest(byte[] payload) {

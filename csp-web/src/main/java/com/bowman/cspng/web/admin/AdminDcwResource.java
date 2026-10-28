@@ -174,16 +174,27 @@ public class AdminDcwResource {
         .map(list -> Response.ok(list.stream().limit(MAX_LIST).map(AdminDcwResource::toMappingResponse).toList()).build());
   }
 
-  static DcwServiceMappingConfig buildMapping(long id, String profile, Integer caid, Integer provider, Integer sourceSid,
-                                             Integer targetSid, Boolean approved, Boolean enabled, Long expiresAtMs) {
+  static DcwServiceMappingConfig buildMapping(long id, String profile, Integer caid, Integer provider,
+                                             Integer targetCaid, Integer targetProvider,
+                                             Integer sourceSid, Integer targetSid,
+                                             Boolean approved, Boolean enabled, Long expiresAtMs) {
     if (caid == null || provider == null || sourceSid == null || targetSid == null || approved == null) {
       throw new IllegalArgumentException("profile, caid, provider, sourceSid, targetSid, approved are required");
     }
-    DcwServiceMappingConfig m = new DcwServiceMappingConfig(id, profile, caid, provider, sourceSid, targetSid, approved,
+    int effTargetCaid = targetCaid != null ? targetCaid : caid;
+    int effTargetProvider = targetProvider != null ? targetProvider : provider;
+    DcwServiceMappingConfig m = new DcwServiceMappingConfig(id, profile, caid, provider,
+        effTargetCaid, effTargetProvider, sourceSid, targetSid, approved,
         enabled == null || enabled, expiresAtMs != null ? expiresAtMs : 0L, 1L, 0L);
     List<String> errors = DcwConfigRules.validateMapping(m);
     if (!errors.isEmpty()) throw new IllegalArgumentException(String.join("; ", errors));
     return m;
+  }
+
+  static DcwServiceMappingConfig buildMapping(long id, String profile, Integer caid, Integer provider,
+                                             Integer sourceSid, Integer targetSid,
+                                             Boolean approved, Boolean enabled, Long expiresAtMs) {
+    return buildMapping(id, profile, caid, provider, null, null, sourceSid, targetSid, approved, enabled, expiresAtMs);
   }
 
   @POST
@@ -192,15 +203,15 @@ public class AdminDcwResource {
     if (req == null) return bad("INVALID_INPUT", "Request body is required");
     DcwServiceMappingConfig m;
     try {
-      m = buildMapping(0L, req.profile(), req.caid(), req.provider(), req.sourceSid(), req.targetSid(), req.approved(),
-          req.enabled(), req.expiresAtMs());
+      m = buildMapping(0L, req.profile(), req.caid(), req.provider(), req.targetCaid(), req.targetProvider(),
+          req.sourceSid(), req.targetSid(), req.approved(), req.enabled(), req.expiresAtMs());
     } catch (IllegalArgumentException e) {
       return bad("INVALID_INPUT", e.getMessage());
     }
     return Uni.createFrom().completionStage(configRepository.createDcwServiceMapping(m, currentUsername()).toCompletionStage())
         .map(id -> Response.status(201).entity(toMappingResponse(new DcwServiceMappingConfig(id, m.profile(), m.caid(),
-            m.provider(), m.sourceSid(), m.targetSid(), m.approved(), m.enabled(), m.expiresAtMs(), 1L,
-            System.currentTimeMillis()))).build());
+            m.provider(), m.targetCaid(), m.targetProvider(), m.sourceSid(), m.targetSid(), m.approved(), m.enabled(),
+            m.expiresAtMs(), 1L, System.currentTimeMillis()))).build());
   }
 
   @PUT
@@ -209,8 +220,8 @@ public class AdminDcwResource {
     if (req == null || req.version() == null || req.version() < 1) return bad("INVALID_INPUT", "version is required and must be >= 1");
     DcwServiceMappingConfig m;
     try {
-      m = buildMapping(id, req.profile(), req.caid(), req.provider(), req.sourceSid(), req.targetSid(), req.approved(),
-          req.enabled(), req.expiresAtMs());
+      m = buildMapping(id, req.profile(), req.caid(), req.provider(), req.targetCaid(), req.targetProvider(),
+          req.sourceSid(), req.targetSid(), req.approved(), req.enabled(), req.expiresAtMs());
     } catch (IllegalArgumentException e) {
       return bad("INVALID_INPUT", e.getMessage());
     }
@@ -351,7 +362,8 @@ public class AdminDcwResource {
   }
 
   private static DcwServiceMappingResponse toMappingResponse(DcwServiceMappingConfig m) {
-    return new DcwServiceMappingResponse(m.id(), m.profile(), m.caid(), m.provider(), m.sourceSid(), m.targetSid(),
+    return new DcwServiceMappingResponse(m.id(), m.profile(), m.caid(), m.provider(),
+        m.targetCaid(), m.targetProvider(), m.sourceSid(), m.targetSid(),
         m.approved(), m.enabled(), m.expiresAtMs(), m.version(), m.updatedAtMs());
   }
 

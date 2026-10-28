@@ -19,8 +19,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -503,5 +506,169 @@ class StrictEcmRouterDcwQualityTest {
     assertEquals(1L, score.get("busy"));
     assertEquals(0L, score.get("fail"));
     assertEquals(0L, score.get("samples"));
+  }
+
+  // ==================================================================
+  // T3 — résolution de mapping DANS le lookup CacheEx :
+  //   * un mapping CAID:Provider global (SID wildcard) résout le lookup
+  //     sur le couple cible, à SID demandé identique ;
+  //   * un mapping par SID (même CAID:Provider) résout le lookup sur le
+  //     SID lié ;
+  //   * la résolution est MONO-SAut (jamais A -> B -> C) ;
+  //   * l'ACL service du client porte aussi sur le SID cible : un mapping
+  //     ne contourne JAMAIS un service bloqué (lookup CacheEx ET
+  //     corroboration de réparation).
+  // ==================================================================
+
+  @Test
+  @DisplayName("CacheEx : un mapping global CAID:Provider approuvé résout le lookup sur le couple cible (même SID)")
+  void cacheExLookupResolvesGlobalCaidProviderMapping() {
+    int sid = 0x32DC;
+    int reqCaid = 0x1884;
+    int reqProvider = 0x000000;
+    EcmKey key = new EcmKey(0x80, sid, 0, reqCaid, 0x12345678);
+    EcmRequest req = new EcmRequest(key, new byte[10], "profile1", "127.0.0.1", "client1",
+        System.currentTimeMillis(), null, 2000L);
+    var auth = new ProtocolAuthResolver.AuthResult("user1", "group1", 1L, 1L,
+        Instant.now().plusSeconds(3600), 1L, Set.of("profile1"), null, null, null, null);
+
+    // Mapping global : le couple 0x1884:0x000000 et le couple 0x1813:0x000068 sont liés, SID inchangé.
+    var globalMapping = new DcwServiceMapping(1L, "profile1", 0x1884, 0x000000, 0x1813, 0x000068,
+        0, 0, true, true, 0L, 1L, 0L);
+
+    StrictEcmRouter router = new StrictEcmRouter(connectorManager, cache, null);
+    router.setDcwPolicy(new DcwQualityPolicy(true, false, false, false, ChecksumMode.INHERIT,
+        DcwRepairMode.OFF, true, List.of(), List.of(globalMapping)));
+    // Le push CacheEx n'existe que sous le couple CIBLE (0x1813:0x000068).
+    router.setCacheExLookup((prof, c, p, s, oe, h) -> (c == 0x1813 && p == 0x000068 && s == 0x32DC)
+        ? new CwReply(new EcmKey(oe, s, 0, c, h), oe, VALID_CW, "L3:@STB@", "77.90.60.222", System.currentTimeMillis())
+        : null);
+
+    CwReply result = router.routeEcm(req, auth, reqProvider).toCompletionStage().toCompletableFuture().join();
+    assertFalse(result.isEmpty(), "le mapping CAID:Provider global doit alimenter le lookup CacheEx");
+    assertArrayEquals(VALID_CW, result.cw());
+    assertEquals("L3:@STB@", result.connectorName(), "provenance du push CacheEx conservée");
+    assertEquals(0x1884, result.key().caId());
+    assertEquals(0x32DC, result.key().serviceId());
+  }
+
+  @Test
+  @DisplayName("CacheEx : le SID cible d'un mapping bloqué par l'ACL du client n'est jamais servi")
+  void cacheExLookupMappedTargetSidBlockedByAclIsRejected() {
+    int sidA = 0x0010;
+    int sidB = 0x0020;
+    EcmKey key = new EcmKey(0x80, sidA, 0, 0x1884, 0x12345678);
+    EcmRequest req = new EcmRequest(key, new byte[10], "profile1", "127.0.0.1", "client1",
+        System.currentTimeMillis(), null, 2000L);
+    var blockedAuth = new ProtocolAuthResolver.AuthResult("user1", "group1", 1L, 1L,
+        Instant.now().plusSeconds(3600), 1L, Set.of("profile1"), null,
+        Map.of("profile1", Set.of(sidB)), null, null);
+    var allowedAuth = new ProtocolAuthResolver.AuthResult("user1", "group1", 1L, 1L,
+        Instant.now().plusSeconds(3600), 1L, Set.of("profile1"), null, null, null, null);
+
+    var sidMapping = new DcwServiceMapping(1L, "profile1", 0x1884, 0x000000, 0x1884, 0x000000,
+        sidA, sidB, true, true, 0L, 1L, 0L);
+
+    StrictEcmRouter router = new StrictEcmRouter(connectorManager, cache, null);
+    router.setDcwPolicy(new DcwQualityPolicy(true, false, false, false, ChecksumMode.INHERIT,
+        DcwRepairMode.OFF, true, List.of(), List.of(sidMapping)));
+    // Le push CacheEx n'existe que sous le SID LIÉ (0x0020).
+    router.setCacheExLookup((prof, c, p, s, oe, h) -> s == 0x0020
+        ? new CwReply(new EcmKey(oe, s, 0, c, h), oe, VALID_CW, "L3:@STB@", "77.90.60.222", System.currentTimeMillis())
+        : null);
+
+    CwReply blocked = router.routeEcm(req, blockedAuth, 0).toCompletionStage().toCompletableFuture().join();
+    assertTrue(blocked.isEmpty(),
+        "le SID cible 0x0020 est bloqué pour ce client : le mapping ne doit pas contourner l'ACL, got "
+            + blocked.connectorName());
+
+    // Contrôle de cohérence : sans blocage ACL, le SID lié est bien consulté — l'assertion
+    // ci-dessus n'est donc pas satisfaite par simple absence de résolution du mapping.
+    CwReply allowed = router.routeEcm(req, allowedAuth, 0).toCompletionStage().toCompletableFuture().join();
+    assertFalse(allowed.isEmpty(), "sans blocage ACL, le lookup sur le SID lié 0x0020 doit servir la CW");
+    assertArrayEquals(VALID_CW, allowed.cw());
+  }
+
+  @Test
+  @DisplayName("CacheEx : la résolution de mapping est mono-saut (A->B) et jamais transitive (A->B->C)")
+  void cacheExLookupMappingIsSingleHopNotTransitive() {
+    int sid = 0x32DC;
+    EcmKey key = new EcmKey(0x80, sid, 0, 0x1884, 0x12345678);
+    EcmRequest req = new EcmRequest(key, new byte[10], "profile1", "127.0.0.1", "client1",
+        System.currentTimeMillis(), null, 2000L);
+    var auth = new ProtocolAuthResolver.AuthResult("user1", "group1", 1L, 1L,
+        Instant.now().plusSeconds(3600), 1L, Set.of("profile1"), null, null, null, null);
+
+    // A (0x1884:0x000000) <-> B (0x1813:0x000068) <-> C (0x0100:0x000068)
+    var ab = new DcwServiceMapping(1L, "profile1", 0x1884, 0x000000, 0x1813, 0x000068,
+        0, 0, true, true, 0L, 1L, 0L);
+    var bc = new DcwServiceMapping(2L, "profile1", 0x1813, 0x000068, 0x0100, 0x000068,
+        0, 0, true, true, 0L, 1L, 0L);
+
+    // Identité sous laquelle le push CacheEx est disponible (contrôlée par le test).
+    AtomicInteger seedCaid = new AtomicInteger(0x0100);
+    AtomicInteger seedProvider = new AtomicInteger(0x000068);
+    List<String> consulted = new ArrayList<>();
+
+    StrictEcmRouter router = new StrictEcmRouter(connectorManager, cache, null);
+    router.setDcwPolicy(new DcwQualityPolicy(true, false, false, false, ChecksumMode.INHERIT,
+        DcwRepairMode.OFF, true, List.of(), List.of(ab, bc)));
+    router.setCacheExLookup((prof, c, p, s, oe, h) -> {
+      consulted.add(String.format("0x%04X:0x%06X:0x%04X", c, p, s));
+      if (c == seedCaid.get() && p == seedProvider.get() && s == sid) {
+        return new CwReply(new EcmKey(oe, s, 0, c, h), oe, VALID_CW, "L3:@STB@", "77.90.60.222", System.currentTimeMillis());
+      }
+      return null;
+    });
+
+    // 1) La CW n'est disponible que sous C : aucune transitivité A -> B -> C.
+    CwReply transitive = router.routeEcm(req, auth, 0).toCompletionStage().toCompletableFuture().join();
+    assertTrue(transitive.isEmpty(),
+        "A->B->C interdit (un seul saut autorisé), got " + transitive.connectorName());
+    assertFalse(consulted.stream().anyMatch(id -> id.equals("0x0100:0x000068:0x32DC")),
+        "l'identité de C ne doit jamais être consultée : " + consulted);
+
+    // 2) Contrôle : la CW est disponible sous B -> servie en un seul saut.
+    seedCaid.set(0x1813);
+    seedProvider.set(0x000068);
+    CwReply singleHop = router.routeEcm(req, auth, 0).toCompletionStage().toCompletableFuture().join();
+    assertFalse(singleHop.isEmpty(), "un seul saut A->B doit servir la CW, consultés : " + consulted);
+    assertArrayEquals(VALID_CW, singleHop.cw());
+  }
+
+  @Test
+  @DisplayName("ENFORCE : corroboration sur le SID cible d'un mapping bloqué par l'ACL du client refusée")
+  void peekCorroborationMappedTargetSidBlockedByAclIsIgnored() {
+    int sidA = 0x2938;
+    int sidB = 0x2940;
+    int provider = 0x30;
+    EcmKey keyA = new EcmKey(0x80, sidA, 0, 0x1884, 0x12345678);
+    EcmKey keyB = new EcmKey(0x80, sidB, 0, 0x1884, 0x12345678);
+    byte[] body = new byte[10];
+    EcmRequest req = new EcmRequest(keyA, body, "profile1", "127.0.0.1", "client1",
+        System.currentTimeMillis(), null, 2000L);
+    // Le client demande sidA (autorisé) mais sidB est bloqué pour lui.
+    var auth = new ProtocolAuthResolver.AuthResult("user1", "group1", 1L, 1L,
+        Instant.now().plusSeconds(3600), 1L, Set.of("profile1"), null,
+        Map.of("profile1", Set.of(sidB)), null, null);
+    byte[] corrupted = VALID_CW.clone();
+    corrupted[3] = 0;
+    corrupted[7] = 0;
+    corrupted[11] = 0;
+    corrupted[15] = 0;
+    connectorManager.addTestConnector(new TestConnector(vertx, "c1", "profile1",
+        new CwReply(keyA, 0x80, corrupted, "c1", "127.0.0.1", 0L)));
+    connectorManager.addTestConnector(new TestConnector(vertx, "c2", "profile1", CwReply.empty(keyA)));
+    StrictCacheKey linked = new StrictCacheKey("profile1", 0x1884, provider, sidB, 0x80, body, 1L, Set.of("c1", "c2"));
+    cache.put(linked, new CwReply(keyB, 0x80, VALID_CW, "c2", "127.0.0.1", System.currentTimeMillis()), 60000);
+    var mapping = new DcwServiceMapping(1L, "profile1", 0x1884, provider, sidA, sidB, true, true, 0L, 1L, 0L);
+    var explicit = new DcwRule(1L, new DcwRuleScope("profile1", 0x1884, provider, 0, null), null,
+        DcwRuleAction.NO_ACTION, ChecksumMode.REQUIRE_VALID, "", true, 0L, 0L);
+    StrictEcmRouter router = new StrictEcmRouter(connectorManager, cache, null);
+    router.setDcwPolicy(new DcwQualityPolicy(true, false, false, false, ChecksumMode.INHERIT,
+        DcwRepairMode.ENFORCE, true, List.of(explicit), List.of(mapping)));
+    CwReply result = router.routeEcm(req, auth, provider).toCompletionStage().toCompletableFuture().join();
+    assertTrue(result.isEmpty(),
+        "le SID cible 0x2940 est bloqué : aucune corroboration servie, got " + result.connectorName());
   }
 }

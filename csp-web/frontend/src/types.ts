@@ -206,6 +206,19 @@ export interface CacheStatus {
   } | null;
 }
 
+export interface CacheExSidStat {
+  caid: number;
+  provid: number;
+  srvid: number;
+  serviceKey?: string;
+  channelName?: string | null;
+  pushedCw?: number;
+  receivedCw?: number;
+  hits?: number;
+  droppedCw?: number;
+  lastActivityAtMs?: number | null;
+}
+
 export interface CacheExStats {
   generatedAtMs?: number;
   pairs?: Array<{
@@ -222,6 +235,10 @@ export interface CacheExStats {
     pushedCw?: number;
     receivedCw?: number;
     droppedCw?: number;
+    remoteIp?: string | null;
+    remoteNodeId?: string | null;
+    hits?: number;
+    sids?: CacheExSidStat[];
     /** Compteurs par cause backend (loop/hop/checksum/filtered/invalid/queue/flood), toujours pré-renseignés. */
     dropReasons?: Record<string, number>;
     lastPushAtMs?: number | null;

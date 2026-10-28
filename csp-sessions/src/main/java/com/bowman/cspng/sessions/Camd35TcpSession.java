@@ -514,6 +514,9 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
       statsRegistry.registerInbound(cacheExPeerId(), "cs378x", policy.mode(),
           profileName != null ? profileName : "", policy.maxHop(), MAX_SEND_QUEUE);
       statsRegistry.updateState(cacheExPeerId(), true, "connected", false);
+      String hexNodeId = remoteNodeId != null && remoteNodeId.length == 8
+          ? java.util.HexFormat.of().withUpperCase().formatHex(remoteNodeId) : null;
+      statsRegistry.updatePeerIdentity(cacheExPeerId(), remoteAddress, hexNodeId);
     }
     if (policy.mode() == 3) {
       // Mode 3 : NOUS recevons du client — annoncer NOTRE filtre (gate d'acceptation).
@@ -567,6 +570,10 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
   private void handleCacheExIdRequest(Camd35FrameCodec.Camd35Frame frame) {
     if (frame.data() != null && frame.data().length >= 8) {
       this.remoteNodeId = Arrays.copyOf(frame.data(), 8);
+      if (statsRegistry != null && cacheexPolicy.enabled()) {
+        String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(this.remoteNodeId);
+        statsRegistry.updatePeerIdentity(cacheExPeerId(), remoteAddress, hexNodeId);
+      }
     }
     byte[] body = new byte[12];
     System.arraycopy(sessionNodeId, 0, body, 0, 8);
@@ -584,6 +591,10 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
   private void handleCacheExIdAnswer(Camd35FrameCodec.Camd35Frame frame) {
     if (frame.data() != null && frame.data().length >= 8) {
       this.remoteNodeId = Arrays.copyOf(frame.data(), 8);
+      if (statsRegistry != null && cacheexPolicy.enabled()) {
+        String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(this.remoteNodeId);
+        statsRegistry.updatePeerIdentity(cacheExPeerId(), remoteAddress, hexNodeId);
+      }
     }
   }
 
@@ -610,19 +621,29 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
       countDrop("invalid");
       return;
     }
+    if (remoteNodeId == null && !push.nodeIds().isEmpty()) {
+      byte[] first = push.nodeIds().get(0);
+      if (first != null && first.length == 8) {
+        this.remoteNodeId = Arrays.copyOf(first, 8);
+        if (statsRegistry != null && cacheexPolicy.enabled()) {
+          String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(this.remoteNodeId);
+          statsRegistry.updatePeerIdentity(cacheExPeerId(), remoteAddress, hexNodeId);
+        }
+      }
+    }
     // rc : E_FOUND(0) / E_UNHANDLED(100) — miroir camd35_cacheex_push_in
     if (push.rc() != 0 && push.rc() != 100) {
-      countDrop("invalid");
+      countDrop("invalid", push.caid(), push.prid(), push.srvid());
       return;
     }
     for (byte[] n : push.nodeIds()) {
       if (Arrays.equals(n, sessionNodeId)) {
-        countDrop("loop");
+        countDrop("loop", push.caid(), push.prid(), push.srvid());
         return;
       }
     }
     if (push.nodeIds().size() > cacheexPolicy.maxHop()) {
-      countDrop("hop");
+      countDrop("hop", push.caid(), push.prid(), push.srvid());
       return;
     }
     // Gate : NOTRE filtre configuré (mode 3)
@@ -639,19 +660,19 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
           }
         }
         if (!matches) {
-          countDrop("filtered");
+          countDrop("filtered", push.caid(), push.prid(), push.srvid());
           return;
         }
       }
     } catch (IllegalArgumentException e) {
-      countDrop("invalid");
+      countDrop("invalid", push.caid(), push.prid(), push.srvid());
       return;
     }
     // R2: Validation parité (0, 0x80, 0x81) AVANT toute allocation ou suivi quorum
     // Compat OSCam : 0 = INCONNU accepté (bypass cycle compté IGNORED, servable) ;
     // autres valeurs => rejet AVANT tout traitement.
     if (push.oddEven() != 0x80 && push.oddEven() != 0x81 && push.oddEven() != 0) {
-      countDrop("invalid");
+      countDrop("invalid", push.caid(), push.prid(), push.srvid());
       logger.fine("Camd35 session CacheEx PUSH dropped — invalid oddEven 0x"
           + Integer.toHexString(push.oddEven()));
       return;
@@ -667,7 +688,7 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
           profileName, push.caid(), push.prid(), push.srvid(), oe, cw,
           push.cycleTimeSec(), push.nextCwCycle(), System.currentTimeMillis());
       if (cwCycleChecker.shouldReject(cycleVerdict)) {
-        countDrop("invalid");
+        countDrop("invalid", push.caid(), push.prid(), push.srvid());
         logger.fine("Camd35 session CacheEx PUSH dropped — cw-cycle " + cycleVerdict);
         return;
       }
@@ -682,16 +703,16 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
           oe, push.dataHash(), cw, peerId, realOrigin,
           com.bowman.cspng.domain.dcw.LegacyGuard.CHECKSUM_REQUIRED);
       if (!verdict.accept()) {
-        countDrop(verdict.dropReason());
+        countDrop(verdict.dropReason(), push.caid(), push.prid(), push.srvid());
         return;
       }
     } else {
       if (!DcwValidator.checksumDcw(cw)) {
-        countDrop("checksum");
+        countDrop("checksum", push.caid(), push.prid(), push.srvid());
         return;
       }
       if (DcwValidator.hasFiveZeroes(cw) || DcwValidator.hasZeroDcw(cw)) {
-        countDrop("invalid");
+        countDrop("invalid", push.caid(), push.prid(), push.srvid());
         return;
       }
     }
@@ -701,7 +722,7 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
     noteUpstreamPath(push.dataHash(), push.nodeIds(), push.cycleTimeSec(), push.nextCwCycle());
 
     EcmKey key = new EcmKey(oe, push.srvid(), 0, push.caid(), push.dataHash());
-    CwReply reply = new CwReply(key, oe, cw.clone(), username, remoteAddress,
+    CwReply reply = new CwReply(key, oe, cw.clone(), peerId, remoteAddress,
         System.currentTimeMillis());
     String peerProfile = profileName != null ? profileName : "default";
     if (cacheVerticle != null) {
@@ -709,16 +730,16 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
           peerProfile, remoteAddress, username,
           System.currentTimeMillis(), null, 5000);
       cacheVerticle.handleReply(synthetic, reply);
-      if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId());
+      if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId(), push.caid(), push.prid(), push.srvid());
       if (gate != null) gate.postInjected(peerId);
     } else if (cacheExBridge != null && cacheExBridge.feedReceived(
         peerProfile, listenerId, push.caid(), push.prid(), push.srvid(), oe, cw,
         push.dataHash(), push.cycleTimeSec(), push.nextCwCycle(),
-        push.nodeIds(), remoteAddress, username)) {
-      if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId());
+        push.nodeIds(), remoteAddress, peerId)) {
+      if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId(), push.caid(), push.prid(), push.srvid());
       if (gate != null) gate.postInjected(peerId);
     } else {
-      countDrop("invalid");
+      countDrop("invalid", push.caid(), push.prid(), push.srvid());
       logger.fine("Camd35 session CacheEx PUSH dropped — no routable cache (worker bridge absent?)");
     }
   }
@@ -748,7 +769,7 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
         }
       }
       if (!matches) {
-        countDrop("filtered");
+        countDrop("filtered", reply.key().caId(), 0, reply.key().serviceId());
         return;
       }
     }
@@ -756,7 +777,7 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
     for (;;) {
       int pending = pendingPushQueue.get();
       if (pending >= MAX_SEND_QUEUE) {
-        countDrop("queue");
+        countDrop("queue", reply.key().caId(), 0, reply.key().serviceId());
         return;
       }
       if (pendingPushQueue.compareAndSet(pending, pending + 1)) break;
@@ -772,7 +793,7 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
       if (!Arrays.equals(n, sessionNodeId)) allNodes.add(n);
     }
     if (allNodes.size() > cacheexPolicy.maxHop()) {
-      countDrop("hop");
+      countDrop("hop", reply.key().caId(), 0, reply.key().serviceId());
       logger.fine("Camd35 session CacheEx PUSH(OUT) skipped — hop count "
           + allNodes.size() + " > max " + cacheexPolicy.maxHop());
       return;
@@ -818,7 +839,7 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
     } else {
       pendingPushQueue.decrementAndGet();
     }
-    if (statsRegistry != null) statsRegistry.countPushed(cacheExPeerId());
+    if (statsRegistry != null) statsRegistry.countPushed(cacheExPeerId(), reply.key().caId(), 0, reply.key().serviceId());
   }
 
   @Override
@@ -867,6 +888,10 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
 
   private void countDrop(String reason) {
     if (statsRegistry != null) statsRegistry.countDropped(cacheExPeerId(), reason);
+  }
+
+  private void countDrop(String reason, int caid, int provid, int srvid) {
+    if (statsRegistry != null) statsRegistry.countDropped(cacheExPeerId(), reason, caid, provid, srvid);
   }
 
   private void sendCwReply(Camd35FrameCodec.Camd35Frame req, byte[] cw) {

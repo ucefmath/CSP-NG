@@ -61,10 +61,17 @@ public final class DcwConfigRules {
     String p = "DCW mapping #" + m.id() + ": ";
     if (m.profile() == null || m.profile().length() > MAX_NAME) e.add(p + "profile is required (1..64)");
     if (m.caid() < 1 || m.caid() > 0xFFFF) e.add(p + "caid must be 1..65535");
+    if (m.targetCaid() < 1 || m.targetCaid() > 0xFFFF) e.add(p + "targetCaid must be 1..65535");
     if (m.provider() < 0 || m.provider() > 0xFFFFFF) e.add(p + "provider must be 0..16777215");
-    if (m.sourceSid() < 1 || m.sourceSid() > 0xFFFF) e.add(p + "sourceSid must be 1..65535");
-    if (m.targetSid() < 1 || m.targetSid() > 0xFFFF) e.add(p + "targetSid must be 1..65535");
-    if (m.sourceSid() == m.targetSid()) e.add(p + "sourceSid must differ from targetSid");
+    if (m.targetProvider() < 0 || m.targetProvider() > 0xFFFFFF) e.add(p + "targetProvider must be 0..16777215");
+    if (m.sourceSid() < 0 || m.sourceSid() > 0xFFFF) e.add(p + "sourceSid must be 0..65535");
+    if (m.targetSid() < 0 || m.targetSid() > 0xFFFF) e.add(p + "targetSid must be 0..65535");
+    if (!((m.sourceSid() == 0 && m.targetSid() == 0) || (m.sourceSid() > 0 && m.targetSid() > 0))) {
+      e.add(p + "sourceSid and targetSid must both be 0 or both 1..65535");
+    }
+    if (m.caid() == m.targetCaid() && m.provider() == m.targetProvider() && m.sourceSid() == m.targetSid()) {
+      e.add(p + "mapping source and target must differ");
+    }
     if (m.expiresAtMs() < 0) e.add(p + "expiresAtMs must be >= 0");
     return e;
   }

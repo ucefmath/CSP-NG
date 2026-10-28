@@ -223,6 +223,10 @@ public class RuntimeCore {
       new com.bowman.cspng.connectors.cacheex.PeerQualityTracker();
   private final com.bowman.cspng.connectors.cacheex.CacheHitAttribution cacheHitAttribution =
       new com.bowman.cspng.connectors.cacheex.CacheHitAttribution();
+  {
+    // Câblage du registry CacheEx sur l'attribution des hits (lot T4)
+    cacheHitAttribution.setCacheExStatsRegistry(cacheExStatsRegistry);
+  }
   private final com.bowman.cspng.connectors.cacheex.PeerQuarantine peerQuarantine =
       new com.bowman.cspng.connectors.cacheex.PeerQuarantine();
   private final com.bowman.cspng.connectors.cacheex.CacheExQuorumTracker quorumTracker =

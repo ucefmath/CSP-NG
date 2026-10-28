@@ -364,8 +364,43 @@ public class StrictEcmRouter implements SessionEcmRouter {
         if (cxVal.isValid()) {
           dispatchStats.recordOk("cacheex", 0);
           com.bowman.cspng.cache.CacheHitSink hits = hitAttribution;
-          if (hits != null) hits.recordServedHit(cxHit.originAddress(), cxHit.connectorName());
+          if (hits != null) hits.recordServedHit(cxHit.originAddress(), cxHit.connectorName(),
+              caid, provider, serviceId);
           return Future.succeededFuture(cxHit);
+        }
+      }
+      // Résolution de mapping en un seul saut (mono-saut, jamais A->B->C).
+      // Uniquement si le provider est connu (pas UNKNOWN_PROVIDER).
+      if (provider != com.bowman.cspng.domain.dcw.DcwRuleScope.UNKNOWN_PROVIDER) {
+        DcwQualityPolicy cxPolicy = effectiveDcwPolicy();
+        long nowMs = System.currentTimeMillis();
+        for (var mapping : cxPolicy.mappings()) {
+          if (mapping == null || !mapping.isActive(nowMs)) continue;
+          var targetOpt = mapping.resolveTarget(profile, caid, provider, serviceId, nowMs);
+          if (targetOpt.isEmpty()) continue;
+          var target = targetOpt.get();
+          // Vérification ACL sur le SID cible : un mapping ne contourne JAMAIS un service bloqué
+          if (!isServiceAllowedByAcl(profile, target.sid(), authContext)) continue;
+          CwReply mappedHit = null;
+          try {
+            mappedHit = cxLookup.lookup(profile, target.caid(), target.provider(), target.sid(),
+                request.key().commandTag(), request.key().dataHash());
+          } catch (Exception ignored) {
+            // fail-closed : on continue vers le mapping suivant
+          }
+          if (mappedHit != null && !mappedHit.isEmpty() && mappedHit.cw() != null && mappedHit.cw().length == 16) {
+            var mappedVal = effectiveDcwPolicy().validate(mappedHit.cw(), profile, caid, provider,
+                serviceId, mappedHit.connectorName(), com.bowman.cspng.domain.dcw.LegacyGuard.PERMISSIVE);
+            if (mappedVal.isValid()) {
+              dispatchStats.recordOk("cacheex", 0);
+              com.bowman.cspng.cache.CacheHitSink hits = hitAttribution;
+              if (hits != null) hits.recordServedHit(mappedHit.originAddress(), mappedHit.connectorName(),
+                  target.caid(), target.provider(), target.sid());
+              CwReply rewrapped = new CwReply(request.key(), request.key().commandTag(), mappedHit.cw(),
+                  mappedHit.connectorName(), mappedHit.originAddress(), mappedHit.timestamp());
+              return Future.succeededFuture(rewrapped);
+            }
+          }
         }
       }
     }
@@ -579,7 +614,7 @@ public class StrictEcmRouter implements SessionEcmRouter {
     leaderPromise.future().onComplete(v -> timeoutTask.cancel(false));
 
     if (!candidates.isEmpty()) {
-      dispatchToCandidates(request, candidates, 0, cacheKey, leaderPromise);
+      dispatchToCandidates(request, authContext, candidates, 0, cacheKey, leaderPromise);
     }
     return leaderPromise.future();
   }
@@ -656,22 +691,42 @@ public class StrictEcmRouter implements SessionEcmRouter {
   }
 
   /**
+   * Vérifie si le service est autorisé par l'ACL (blockedServices / allowedServices) pour le profil donné.
+   * null authContext => refusé.
+   */
+  private boolean isServiceAllowedByAcl(String profile, int sid, ProtocolAuthResolver.AuthResult authContext) {
+    if (authContext == null) return false;
+    if (authContext.blockedServices() != null) {
+      Set<Integer> blocked = authContext.blockedServices().get(profile);
+      if (blocked != null && blocked.contains(sid)) return false;
+    }
+    if (authContext.allowedServices() != null) {
+      Set<Integer> allowed = authContext.allowedServices().get(profile);
+      if (allowed != null && !allowed.isEmpty() && !allowed.contains(sid)) return false;
+    }
+    return true;
+  }
+
+  /**
    * Référence fraîche : même clé stricte, sinon SID lié par mapping approuvé même provider.
    * Le peek lié ne recopie jamais l'entrée sur le SID demandeur.
+   * authContext est utilisé pour vérifier que le SID cible est autorisé par l'ACL.
    */
-  private CwReply peekCorroboration(StrictCacheKey cacheKey, DcwQualityPolicy policy, int requestSid) {
+  private CwReply peekCorroboration(StrictCacheKey cacheKey, DcwQualityPolicy policy, int requestSid,
+                                    ProtocolAuthResolver.AuthResult authContext) {
     CwReply direct = peekFreshLocal(cacheKey);
     if (direct != null) return direct;
     if (policy == null || cacheKey.provider() == com.bowman.cspng.domain.dcw.DcwRuleScope.UNKNOWN_PROVIDER) return null;
     long now = System.currentTimeMillis();
     for (var mapping : policy.mappings()) {
       if (mapping == null || !mapping.isActive(now)) continue;
-      int other = -1;
-      if (mapping.sourceSid() == requestSid) other = mapping.targetSid();
-      else if (mapping.targetSid() == requestSid) other = mapping.sourceSid();
-      if (other < 0) continue;
-      if (!mapping.matches(cacheKey.profile(), cacheKey.caid(), cacheKey.provider(), requestSid, other, now)) continue;
-      StrictCacheKey linked = new StrictCacheKey(cacheKey.profile(), cacheKey.caid(), cacheKey.provider(), other,
+      var targetOpt = mapping.resolveTarget(cacheKey.profile(), cacheKey.caid(), cacheKey.provider(), requestSid, now);
+      if (targetOpt.isEmpty()) continue;
+      var target = targetOpt.get();
+      // Uniquement le même caid (corroboration intra-provider, pas de saut inter-provider dans peekCorroboration)
+      if (target.caid() != cacheKey.caid()) continue;
+      if (!isServiceAllowedByAcl(cacheKey.profile(), target.sid(), authContext)) continue;
+      StrictCacheKey linked = new StrictCacheKey(cacheKey.profile(), target.caid(), target.provider(), target.sid(),
           cacheKey.commandTag(), cacheKey.exactBody(), cacheKey.policyEpoch(), cacheKey.eligibleConnectors());
       CwReply hit = peekFreshLocal(linked);
       if (hit != null && !hit.isEmpty()) return hit;
@@ -695,7 +750,8 @@ public class StrictEcmRouter implements SessionEcmRouter {
     return null;
   }
 
-  private void dispatchToCandidates(EcmRequest request, List<AbstractConnector> candidates, int index,
+  private void dispatchToCandidates(EcmRequest request, ProtocolAuthResolver.AuthResult authContext,
+                                    List<AbstractConnector> candidates, int index,
                                     StrictCacheKey cacheKey, Promise<CwReply> resultPromise) {
     if (index >= candidates.size()) {
       // Candidats locaux épuisés sans CW valide
@@ -729,7 +785,7 @@ public class StrictEcmRouter implements SessionEcmRouter {
             untrackAttempt(request.key());
             dispatchStats.recordFail(expectedName, latencyMs);
             adaptiveEngine.recordFail(request.profileName(), request.key().caId(), cacheKey.provider(), request.key().serviceId(), expectedName, latencyMs);
-            dispatchToCandidates(request, candidates, index + 1, cacheKey, resultPromise);
+            dispatchToCandidates(request, authContext, candidates, index + 1, cacheKey, resultPromise);
             return;
           } else {
             reply = raw;
@@ -748,7 +804,7 @@ public class StrictEcmRouter implements SessionEcmRouter {
             // preuve (le put ci-dessous n'est atteint que pour une réponse déjà valide).
             if (val.reason() == DcwValidationResult.Reason.CHECKSUM_FAIL
                 && effectiveDcwPolicy().repairMode() != com.bowman.cspng.domain.dcw.DcwRepairMode.OFF) {
-              CwReply refCached = peekCorroboration(cacheKey, dcwPol, request.key().serviceId());
+              CwReply refCached = peekCorroboration(cacheKey, dcwPol, request.key().serviceId(), authContext);
               if (refCached != null && !refCached.isEmpty()
                   && refCached.connectorName() != null
                   && !refCached.connectorName().startsWith("repaired:")
@@ -788,7 +844,7 @@ public class StrictEcmRouter implements SessionEcmRouter {
             untrackAttempt(request.key());
             dispatchStats.recordFail(expectedName, latencyMs);
             adaptiveEngine.recordInvalid(request.profileName(), request.key().caId(), cacheKey.provider(), request.key().serviceId(), expectedName, latencyMs);
-            dispatchToCandidates(request, candidates, index + 1, cacheKey, resultPromise);
+            dispatchToCandidates(request, authContext, candidates, index + 1, cacheKey, resultPromise);
             return;
           }
 
@@ -818,7 +874,7 @@ public class StrictEcmRouter implements SessionEcmRouter {
               dispatchStats.recordFail(expectedName, latencyMs);
               adaptiveEngine.recordInvalid(request.profileName(), request.key().caId(), cacheKey.provider(),
                   request.key().serviceId(), expectedName, latencyMs);
-              dispatchToCandidates(request, candidates, index + 1, cacheKey, resultPromise);
+              dispatchToCandidates(request, authContext, candidates, index + 1, cacheKey, resultPromise);
               return;
             }
           }
@@ -868,7 +924,7 @@ public class StrictEcmRouter implements SessionEcmRouter {
             adaptiveEngine.recordFail(request.profileName(), request.key().caId(), cacheKey.provider(),
                 request.key().serviceId(), expectedName, (System.nanoTime() - attemptStartNs) / 1_000_000L);
           }
-          dispatchToCandidates(request, candidates, index + 1, cacheKey, resultPromise);
+          dispatchToCandidates(request, authContext, candidates, index + 1, cacheKey, resultPromise);
         }
       });
     } catch (Exception e) {
@@ -876,7 +932,7 @@ public class StrictEcmRouter implements SessionEcmRouter {
       dispatchStats.recordFail(expectedName,
           (System.nanoTime() - attemptStartNs) / 1_000_000L);
       adaptiveEngine.recordFail(request.profileName(), request.key().caId(), cacheKey.provider(), request.key().serviceId(), expectedName, (System.nanoTime() - attemptStartNs) / 1_000_000L);
-      dispatchToCandidates(request, candidates, index + 1, cacheKey, resultPromise);
+      dispatchToCandidates(request, authContext, candidates, index + 1, cacheKey, resultPromise);
     }
   }
 }

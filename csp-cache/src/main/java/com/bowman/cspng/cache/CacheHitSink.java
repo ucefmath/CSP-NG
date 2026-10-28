@@ -14,4 +14,14 @@ public interface CacheHitSink {
 
   /** Enregistre un hit servi (adresses/noms seuls, jamais de CW). */
   void recordServedHit(String originAddress, String connectorName);
+
+  /**
+   * Surcharge enrichie avec les identifiants de service (caid, provid, srvid).
+   * L'implémentation par défaut délègue à {@link #recordServedHit(String, String)}
+   * pour garantir la rétrocompatibilité avec les implémentations lambda.
+   */
+  default void recordServedHit(String originAddress, String connectorName,
+                               int caid, int provid, int srvid) {
+    recordServedHit(originAddress, connectorName);
+  }
 }

@@ -2591,7 +2591,7 @@ public class ConfigRepository {
         + " zero_counting_enabled, default_checksum_mode, repair_mode, allow_zero_half, version, updated_at";
     private static final String DCW_RULE_COLS = "id, profile, caid, provider, sid, source_id, digest_sha256,"
         + " action, checksum_mode, notes, enabled, version, updated_at";
-    private static final String DCW_MAP_COLS = "id, profile, caid, provider, source_sid, target_sid, approved,"
+    private static final String DCW_MAP_COLS = "id, profile, caid, provider, target_caid, target_provider, source_sid, target_sid, approved,"
         + " enabled, expires_at, version, updated_at";
 
     private static long tsMs(Row r, String col) {
@@ -2622,9 +2622,12 @@ public class ConfigRepository {
     }
 
     private static DcwServiceMappingConfig mapDcwMapping(Row r) {
+        int caid = r.getInteger("caid") != null ? r.getInteger("caid") : 0;
+        int provider = r.getInteger("provider") != null ? r.getInteger("provider") : 0;
+        int targetCaid = r.getInteger("target_caid") != null ? r.getInteger("target_caid") : caid;
+        int targetProvider = r.getInteger("target_provider") != null ? r.getInteger("target_provider") : provider;
         return new DcwServiceMappingConfig(r.getLong("id"), r.getString("profile"),
-            r.getInteger("caid") != null ? r.getInteger("caid") : 0,
-            r.getInteger("provider") != null ? r.getInteger("provider") : 0,
+            caid, provider, targetCaid, targetProvider,
             r.getInteger("source_sid") != null ? r.getInteger("source_sid") : 0,
             r.getInteger("target_sid") != null ? r.getInteger("target_sid") : 0,
             boolOr(r, "approved", false), boolOr(r, "enabled", true), tsMs(r, "expires_at"),
@@ -3253,6 +3256,41 @@ public class ConfigRepository {
         return getDcwPolicy().map(DcwPolicyConfig::mappings);
     }
 
+    private static boolean sameEndpoint(int caid1, int prov1, int sid1, int caid2, int prov2, int sid2) {
+        return caid1 == caid2 && prov1 == prov2 && sid1 == sid2;
+    }
+
+    private static boolean sameProfile(String p1, String p2) {
+        if (p1 == null && p2 == null) return true;
+        if (p1 == null || p2 == null) return false;
+        return p1.equalsIgnoreCase(p2);
+    }
+
+    private static void checkNoDuplicateMappingsForId(List<DcwServiceMappingConfig> mappings, long targetId) {
+        if (mappings == null || mappings.size() < 2) return;
+        DcwServiceMappingConfig target = null;
+        for (DcwServiceMappingConfig m : mappings) {
+            if (m.id() == targetId) {
+                target = m;
+                break;
+            }
+        }
+        if (target == null) return;
+        for (DcwServiceMappingConfig other : mappings) {
+            if (other.id() == targetId) continue;
+            if (sameProfile(target.profile(), other.profile())) {
+                boolean direct = sameEndpoint(target.caid(), target.provider(), target.sourceSid(), other.caid(), other.provider(), other.sourceSid())
+                    && sameEndpoint(target.targetCaid(), target.targetProvider(), target.targetSid(), other.targetCaid(), other.targetProvider(), other.targetSid());
+                boolean inverse = sameEndpoint(target.caid(), target.provider(), target.sourceSid(), other.targetCaid(), other.targetProvider(), other.targetSid())
+                    && sameEndpoint(target.targetCaid(), target.targetProvider(), target.targetSid(), other.caid(), other.provider(), other.sourceSid());
+                if (direct || inverse) {
+                    throw new ConfigValidationException("Duplicate or inverse service mapping conflict in profile '"
+                        + target.profile() + "'");
+                }
+            }
+        }
+    }
+
     /** Valide la policy candidate complete (bornes, conflits, profils connus, compilation) ; echec => ConfigValidationException (400). */
     private static Future<Void> checkCandidate(DcwPolicyConfig candidate, java.util.Set<String> knownProfiles) {
         List<String> errors = DcwConfigRules.validatePolicy(candidate, knownProfiles);
@@ -3389,14 +3427,18 @@ public class ConfigRepository {
 
     public Future<Long> createDcwServiceMapping(DcwServiceMappingConfig m, String user) {
         return dcwMutation(user, "csp_dcw_service_mapping", "new", "dcw mapping created approved=" + m.approved(),
-            cur -> cur.withRulesAndMappings(cur.rules(), replaceById(cur.mappings(), DcwServiceMappingConfig::id, Long.MIN_VALUE,
-                new DcwServiceMappingConfig(Long.MIN_VALUE, m.profile(), m.caid(), m.provider(), m.sourceSid(), m.targetSid(),
-                    m.approved(), m.enabled(), m.expiresAtMs(), 1L, 0L))),
-            (client, cur) -> client.preparedQuery("INSERT INTO csp_dcw_service_mapping (profile, caid, provider, source_sid,"
+            cur -> {
+                DcwPolicyConfig cand = cur.withRulesAndMappings(cur.rules(), replaceById(cur.mappings(), DcwServiceMappingConfig::id, Long.MIN_VALUE,
+                    new DcwServiceMappingConfig(Long.MIN_VALUE, m.profile(), m.caid(), m.provider(), m.targetCaid(), m.targetProvider(),
+                        m.sourceSid(), m.targetSid(), m.approved(), m.enabled(), m.expiresAtMs(), 1L, 0L)));
+                checkNoDuplicateMappingsForId(cand.mappings(), Long.MIN_VALUE);
+                return cand;
+            },
+            (client, cur) -> client.preparedQuery("INSERT INTO csp_dcw_service_mapping (profile, caid, provider, target_caid, target_provider, source_sid,"
                     + " target_sid, approved, enabled, expires_at, version, updated_at, updated_by)"
-                    + " VALUES ($1,$2,$3,$4,$5,$6,$7,$8,1,now(),$9) RETURNING id")
-                .execute(Tuple.from(new Object[]{m.profile(), m.caid(), m.provider(), m.sourceSid(), m.targetSid(),
-                    m.approved(), m.enabled(), expiresTs(m.expiresAtMs()), user}))
+                    + " VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,1,now(),$11) RETURNING id")
+                .execute(Tuple.from(new Object[]{m.profile(), m.caid(), m.provider(), m.targetCaid(), m.targetProvider(),
+                    m.sourceSid(), m.targetSid(), m.approved(), m.enabled(), expiresTs(m.expiresAtMs()), user}))
                 .map(rows -> firstOrNull(rows).getLong("id")));
     }
 
@@ -3404,15 +3446,17 @@ public class ConfigRepository {
         return dcwMutation(user, "csp_dcw_service_mapping", String.valueOf(id), "dcw mapping updated approved=" + m.approved(),
             cur -> {
                 if (cur.mappings().stream().noneMatch(x -> x.id() == id)) throw new ConfigNotFoundException("csp_dcw_service_mapping", String.valueOf(id));
-                return cur.withRulesAndMappings(cur.rules(), replaceById(cur.mappings(), DcwServiceMappingConfig::id, id,
-                    new DcwServiceMappingConfig(id, m.profile(), m.caid(), m.provider(), m.sourceSid(), m.targetSid(),
-                        m.approved(), m.enabled(), m.expiresAtMs(), version, 0L)));
+                DcwPolicyConfig cand = cur.withRulesAndMappings(cur.rules(), replaceById(cur.mappings(), DcwServiceMappingConfig::id, id,
+                    new DcwServiceMappingConfig(id, m.profile(), m.caid(), m.provider(), m.targetCaid(), m.targetProvider(),
+                        m.sourceSid(), m.targetSid(), m.approved(), m.enabled(), m.expiresAtMs(), version, 0L)));
+                checkNoDuplicateMappingsForId(cand.mappings(), id);
+                return cand;
             },
             (client, cur) -> client.preparedQuery("UPDATE csp_dcw_service_mapping SET profile=$1, caid=$2, provider=$3,"
-                    + " source_sid=$4, target_sid=$5, approved=$6, enabled=$7, expires_at=$8, version=version+1,"
-                    + " updated_at=now(), updated_by=$9 WHERE id=$10 AND version=$11")
-                .execute(Tuple.from(new Object[]{m.profile(), m.caid(), m.provider(), m.sourceSid(), m.targetSid(),
-                    m.approved(), m.enabled(), expiresTs(m.expiresAtMs()), user, id, version}))
+                    + " target_caid=$4, target_provider=$5, source_sid=$6, target_sid=$7, approved=$8, enabled=$9, expires_at=$10, version=version+1,"
+                    + " updated_at=now(), updated_by=$11 WHERE id=$12 AND version=$13")
+                .execute(Tuple.from(new Object[]{m.profile(), m.caid(), m.provider(), m.targetCaid(), m.targetProvider(),
+                    m.sourceSid(), m.targetSid(), m.approved(), m.enabled(), expiresTs(m.expiresAtMs()), user, id, version}))
                 .compose(rows -> rows.rowCount() == 0
                     ? Future.failedFuture(new OptimisticLockException("csp_dcw_service_mapping", String.valueOf(id), version))
                     : Future.<Void>succeededFuture()));

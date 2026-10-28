@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -159,14 +160,96 @@ class DcwPolicyFoundationsTest {
   @DisplayName("Mappings typés dans la policy : sourceSid != targetSid, expiration respectée, borne 1000")
   void mappingsTyped() {
     assertThrows(IllegalArgumentException.class,
-        () -> new DcwServiceMapping(1L, "p", 0x1884, 0x30, 5, 5, true, true, 0L, 1L, 0L));
-    var m = new DcwServiceMapping(1L, "p", 0x1884, 0x30, 5, 6, true, true, 10_000L, 1L, 0L);
+        () -> new DcwServiceMapping(1L, "p", 0x1884, 0x30, 0x1884, 0x30, 5, 5, true, true, 0L, 1L, 0L));
+    var m = new DcwServiceMapping(1L, "p", 0x1884, 0x30, 0x1884, 0x30, 5, 6, true, true, 10_000L, 1L, 0L);
     assertTrue(m.matches("p", 0x1884, 0x30, 6, 5, 9_999L));
     assertFalse(m.matches("p", 0x1884, 0x30, 6, 5, 10_001L), "expiré");
     assertFalse(m.matches("p", 0x1884, 0x31, 6, 5, 1L), "cross-provider");
-    var notApproved = new DcwServiceMapping(2L, "p", 0x1884, 0x30, 5, 6, false, true, 0L, 1L, 0L);
+    var notApproved = new DcwServiceMapping(2L, "p", 0x1884, 0x30, 0x1884, 0x30, 5, 6, false, true, 0L, 1L, 0L);
     assertFalse(notApproved.matches("p", 0x1884, 0x30, 5, 6, 1L));
     var p = new DcwQualityPolicy(true, false, false, false, ChecksumMode.INHERIT, DcwRepairMode.OFF, true, List.of(), List.of(m));
     assertEquals(1, p.mappings().size());
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // Contrat CAID:Provider : un mapping global (sourceSid = targetSid = 0) peut lier deux couples
+  // CAID/provider distincts et résoudre un SID dans les deux sens en le conservant.
+  // ---------------------------------------------------------------------------------------------
+
+  static final int MAP_CAID_A = 0x1884;
+  static final int MAP_PROVIDER_A = 0x000000;
+  static final int MAP_CAID_B = 0x1813;
+  static final int MAP_PROVIDER_B = 0x000068;
+  static final int MAP_SID = 0x32DC;
+
+  /** Mapping global p: 0x1884/0x000000 <-> 0x1813/0x000068, sans restriction de SID (0, 0). */
+  static DcwServiceMapping globalCaidProviderMapping() {
+    return new DcwServiceMapping(10L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_B, MAP_PROVIDER_B,
+        0, 0, true, true, 0L, 1L, 0L);
+  }
+
+  @Test
+  @DisplayName("Mapping CAID:Provider global : change de couple CAID/provider et résout dans les deux sens en conservant le SID")
+  void globalCaidProviderMappingResolvesBothWays() {
+    var m = globalCaidProviderMapping();
+    assertEquals(Optional.of(new DcwServiceMapping.MappedTarget(MAP_CAID_B, MAP_PROVIDER_B, MAP_SID)),
+        m.resolveTarget("p", MAP_CAID_A, MAP_PROVIDER_A, MAP_SID, 1000L));
+    assertEquals(Optional.of(new DcwServiceMapping.MappedTarget(MAP_CAID_A, MAP_PROVIDER_A, MAP_SID)),
+        m.resolveTarget("p", MAP_CAID_B, MAP_PROVIDER_B, MAP_SID, 1000L));
+
+    // autres SID : le mapping global n'en privilégie aucun (sourceSid = targetSid = 0)
+    assertEquals(Optional.of(new DcwServiceMapping.MappedTarget(MAP_CAID_B, MAP_PROVIDER_B, 0x0001)),
+        m.resolveTarget("p", MAP_CAID_A, MAP_PROVIDER_A, 0x0001, 1000L));
+  }
+
+  @Test
+  @DisplayName("Mapping CAID:Provider global : provider inconnu, profil ou CAID/provider non couverts ne résolvent rien")
+  void globalCaidProviderMappingIgnoresNonCoveredContext() {
+    var m = globalCaidProviderMapping();
+    assertEquals(Optional.empty(),
+        m.resolveTarget("p", MAP_CAID_A, DcwRuleScope.UNKNOWN_PROVIDER, MAP_SID, 1000L),
+        "provider inconnu : jamais de mapping");
+    assertEquals(Optional.empty(), m.resolveTarget("other", MAP_CAID_A, MAP_PROVIDER_A, MAP_SID, 1000L));
+    assertEquals(Optional.empty(), m.resolveTarget("p", 0x1885, MAP_PROVIDER_A, MAP_SID, 1000L));
+    assertEquals(Optional.empty(), m.resolveTarget("p", MAP_CAID_A, 0x000001, MAP_SID, 1000L));
+  }
+
+  @Test
+  @DisplayName("Mapping CAID:Provider global : expiration et inactive (désactivé / non approuvé) ne résolvent rien")
+  void globalCaidProviderMappingRequiresActive() {
+    var expiring = new DcwServiceMapping(10L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_B, MAP_PROVIDER_B,
+        0, 0, true, true, 10_000L, 1L, 0L);
+    assertTrue(expiring.resolveTarget("p", MAP_CAID_A, MAP_PROVIDER_A, MAP_SID, 9_999L).isPresent());
+    assertEquals(Optional.empty(), expiring.resolveTarget("p", MAP_CAID_A, MAP_PROVIDER_A, MAP_SID, 10_001L));
+    var disabled = new DcwServiceMapping(11L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_B, MAP_PROVIDER_B,
+        0, 0, true, false, 0L, 1L, 0L);
+    assertEquals(Optional.empty(), disabled.resolveTarget("p", MAP_CAID_A, MAP_PROVIDER_A, MAP_SID, 1000L));
+    var notApproved = new DcwServiceMapping(12L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_B, MAP_PROVIDER_B,
+        0, 0, false, true, 0L, 1L, 0L);
+    assertEquals(Optional.empty(), notApproved.resolveTarget("p", MAP_CAID_A, MAP_PROVIDER_A, MAP_SID, 1000L));
+  }
+
+  @Test
+  @DisplayName("Mapping mixte (un seul SID à 0) refusé ; auto-mapping complet refusé ; même CAID/provider avec SIDs distincts accepté")
+  void caidProviderMappingShapeEnforced() {
+    // SID 0 d'un seul côté : ambigu (global d'un côté, ciblé de l'autre)
+    assertThrows(IllegalArgumentException.class,
+        () -> new DcwServiceMapping(11L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_B, MAP_PROVIDER_B,
+            0, 5, true, true, 0L, 1L, 0L));
+    assertThrows(IllegalArgumentException.class,
+        () -> new DcwServiceMapping(12L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_B, MAP_PROVIDER_B,
+            5, 0, true, true, 0L, 1L, 0L));
+    // auto-mapping : même CAID/provider et même SID (y compris le cas global 0/0)
+    assertThrows(IllegalArgumentException.class,
+        () -> new DcwServiceMapping(13L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_A, MAP_PROVIDER_A,
+            0, 0, true, true, 0L, 1L, 0L));
+    assertThrows(IllegalArgumentException.class,
+        () -> new DcwServiceMapping(14L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_A, MAP_PROVIDER_A,
+            5, 5, true, true, 0L, 1L, 0L));
+    // mapping intra CAID/provider existant : toujours légitime
+    assertDoesNotThrow(() -> new DcwServiceMapping(15L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_A, MAP_PROVIDER_A,
+        5, 6, true, true, 0L, 1L, 0L));
+    assertDoesNotThrow(() -> new DcwServiceMapping(16L, "p", MAP_CAID_A, MAP_PROVIDER_A, MAP_CAID_B, MAP_PROVIDER_B,
+        5, 6, true, true, 0L, 1L, 0L));
   }
 }

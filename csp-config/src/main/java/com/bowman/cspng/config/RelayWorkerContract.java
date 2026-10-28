@@ -215,11 +215,30 @@ public final class RelayWorkerContract {
     }
   }
 
-  /** Mapping de service approuvé transporté au worker ({@code expiresAtMs = 0} : sans expiration). */
+  /**
+   * Mapping de service approuvé transporté au worker ({@code expiresAtMs = 0} : sans expiration).
+   * {@code targetCaid}/{@code targetProvider} (SID-map) : cible explicite d'un couple
+   * (caid, provider) distinct du couple source ; {@code null} => cible implicite = source
+   * (forme v1.0.0, jamais émise sur le fil quand identique — compat ancien central).
+   */
+  @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
   public record DcwMappingView(long id, String profile, int caid, int provider, int sourceSid, int targetSid,
-                               boolean approved, boolean enabled, long expiresAtMs) {
+                               boolean approved, boolean enabled, long expiresAtMs,
+                               @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+                               Integer targetCaid,
+                               @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+                               Integer targetProvider) {
+    /** Compat sans cible cross-CAID explicite (pre-SID-map : cible implicite = source). */
+    public DcwMappingView(long id, String profile, int caid, int provider, int sourceSid, int targetSid,
+                          boolean approved, boolean enabled, long expiresAtMs) {
+      this(id, profile, caid, provider, sourceSid, targetSid, approved, enabled, expiresAtMs, null, null);
+    }
+
     public DcwServiceMappingConfig toConfig() {
-      return new DcwServiceMappingConfig(id, profile, caid, provider, sourceSid, targetSid, approved, enabled, expiresAtMs, 1L, 0L);
+      int effTargetCaid = (targetCaid != null && targetCaid > 0) ? targetCaid : caid;
+      int effTargetProv = (targetProvider != null && targetProvider >= 0) ? targetProvider : provider;
+      return new DcwServiceMappingConfig(id, profile, caid, provider, effTargetCaid, effTargetProv,
+          sourceSid, targetSid, approved, enabled, expiresAtMs, 1L, 0L);
     }
   }
 
@@ -272,8 +291,11 @@ public final class RelayWorkerContract {
       for (var m : p.mappings()) {
         if (!m.enabled() || !m.approved()) continue;
         if (profileFilter != null && !profileFilter.test(m.profile())) continue;
+        boolean sameTarget = m.targetCaid() == m.caid() && m.targetProvider() == m.provider();
+        Integer tCaid = sameTarget ? null : m.targetCaid();
+        Integer tProvider = sameTarget ? null : m.targetProvider();
         mv.add(new DcwMappingView(m.id(), m.profile(), m.caid(), m.provider(), m.sourceSid(), m.targetSid(),
-            m.approved(), m.enabled(), m.expiresAtMs()));
+            m.approved(), m.enabled(), m.expiresAtMs(), tCaid, tProvider));
       }
       return new DcwPolicyView(p.enabled(), p.adaptiveRoutingEnabled(), p.autoObserveEnabled(), p.zeroCountingEnabled(),
           p.defaultChecksumMode(), p.repairMode(), p.allowZeroHalf(), rv, mv);
@@ -439,15 +461,52 @@ public final class RelayWorkerContract {
     }
   }
 
-  /** Stats cacheex par pair remontées par le worker (même forme que le central, C1). */
+  /**
+   * Stats par service (caid/provid/srvid) au sein d'une paire CacheEx (SID-map, extension
+   * additive v2) : transite sur le canal stats worker→central, jamais sur un ancien central
+   * (champ {@code sids} de {@link CacheExPairStatsView} omis si absent).
+   */
+  @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
+  public record CacheExSidStatsView(
+      int caid, int provid, int srvid,
+      long pushedCw, long receivedCw, long hits, long droppedCw,
+      Long lastActivityAtMs) {}
+
+  /**
+   * Stats cacheex par pair remontées par le worker (même forme que le central, C1).
+   * {@code remoteIp}/{@code remoteNodeId}/{@code hits}/{@code sids} (SID-map, extension
+   * additive v2) : omis du JSON quand absents (NON_NULL) pour préserver strictement la
+   * forme v1.0.0 (16 clés) lue par un central non mis à jour.
+   */
+  @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
   public record CacheExPairStatsView(
       String peerId, String direction, String protocol, int mode, String profile,
       boolean online, String state, int maxHop, int maxSendQueue, boolean filterActive,
       long pushedCw, long receivedCw, long droppedCw,
-      java.util.Map<String, Long> dropReasons, Long lastPushAtMs, Long lastReceiveAtMs) {
+      java.util.Map<String, Long> dropReasons, Long lastPushAtMs, Long lastReceiveAtMs,
+      @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+      String remoteIp,
+      @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+      String remoteNodeId,
+      @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+      Long hits,
+      @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+      List<CacheExSidStatsView> sids) {
     public CacheExPairStatsView {
       if (peerId == null || peerId.isBlank()) throw new IllegalArgumentException("peerId required");
       dropReasons = dropReasons != null ? java.util.Map.copyOf(dropReasons) : java.util.Map.of();
+      sids = sids != null ? List.copyOf(sids) : null;
+    }
+
+    /** Compat sans extension v2 (remoteIp/remoteNodeId/hits/sids, SID-map, pre-C? ack 256 KiB). */
+    public CacheExPairStatsView(
+        String peerId, String direction, String protocol, int mode, String profile,
+        boolean online, String state, int maxHop, int maxSendQueue, boolean filterActive,
+        long pushedCw, long receivedCw, long droppedCw,
+        java.util.Map<String, Long> dropReasons, Long lastPushAtMs, Long lastReceiveAtMs) {
+      this(peerId, direction, protocol, mode, profile, online, state, maxHop, maxSendQueue, filterActive,
+          pushedCw, receivedCw, droppedCw, dropReasons, lastPushAtMs, lastReceiveAtMs,
+          null, null, null, null);
     }
   }
 

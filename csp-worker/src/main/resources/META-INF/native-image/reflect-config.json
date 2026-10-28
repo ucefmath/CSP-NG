@@ -658,6 +658,12 @@
     "allDeclaredMethods": true
   },
   {
+    "name": "com.bowman.cspng.config.RelayWorkerContract$CacheExSidStatsView",
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true
+  },
+  {
     "name": "com.bowman.cspng.config.RelayWorkerContract$CwCycleView",
     "allDeclaredConstructors": true,
     "allDeclaredFields": true,

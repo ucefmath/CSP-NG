@@ -85,6 +85,37 @@ class AdminCacheexResourceTest {
   }
 
   @Test
+  @DisplayName("Paires worker : identité distante, hits et SID résolus propagés (SID-map)")
+  void workerAndCentralPairsIncludeRemoteIdentityHitsAndResolvedSids() {
+    String jsonWithRemoteIpNodeIdHitsAndSids = "{\"cacheex\": [{"
+        + "  \"peerId\": \"cx-up\", \"direction\": \"outbound\", \"protocol\": \"cccam\","
+        + "  \"mode\": 3, \"profile\": \"default\", \"online\": true, \"state\": \"connected\","
+        + "  \"remoteIp\": \"77.90.60.222\","
+        + "  \"remoteNodeId\": \"1A2B3C4D5E6F7081\","
+        + "  \"hits\": 5,"
+        + "  \"sids\": [{"
+        + "    \"caid\": 6276, \"provid\": 0, \"srvid\": 13020,"
+        + "    \"pushedCw\": 0, \"receivedCw\": 10, \"hits\": 5, \"droppedCw\": 1,"
+        + "    \"lastActivityAtMs\": 1700000000000"
+        + "  }]"
+        + "}]}";
+    var pairs = resource().parseWorkerPairs("w1", jsonWithRemoteIpNodeIdHitsAndSids);
+    assertEquals(1, pairs.size(), "une paire worker valide => une entrée");
+    var p = pairs.get(0);
+    assertEquals("77.90.60.222", p.remoteIp(), "IP distante du pair remontée par le worker");
+    assertEquals("1A2B3C4D5E6F7081", p.remoteNodeId(), "identifiant de nœud distant remonté");
+    assertEquals(5L, p.hits(), "hits servis depuis ce pair");
+    assertEquals(1, p.sids().size(), "un SID résolu");
+    var sid = p.sids().get(0);
+    assertEquals("1884@000000:32DC", sid.serviceKey(), "clé de service canonique CAID@PROVID:SID");
+    assertEquals(6276, sid.caid());
+    assertEquals(13020, sid.srvid());
+    assertEquals(10L, sid.receivedCw());
+    assertEquals(5L, sid.hits());
+    assertEquals(1L, sid.droppedCw());
+  }
+
+  @Test
   @DisplayName("Reset central ne touche que le registry local")
   void resetOnlyLocalRegistry() {
     var res = resource();

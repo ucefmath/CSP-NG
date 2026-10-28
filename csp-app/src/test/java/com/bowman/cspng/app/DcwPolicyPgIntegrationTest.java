@@ -263,4 +263,49 @@ class DcwPolicyPgIntegrationTest {
     sql("DELETE FROM csp_dcw_service_mapping WHERE profile = 'fk_test_p_renamed'");
     sql("DELETE FROM csp_profile WHERE name = 'fk_test_p_renamed'");
   }
+
+  @Test @Order(11)
+  @DisplayName("Mapping CAID:Provider global (sourceSid=targetSid=0) : couple cible persisté, doublon inverse rejeté, update persisté")
+  void caidProviderMappingPersistenceAndReverseDuplicateRejection() throws Exception {
+    // 1. Création d'un mapping global de couples : (0x1884, 0x000000) -> (0x1813, 0x000068)
+    long id = await(repo.createDcwServiceMapping(
+        new DcwServiceMappingConfig(0, "default", 0x1884, 0x000000, 0x1813, 0x000068, 0, 0, true, true, 0L, 1, 0), "admin"));
+    assertTrue(id > 0);
+
+    // 2. Rechargement depuis la base : le couple cible et les SID wildcard sont bien persistés
+    var reloaded = await(repo.getDcwPolicy()).mappings().stream()
+        .filter(m -> m.id() == id).findFirst().orElseThrow();
+    assertEquals(0x1813, reloaded.targetCaid(), "target_caid du mapping global persisté");
+    assertEquals(0x000068, reloaded.targetProvider(), "target_provider du mapping global persisté");
+    assertEquals(0, reloaded.sourceSid(), "source_sid wildcard (0) persisté");
+    assertEquals(0, reloaded.targetSid(), "target_sid wildcard (0) persisté");
+
+    // 3. Doublon inverse rejeté dans la transaction (aucune écriture)
+    var ex = assertThrows(ExecutionException.class, () -> await(repo.createDcwServiceMapping(
+        new DcwServiceMappingConfig(0, "default", 0x1813, 0x000068, 0x1884, 0x000000, 0, 0, true, true, 0L, 1, 0), "admin")));
+    assertInstanceOf(ConfigValidationException.class, ex.getCause());
+    // 0x1813 = 6163, 0x000068 = 104 (littéraux décimaux : 0x… n'est pas portable avant PG16)
+    assertEquals(0, scalar("SELECT count(*) FROM csp_dcw_service_mapping WHERE profile = 'default'"
+        + " AND caid = 6163 AND provider = 104"), "le doublon inverse ne doit pas être écrit");
+
+    // 4. Mise à jour du couple cible : persistée en base
+    await(repo.updateDcwServiceMapping(id, new DcwServiceMappingConfig(id, "default", 0x1884, 0x000000,
+        0x1818, 0x00006C, 0, 0, true, true, 0L, 1, 0), 1L, "admin"));
+    var updated = await(repo.getDcwPolicy()).mappings().stream()
+        .filter(m -> m.id() == id).findFirst().orElseThrow();
+    assertEquals(0x1818, updated.targetCaid(), "target_caid mis à jour persisté");
+    assertEquals(0x00006C, updated.targetProvider(), "target_provider mis à jour persisté");
+
+    // 5. Insertion SQL brute de (source_sid=0, target_sid=5) échoue sur la contrainte SQL ck_dcw_mapping_sid_pair
+    var sqlEx = assertThrows(ExecutionException.class, () -> sql(
+        "INSERT INTO csp_dcw_service_mapping (profile, caid, provider, target_caid, target_provider, source_sid, target_sid, approved, enabled, version, updated_at, updated_by)"
+        + " VALUES ('default', 6276, 0, 6163, 104, 0, 5, true, true, 1, now(), 'admin')"));
+    assertTrue(sqlEx.getCause().getMessage().contains("ck_dcw_mapping_sid_pair"),
+        "l'insertion doit échouer sur la contrainte ck_dcw_mapping_sid_pair");
+
+    // 6. repo.createDcwRule(...) fonctionne sans erreur
+    long ruleId = await(repo.createDcwRule(
+        new DcwRuleConfig(0, "default", 0x1884, null, 0, null, null, "none", "ignore", "", true, 1L, 0L), "admin"));
+    assertTrue(ruleId > 0, "règle DCW créée sans erreur");
+  }
 }

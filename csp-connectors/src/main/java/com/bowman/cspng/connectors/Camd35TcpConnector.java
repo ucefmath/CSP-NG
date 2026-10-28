@@ -238,7 +238,12 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
         if (cacheVerticle != null) {
           cacheVerticle.addTransport(this);
         }
-        if (statsRegistry != null) statsRegistry.updateState(name, true, "connected", false);
+        if (statsRegistry != null) {
+          statsRegistry.updateState(name, true, "connected", false);
+          String hexNodeId = remoteNodeId != null && remoteNodeId.length == 8
+              ? java.util.HexFormat.of().withUpperCase().formatHex(remoteNodeId) : null;
+          statsRegistry.updatePeerIdentity(name, host + ":" + port, hexNodeId);
+        }
         // Échange d'id (0x3D avec notre node id) — miroir camd35_cacheex_push_request_remote_id
         sendCacheExIdRequest();
         // Mode 2 (nous recevons) : annoncer NOTRE filtre au pair
@@ -393,6 +398,10 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
     // Le pair annonce son node id (body[0..7]) et demande le nôtre — miroir OSCam 0x3D
     if (frame.data() != null && frame.data().length >= 8) {
       this.remoteNodeId = Arrays.copyOf(frame.data(), 8);
+      if (statsRegistry != null && cacheexMode != 0) {
+        String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(this.remoteNodeId);
+        statsRegistry.updatePeerIdentity(name, host + ":" + port, hexNodeId);
+      }
     }
     sendCacheExIdAnswer();
     if (statsRegistry != null && cacheexMode != 0) {
@@ -403,6 +412,10 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
   private void handleIdAnswer(Camd35FrameCodec.Camd35Frame frame) {
     if (frame.data() != null && frame.data().length >= 8) {
       this.remoteNodeId = Arrays.copyOf(frame.data(), 8);
+      if (statsRegistry != null && cacheexMode != 0) {
+        String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(this.remoteNodeId);
+        statsRegistry.updatePeerIdentity(name, host + ":" + port, hexNodeId);
+      }
     }
   }
 
@@ -428,21 +441,31 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
       logger.fine("CS378x CacheEx PUSH parse error: " + e.getMessage());
       return;
     }
+    if (remoteNodeId == null && !push.nodeIds().isEmpty()) {
+      byte[] first = push.nodeIds().get(0);
+      if (first != null && first.length == 8) {
+        this.remoteNodeId = Arrays.copyOf(first, 8);
+        if (statsRegistry != null && cacheexMode != 0) {
+          String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(this.remoteNodeId);
+          statsRegistry.updatePeerIdentity(name, host + ":" + port, hexNodeId);
+        }
+      }
+    }
     // rc : E_FOUND(0) ou E_UNHANDLED(100) — miroir camd35_cacheex_push_in
     if (push.rc() != 0 && push.rc() != 100) {
-      countDrop(CacheExStatsRegistry.REASON_INVALID);
+      countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
       return;
     }
     // Anti-boucle : notre node id dans le chemin
     for (byte[] n : push.nodeIds()) {
       if (Arrays.equals(n, nodeId)) {
-        countDrop(CacheExStatsRegistry.REASON_LOOP);
+        countDrop(CacheExStatsRegistry.REASON_LOOP, push.caid(), push.prid(), push.srvid());
         return;
       }
     }
     // Max-hop
     if (push.nodeIds().size() > cacheexMaxHop) {
-      countDrop(CacheExStatsRegistry.REASON_HOP);
+      countDrop(CacheExStatsRegistry.REASON_HOP, push.caid(), push.prid(), push.srvid());
       logger.fine("CS378x CacheEx PUSH skipped — hop count " + push.nodeIds().size()
           + " > max " + cacheexMaxHop);
       return;
@@ -458,14 +481,14 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
         }
       }
       if (!matches) {
-        countDrop(CacheExStatsRegistry.REASON_FILTERED);
+        countDrop(CacheExStatsRegistry.REASON_FILTERED, push.caid(), push.prid(), push.srvid());
         return;
       }
     }
     // R2: Validation parité (0, 0x80, 0x81) AVANT toute allocation ou suivi quorum
     // Compat OSCam : 0 = INCONNU accepté (bypass cycle compté) ; autres => rejet fail-closed.
     if (push.oddEven() != 0x80 && push.oddEven() != 0x81 && push.oddEven() != 0) {
-      countDrop(CacheExStatsRegistry.REASON_INVALID);
+      countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
       logger.fine("CS378x CacheEx PUSH dropped — invalid oddEven 0x"
           + Integer.toHexString(push.oddEven()));
       return;
@@ -481,7 +504,7 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
           profile, push.caid(), push.prid(), push.srvid(), oe, cw,
           push.cycleTimeSec(), push.nextCwCycle(), System.currentTimeMillis());
       if (cwCycleChecker.shouldReject(cycleVerdict)) {
-        countDrop(CacheExStatsRegistry.REASON_INVALID);
+        countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
         logger.fine("CS378x CacheEx PUSH dropped — cw-cycle " + cycleVerdict);
         return;
       }
@@ -497,17 +520,17 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
           cw, name, realOrigin,
           com.bowman.cspng.domain.dcw.LegacyGuard.CHECKSUM_REQUIRED);
       if (!verdict.accept()) {
-        countDrop(verdict.dropReason());
+        countDrop(verdict.dropReason(), push.caid(), push.prid(), push.srvid());
         logger.fine("CS378x CacheEx PUSH dropped — " + verdict.detail() + " from " + name);
         return;
       }
     } else {
       if (!DcwValidator.checksumDcw(cw)) {
-        countDrop(CacheExStatsRegistry.REASON_CHECKSUM);
+        countDrop(CacheExStatsRegistry.REASON_CHECKSUM, push.caid(), push.prid(), push.srvid());
         return;
       }
       if (DcwValidator.hasFiveZeroes(cw) || DcwValidator.hasZeroDcw(cw)) {
-        countDrop(CacheExStatsRegistry.REASON_INVALID);
+        countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
         return;
       }
     }
@@ -521,16 +544,16 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
       EcmRequest synthetic = new EcmRequest(key, new byte[0], profile, origin, name,
           System.currentTimeMillis(), null, 5000);
       cacheVerticle.handleReply(synthetic, reply);
-      if (statsRegistry != null) statsRegistry.countReceived(name);
+      if (statsRegistry != null) statsRegistry.countReceived(name, push.caid(), push.prid(), push.srvid());
       if (gate != null) gate.postInjected(name);
     } else if (cacheExBridge != null && cacheExBridge.feedReceived(
         profile, -1, push.caid(), push.prid(), push.srvid(), oe, cw,
         push.dataHash(), push.cycleTimeSec(), push.nextCwCycle(),
         push.nodeIds(), origin, name)) {
-      if (statsRegistry != null) statsRegistry.countReceived(name);
+      if (statsRegistry != null) statsRegistry.countReceived(name, push.caid(), push.prid(), push.srvid());
       if (gate != null) gate.postInjected(name);
     } else {
-      countDrop(CacheExStatsRegistry.REASON_INVALID);
+      countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
       logger.fine("CS378x CacheEx PUSH dropped — no routable cache (worker bridge absent?)");
     }
   }
@@ -559,7 +582,7 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
       if (!java.util.Arrays.equals(n, nodeId)) allNodes.add(n);
     }
     if (allNodes.size() > cacheexMaxHop) {
-      countDrop(CacheExStatsRegistry.REASON_HOP);
+      countDrop(CacheExStatsRegistry.REASON_HOP, reply.key().caId(), 0, reply.key().serviceId());
       return;
     }
 
@@ -567,7 +590,7 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
     for (;;) {
       int pending = pendingPushQueue.get();
       if (pending >= cacheexMaxSendQueue) {
-        countDrop(CacheExStatsRegistry.REASON_QUEUE);
+        countDrop(CacheExStatsRegistry.REASON_QUEUE, reply.key().caId(), 0, reply.key().serviceId());
         logger.fine("CS378x CacheEx PUSH(OUT) dropped — send queue full ("
             + pending + " >= " + cacheexMaxSendQueue + ")");
         return;
@@ -611,7 +634,7 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
         pendingPushQueue.decrementAndGet();
       }
     });
-    if (statsRegistry != null) statsRegistry.countPushed(name);
+    if (statsRegistry != null) statsRegistry.countPushed(name, reply.key().caId(), 0, reply.key().serviceId());
   }
 
   @Override
@@ -690,6 +713,10 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
 
   private void countDrop(String reason) {
     if (statsRegistry != null) statsRegistry.countDropped(name, reason);
+  }
+
+  private void countDrop(String reason, int caid, int provid, int srvid) {
+    if (statsRegistry != null) statsRegistry.countDropped(name, reason, caid, provid, srvid);
   }
 
   // ============================================================

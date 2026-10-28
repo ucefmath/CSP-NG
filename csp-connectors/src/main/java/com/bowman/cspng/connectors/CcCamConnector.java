@@ -303,6 +303,9 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
 
         if (statsRegistry != null && cacheexMode != CcConstants.CACHEEX_MODE_OFF) {
           statsRegistry.updateState(name, false, "connecting", false);
+          String hexNodeId = peerNodeId != null && peerNodeId.length == 8
+              ? java.util.HexFormat.of().withUpperCase().formatHex(peerNodeId) : null;
+          statsRegistry.updatePeerIdentity(name, host + ":" + port, hexNodeId);
         }
 
         // Étape 1: attendre les 16 octets de seed du serveur (EN CLAIR)
@@ -685,6 +688,10 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
       CcCardCodec.SrvData srv = CcCardCodec.parseSrvData(payload);
       peerNodeId = srv.nodeId();
       peerVersion = srv.peerVersion();
+      if (statsRegistry != null && cacheexMode != CcConstants.CACHEEX_MODE_OFF && peerNodeId != null && peerNodeId.length == 8) {
+        String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(peerNodeId);
+        statsRegistry.updatePeerIdentity(name, host + ":" + port, hexNodeId);
+      }
 
       // Construire la clé AES pour CMD_0B : node_id(8) + version(8)
       cmd0bAesKey = new byte[16];
@@ -1023,6 +1030,17 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
     }
 
     try {
+      if (peerNodeId == null && !push.nodeIds().isEmpty()) {
+        byte[] first = push.nodeIds().get(0);
+        if (first != null && first.length == 8) {
+          this.peerNodeId = Arrays.copyOf(first, 8);
+          if (statsRegistry != null && cacheexMode != CcConstants.CACHEEX_MODE_OFF) {
+            String hexNodeId = java.util.HexFormat.of().withUpperCase().formatHex(this.peerNodeId);
+            statsRegistry.updatePeerIdentity(name, host + ":" + port, hexNodeId);
+          }
+        }
+      }
+
       logger.fine("CCcam CacheEx PUSH: caid=0x" + Integer.toHexString(push.caid())
           + " srvid=0x" + Integer.toHexString(push.srvid())
           + " rc=" + push.rc() + " hash=0x" + Integer.toHexString(push.dataHash())
@@ -1031,21 +1049,21 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
 
       // Validation
       if (!CcCacheExCodec.isPushValid(push)) {
-        countDrop(CacheExStatsRegistry.REASON_INVALID);
+        countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
         logger.fine("CCcam CacheEx PUSH not valid (rc=" + push.rc() + ")");
         return;
       }
 
       // Anti-boucle : vérifier que notre propre node_id n'est pas dans la liste
       if (CcCacheExCodec.containsNode(push.nodeIds(), nodeId)) {
-        countDrop(CacheExStatsRegistry.REASON_LOOP);
+        countDrop(CacheExStatsRegistry.REASON_LOOP, push.caid(), push.prid(), push.srvid());
         logger.fine("CCcam CacheEx PUSH skipped — own node in path");
         return;
       }
 
       // Max-hop : le nombre de nodes dans le chemin
       if (push.nodeIds().size() > cacheexMaxHop) {
-        countDrop(CacheExStatsRegistry.REASON_HOP);
+        countDrop(CacheExStatsRegistry.REASON_HOP, push.caid(), push.prid(), push.srvid());
         logger.fine("CCcam CacheEx PUSH skipped — hop count " + push.nodeIds().size()
             + " > max " + cacheexMaxHop);
         return;
@@ -1061,7 +1079,7 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
           }
         }
         if (!matches) {
-          countDrop(CacheExStatsRegistry.REASON_FILTERED);
+          countDrop(CacheExStatsRegistry.REASON_FILTERED, push.caid(), push.prid(), push.srvid());
           logger.fine("CCcam CacheEx PUSH dropped — caid/provid not in configured filter");
           return;
         }
@@ -1073,7 +1091,7 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
       // L'inconnue contourne le check cycle (bypass compté IGNORED) sans contaminer
       // les moitiés odd/even, mais reste servable (lookup par hash).
       if (push.oddEven() != 0x80 && push.oddEven() != 0x81 && push.oddEven() != 0) {
-        countDrop(CacheExStatsRegistry.REASON_INVALID);
+        countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
         logger.fine("CCcam CacheEx PUSH dropped — invalid oddEven 0x"
             + Integer.toHexString(push.oddEven()));
         return;
@@ -1088,7 +1106,7 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
             profile, push.caid(), push.prid(), push.srvid(), oe, push.cw(),
             push.cycleTimeSec(), push.nextCwCycle(), System.currentTimeMillis());
         if (cwCycleChecker.shouldReject(cycleVerdict)) {
-          countDrop(CacheExStatsRegistry.REASON_INVALID);
+          countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
           logger.fine("CCcam CacheEx PUSH dropped — cw-cycle " + cycleVerdict);
           return;
         }
@@ -1109,23 +1127,23 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
             pushCw, name, realOrigin,
             com.bowman.cspng.domain.dcw.LegacyGuard.CHECKSUM_REQUIRED);
         if (!verdict.accept()) {
-          countDrop(verdict.dropReason());
+          countDrop(verdict.dropReason(), push.caid(), push.prid(), push.srvid());
           logger.fine("CCcam CacheEx PUSH dropped — " + verdict.detail() + " from " + name);
           return;
         }
       } else {
         if (!DcwValidator.checksumDcw(pushCw)) {
-          countDrop(CacheExStatsRegistry.REASON_CHECKSUM);
+          countDrop(CacheExStatsRegistry.REASON_CHECKSUM, push.caid(), push.prid(), push.srvid());
           logger.fine("CCcam CacheEx PUSH dropped — CW checksum invalid");
           return;
         }
         if (DcwValidator.hasFiveZeroes(pushCw)) {
-          countDrop(CacheExStatsRegistry.REASON_INVALID);
+          countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
           logger.fine("CCcam CacheEx PUSH dropped — CW has 5-7 zeroes");
           return;
         }
         if (DcwValidator.hasZeroDcw(pushCw)) {
-          countDrop(CacheExStatsRegistry.REASON_INVALID);
+          countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
           logger.fine("CCcam CacheEx PUSH dropped — CW has zero half");
           return;
         }
@@ -1150,22 +1168,22 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
             profile, originAddress, name,
             System.currentTimeMillis(), null, 5000);
         cacheVerticle.handleReply(syntheticRequest, reply);
-        if (statsRegistry != null) statsRegistry.countReceived(name);
+        if (statsRegistry != null) statsRegistry.countReceived(name, push.caid(), push.prid(), push.srvid());
         if (gate != null) gate.postInjected(name);
       } else if (cacheExBridge != null && cacheExBridge.feedReceived(
           profile, -1, push.caid(), push.prid(), push.srvid(), oe, pushCw,
           push.dataHash(), push.cycleTimeSec(), push.nextCwCycle(),
           push.nodeIds(), originAddress, name)) {
-        if (statsRegistry != null) statsRegistry.countReceived(name);
+        if (statsRegistry != null) statsRegistry.countReceived(name, push.caid(), push.prid(), push.srvid());
         if (gate != null) gate.postInjected(name);
       } else {
         // Aucun cache routable (worker sans pont / profil inconnu) — rejet explicite
-        countDrop(CacheExStatsRegistry.REASON_INVALID);
+        countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
         logger.fine("CCcam CacheEx PUSH dropped — no routable cache (worker bridge absent?)");
       }
 
     } catch (Exception e) {
-      countDrop(CacheExStatsRegistry.REASON_INVALID);
+      countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
       logger.log(Level.WARNING,
           "CCcam CacheEx PUSH handling error: " + e.getMessage(), e);
     }
@@ -1203,6 +1221,10 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
 
   private void countDrop(String reason) {
     if (statsRegistry != null) statsRegistry.countDropped(name, reason);
+  }
+
+  private void countDrop(String reason, int caid, int provid, int srvid) {
+    if (statsRegistry != null) statsRegistry.countDropped(name, reason, caid, provid, srvid);
   }
 
   /**
@@ -1326,7 +1348,7 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
 
     // Vérifier max-hop — FIX 3: aligné RX (count > maxhop rejeté par OSCam)
     if (allNodes.size() > cacheexMaxHop) {
-      countDrop(CacheExStatsRegistry.REASON_HOP);
+      countDrop(CacheExStatsRegistry.REASON_HOP, reply.key().caId(), 0, reply.key().serviceId());
       logger.fine("CCcam CacheEx PUSH(OUT) skipped — hop count "
           + allNodes.size() + " > max " + cacheexMaxHop);
       return;
@@ -1337,7 +1359,7 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
     for (;;) {
       int pending = pendingPushQueue.get();
       if (pending >= cacheexMaxSendQueue) {
-        countDrop(CacheExStatsRegistry.REASON_QUEUE);
+        countDrop(CacheExStatsRegistry.REASON_QUEUE, reply.key().caId(), 0, reply.key().serviceId());
         logger.fine("CCcam CacheEx PUSH(OUT) dropped — send queue full ("
             + pending + " >= " + cacheexMaxSendQueue + ")");
         return;
@@ -1379,7 +1401,7 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
         pendingPushQueue.decrementAndGet();
       }
     });
-    if (statsRegistry != null) statsRegistry.countPushed(name);
+    if (statsRegistry != null) statsRegistry.countPushed(name, reply.key().caId(), 0, reply.key().serviceId());
 
     logger.fine("CCcam CacheEx PUSH(OUT): hash=0x"
         + Integer.toHexString(reply.key().dataHash())

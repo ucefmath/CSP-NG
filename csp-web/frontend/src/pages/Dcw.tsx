@@ -493,12 +493,32 @@ interface DcwMapping {
   profile?: string;
   caid?: number;
   provider?: number;
+  targetCaid?: number;
+  targetProvider?: number;
   sourceSid?: number;
   targetSid?: number;
   approved?: boolean;
   enabled?: boolean;
   expiresAtMs?: number;
   version: number;
+}
+
+function formatCaidProvider(caid?: number, provider?: number): string {
+  const c = caid != null ? hex(caid, 4) : "—";
+  const p = provider != null ? hex(provider, 6) : "—";
+  return `${c}:${p}`;
+}
+
+function formatCaidProviderMapping(m: DcwMapping): string {
+  const src = formatCaidProvider(m.caid, m.provider);
+  const tgtCaid = m.targetCaid ?? m.caid;
+  const tgtProv = m.targetProvider ?? m.provider;
+  const hasDiff = (m.targetCaid != null && m.targetCaid !== m.caid) || (m.targetProvider != null && m.targetProvider !== m.provider);
+  if (hasDiff) {
+    const tgt = formatCaidProvider(tgtCaid, tgtProv);
+    return `${src} → ${tgt}`;
+  }
+  return src;
 }
 
 function MappingsTab() {
@@ -542,7 +562,7 @@ function MappingsTab() {
   return (
     <div>
       <div className="toolbar">
-        <h2>Mappings de service (même profil/CAID/provider)</h2>
+        <h2>Mappings de service (CAID:Provider &amp; SIDs)</h2>
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setDlg("new")}>Nouveau mapping</button>
       </div>
       <p className="muted small">
@@ -558,8 +578,7 @@ function MappingsTab() {
               <tr>
                 <th>ID</th>
                 <th>Profil</th>
-                <th>CAID</th>
-                <th>Provider</th>
+                <th>CAID:Provider → Cible</th>
                 <th>Source → Cible</th>
                 <th>Approuvé</th>
                 <th>État</th>
@@ -573,9 +592,10 @@ function MappingsTab() {
                 <tr key={m.id}>
                   <td className="mono">#{m.id}</td>
                   <td>{m.profile}</td>
-                  <td className="mono">{m.caid != null ? hex(m.caid, 4) : "—"}</td>
-                  <td className="mono">{m.provider != null ? hex(m.provider, 6) : "—"}</td>
-                  <td className="mono small">{m.sourceSid != null ? formatSid(m.sourceSid) : "?"} → {m.targetSid != null ? formatSid(m.targetSid) : "?"}</td>
+                  <td className="mono small">{formatCaidProviderMapping(m)}</td>
+                  <td className="mono small">
+                    {m.sourceSid === 0 && m.targetSid === 0 ? "* (tous les SIDs)" : `${m.sourceSid != null ? formatSid(m.sourceSid) : "?"} → ${m.targetSid != null ? formatSid(m.targetSid) : "?"}`}
+                  </td>
                   <td>{m.approved ? "oui" : "non"}</td>
                   <td>
                     <span className={m.enabled ? "badge badge-ok" : "badge badge-muted"}>
@@ -606,6 +626,13 @@ function epochToLocal(ms: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function parseHexOrDec(raw: string): number {
+  const t = raw.trim();
+  if (!t) return NaN;
+  if (/^0x[0-9a-fA-F]+$/i.test(t)) return parseInt(t, 16);
+  return parseInteger(t, NaN);
+}
+
 function MappingDialog({ existing, onClose, onSaved }: { existing: DcwMapping | null; onClose: () => void; onSaved: () => void }) {
   const { push } = useToast();
   const isEdit = !!existing;
@@ -613,8 +640,10 @@ function MappingDialog({ existing, onClose, onSaved }: { existing: DcwMapping | 
     profile: existing?.profile ?? "",
     caid: existing?.caid != null ? String(existing.caid) : "",
     provider: existing?.provider != null ? String(existing.provider) : "0",
-    sourceSid: existing?.sourceSid != null ? formatSid(existing.sourceSid) : "",
-    targetSid: existing?.targetSid != null ? formatSid(existing.targetSid) : "",
+    targetCaid: existing?.targetCaid != null ? (existing.targetCaid > 255 ? hex(existing.targetCaid, 4) : String(existing.targetCaid)) : "",
+    targetProvider: existing?.targetProvider != null ? hex(existing.targetProvider, 6) : "",
+    sourceSid: existing?.sourceSid != null ? (existing.sourceSid === 0 ? "0" : formatSid(existing.sourceSid)) : "",
+    targetSid: existing?.targetSid != null ? (existing.targetSid === 0 ? "0" : formatSid(existing.targetSid)) : "",
     approved: existing?.approved ?? true,
     enabled: existing?.enabled ?? true,
     expiresAt: existing?.expiresAtMs ? epochToLocal(existing.expiresAtMs) : "",
@@ -625,26 +654,46 @@ function MappingDialog({ existing, onClose, onSaved }: { existing: DcwMapping | 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setF({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value });
 
-  function parseSidLike(raw: string): number {
-    const t = raw.trim();
-    if (!t) return NaN;
-    if (/^0x[0-9a-fA-F]+$/.test(t)) return parseInt(t, 16);
-    return parseInteger(t, NaN);
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
     if (!f.profile.trim() || f.profile.length > 64) return setErr("Profil requis (1..64)");
-    const caid = parseInteger(f.caid.trim(), NaN);
+    const caid = parseHexOrDec(f.caid);
     if (!(caid >= 1 && caid <= 65535)) return setErr("CAID requis (1..65535)");
-    const provider = /^0x/i.test(f.provider.trim()) ? parseInt(f.provider.trim(), 16) : parseInteger(f.provider.trim(), NaN);
+    const provider = parseHexOrDec(f.provider);
     if (!(provider >= 0 && provider <= 16777215)) return setErr("Provider requis (0..16777215)");
-    const sourceSid = parseSidLike(f.sourceSid);
-    if (!(sourceSid >= 1 && sourceSid <= 65535)) return setErr("SID Source requis (1..65535)");
-    const targetSid = parseSidLike(f.targetSid);
-    if (!(targetSid >= 1 && targetSid <= 65535)) return setErr("SID Cible requis (1..65535)");
-    if (sourceSid === targetSid) return setErr("sourceSid doit différer de targetSid");
+
+    let targetCaid: number | undefined = undefined;
+    if (f.targetCaid.trim()) {
+      const parsed = parseHexOrDec(f.targetCaid);
+      if (!(parsed >= 1 && parsed <= 65535)) return setErr("CAID Cible invalide (1..65535)");
+      targetCaid = parsed;
+    }
+
+    let targetProvider: number | undefined = undefined;
+    if (f.targetProvider.trim()) {
+      const parsed = parseHexOrDec(f.targetProvider);
+      if (!(parsed >= 0 && parsed <= 16777215)) return setErr("Provider Cible invalide (0..16777215)");
+      targetProvider = parsed;
+    }
+
+    const sourceSid = parseHexOrDec(f.sourceSid);
+    if (isNaN(sourceSid) || sourceSid < 0 || sourceSid > 65535) return setErr("SID Source requis (0 ou 1..65535)");
+    const targetSid = parseHexOrDec(f.targetSid);
+    if (isNaN(targetSid) || targetSid < 0 || targetSid > 65535) return setErr("SID Cible requis (0 ou 1..65535)");
+
+    const isGlobalSid = sourceSid === 0 && targetSid === 0;
+    const isSpecificSid = sourceSid >= 1 && sourceSid <= 65535 && targetSid >= 1 && targetSid <= 65535;
+    if (!isGlobalSid && !isSpecificSid) {
+      return setErr("sourceSid et targetSid doivent être soit tous deux 0 (mapping global), soit tous deux dans 1..65535");
+    }
+
+    const effectiveTargetCaid = targetCaid ?? caid;
+    const effectiveTargetProv = targetProvider ?? provider;
+    if (caid === effectiveTargetCaid && provider === effectiveTargetProv && sourceSid === targetSid) {
+      return setErr("sourceSid doit différer de targetSid (ou cible CAID:Provider différente)");
+    }
+
     const version = parseInteger(f.version, NaN);
     if (isEdit && !(version >= 1)) return setErr("Version requise (>= 1)");
     setBusy(true);
@@ -659,6 +708,12 @@ function MappingDialog({ existing, onClose, onSaved }: { existing: DcwMapping | 
         enabled: f.enabled,
         expiresAtMs: f.expiresAt.trim() ? new Date(f.expiresAt).getTime() : 0,
       };
+      if (targetCaid !== undefined && targetCaid !== caid) {
+        payload.targetCaid = targetCaid;
+      }
+      if (targetProvider !== undefined && targetProvider !== provider) {
+        payload.targetProvider = targetProvider;
+      }
       if (isEdit) {
         await apiJson(`/api/admin/dcw/mappings/${existing.id}`, { method: "PUT", body: { ...payload, version } });
         push(`Mapping #${existing.id} mis à jour`);
@@ -684,11 +739,19 @@ function MappingDialog({ existing, onClose, onSaved }: { existing: DcwMapping | 
       <form onSubmit={submit} noValidate>
         <div className="form-grid cols-2">
           <Field label="Profil (requis, 1..64)" htmlFor="dm-profile"><input id="dm-profile" value={f.profile} onChange={set("profile")} required /></Field>
-          <Field label="CAID (requis, 1..65535)" htmlFor="dm-caid"><input id="dm-caid" type="number" value={f.caid} onChange={set("caid")} required /></Field>
-          <Field label="Provider (requis, 0..16777215)" htmlFor="dm-prov"><input id="dm-prov" value={f.provider} onChange={set("provider")} required /></Field>
+          <Field label="CAID (requis, 1..65535)" htmlFor="dm-caid"><input id="dm-caid" value={f.caid} onChange={set("caid")} required placeholder="décimal ou 0x…" /></Field>
+          <Field label="Provider (requis, 0..16777215)" htmlFor="dm-prov"><input id="dm-prov" value={f.provider} onChange={set("provider")} required placeholder="décimal ou 0x…" /></Field>
           <Field label="Expiration (vide = permanente)" htmlFor="dm-exp"><input id="dm-exp" type="datetime-local" value={f.expiresAt} onChange={set("expiresAt")} /></Field>
-          <Field label="SID Source (1..65535 ou hex 0x…)" htmlFor="dm-src"><input id="dm-src" value={f.sourceSid} onChange={set("sourceSid")} required /></Field>
-          <Field label="SID Cible (≠ source)" htmlFor="dm-tgt"><input id="dm-tgt" value={f.targetSid} onChange={set("targetSid")} required /></Field>
+          <div className="field">
+            <label id="lbl-dm-tcaid">CAID Cible (décimal ou 0x…, vide = même CAID)</label>
+            <input id="dm-tcaid" value={f.targetCaid} onChange={set("targetCaid")} placeholder="vide = même CAID" />
+          </div>
+          <div className="field">
+            <label id="lbl-dm-tprov">Provider Cible (décimal ou 0x…, vide = même Provider)</label>
+            <input id="dm-tprov" value={f.targetProvider} onChange={set("targetProvider")} placeholder="vide = même Provider" />
+          </div>
+          <Field label="SID Source (1..65535 ou hex 0x…)" htmlFor="dm-src"><input id="dm-src" value={f.sourceSid} onChange={set("sourceSid")} required placeholder="0 = tous les SIDs (mapping CAID:Provider global)" /></Field>
+          <Field label="SID Cible (≠ source)" htmlFor="dm-tgt"><input id="dm-tgt" value={f.targetSid} onChange={set("targetSid")} required placeholder="0 = tous les SIDs (mapping CAID:Provider global)" /></Field>
           <label className="check-row"><input type="checkbox" checked={f.approved} onChange={set("approved")} /><span>Approuvé explicitement</span></label>
           <label className="check-row"><input type="checkbox" checked={f.enabled} onChange={set("enabled")} /><span>Activé</span></label>
           {isEdit && (

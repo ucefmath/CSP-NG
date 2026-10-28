@@ -111,7 +111,24 @@ public class CacheVerticle extends AbstractVerticle {
   private void recordServedHit(CwReply reply) {
     CacheHitSink a = hitAttribution;
     if (a == null || reply == null || reply.isEmpty()) return;
-    a.recordServedHit(reply.originAddress(), reply.connectorName());
+    a.recordServedHit(reply.originAddress(), reply.connectorName(),
+        reply.key().caId(), 0, reply.key().serviceId());
+  }
+
+  /**
+   * Enregistrement enrichi du hit servi avec extraction du provider depuis le corps ECM.
+   * Utilisé quand la requête originale est disponible (hit instantané, waiter).
+   */
+  private void recordServedHit(CwReply reply, EcmRequest request) {
+    CacheHitSink a = hitAttribution;
+    if (a == null || reply == null || reply.isEmpty()) return;
+    int caid = request.key().caId();
+    int srvid = request.key().serviceId();
+    int provid = 0;
+    if (request.body() != null && request.body().length > 0) {
+      provid = com.bowman.cspng.codec.EcmProviderExtractor.extractProvider(caid, request.body());
+    }
+    a.recordServedHit(reply.originAddress(), reply.connectorName(), caid, provid, srvid);
   }
 
   @Override
@@ -192,7 +209,7 @@ public class CacheVerticle extends AbstractVerticle {
         CwReply reply = buildReturnedReply(cached, request);
         instantHits.incrementAndGet();
         if (reply.originAddress() != null) remoteHits.incrementAndGet();
-        recordServedHit(reply);
+        recordServedHit(reply, request);
         long elapsed = System.currentTimeMillis() - start;
         logCacheHit("INSTANT", request, reply, elapsed);
         resultPromise.complete(new CacheResult(reply, true, false, false, elapsed));
@@ -241,7 +258,7 @@ public class CacheVerticle extends AbstractVerticle {
         Handler<CwReply> onReply = returned -> {
           waitHits.incrementAndGet();
           if (returned.originAddress() != null) remoteHits.incrementAndGet();
-          recordServedHit(returned);
+          recordServedHit(returned, request);
         };
 
         PendingRegistry.Waiter waiter = pending.addWaiter(request, maxWait, onAlert, onTimeout, onReply, replyTransform);

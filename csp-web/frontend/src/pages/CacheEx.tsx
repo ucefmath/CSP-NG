@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { apiFetch, apiJson, describeError, formatDate } from "../api";
 import type {
   CacheExStats,
@@ -26,6 +26,11 @@ const REASON_LABELS: Record<string, string> = {
   quarantine: "quarantaine",
   quorum: "quorum (en attente/divergent)",
 };
+
+export function formatServiceLabel(s: { serviceKey?: string; caid?: number; provid?: number; srvid?: number; channelName?: string | null }): string {
+  const key = s.serviceKey || `${(s.caid ?? 0).toString(16).toUpperCase().padStart(4, "0")}@${(s.provid ?? 0).toString(16).toUpperCase().padStart(6, "0")}:${(s.srvid ?? 0).toString(16).toUpperCase().padStart(4, "0")}`;
+  return s.channelName ? `${key} — ${s.channelName}` : key;
+}
 
 export function formatReasons(reasons: Record<string, number> | null | undefined): string {
   if (!reasons) return "inconnu";
@@ -55,6 +60,7 @@ function directionHint(mode: number | undefined, direction: string | undefined):
 export function CacheExPage() {
   const { push } = useToast();
   const [resetting, setResetting] = useState(false);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const st = useSnapshot(async () => {
     const { body } = await apiJson<CacheExStats>("/api/admin/cacheex/stats");
     return body;
@@ -116,13 +122,16 @@ export function CacheExPage() {
             <thead>
               <tr>
                 <th>Pair</th>
+                <th>IP / Node ID</th>
                 <th>Direction</th>
                 <th>Proto</th>
                 <th>Mode</th>
                 <th>Sens</th>
                 <th>État</th>
+                <th>SIDs</th>
                 <th>Poussés</th>
                 <th>Reçus</th>
+                <th>Hits</th>
                 <th>Jetés</th>
                 <th>Flood</th>
                 <th>Causes</th>
@@ -131,29 +140,102 @@ export function CacheExPage() {
               </tr>
             </thead>
             <tbody>
-              {pairs.map((p) => (
-                <tr key={`${p.direction}/${p.peerId}`}>
-                  <td className="mono">{p.peerId}</td>
-                  <td>{p.direction === "outbound" ? "sortant" : "entrant"}</td>
-                  <td className="mono">{p.protocol ?? "—"}</td>
-                  <td className="mono">{p.mode ?? "—"}</td>
-                  <td className="small">{directionHint(p.mode, p.direction)}</td>
-                  <td>
-                    <span className={p.online ? "badge badge-ok" : "badge badge-muted"}>
-                      {p.state ?? (p.online ? "connecté" : "—")}
-                    </span>
-                  </td>
-                  <td className="mono">{p.pushedCw ?? "—"}</td>
-                  <td className="mono">{p.receivedCw ?? "—"}</td>
-                  <td className="mono">{p.droppedCw ?? "—"}</td>
-                  <td className="mono small" title="Rejets flood (anti-rafale)">
-                    {floodOf(p.dropReasons)}
-                  </td>
-                  <td className="mono small">{formatReasons(p.dropReasons)}</td>
-                  <td className="small">{formatDate(p.lastPushAtMs)}</td>
-                  <td className="small">{formatDate(p.lastReceiveAtMs)}</td>
-                </tr>
-              ))}
+              {pairs.map((p) => {
+                const pairKey = `${p.direction}/${p.peerId}`;
+                const sidCount = p.sids?.length ?? 0;
+                const hasSids = sidCount > 0;
+                const isExpanded = hasSids && !(collapsed[pairKey] ?? false);
+                return (
+                  <Fragment key={pairKey}>
+                    <tr>
+                      <td className="mono">{p.peerId}</td>
+                      <td className="mono small">
+                        <div className="peer-meta">
+                          <span>{p.remoteIp || "—"}</span>
+                          <span className="muted">{p.remoteNodeId || "—"}</span>
+                        </div>
+                      </td>
+                      <td>{p.direction === "outbound" ? "sortant" : "entrant"}</td>
+                      <td className="mono">{p.protocol ?? "—"}</td>
+                      <td className="mono">{p.mode ?? "—"}</td>
+                      <td className="small">{directionHint(p.mode, p.direction)}</td>
+                      <td>
+                        <span className={p.online ? "badge badge-ok" : "badge badge-muted"}>
+                          {p.state ?? (p.online ? "connecté" : "—")}
+                        </span>
+                      </td>
+                      <td>
+                        {hasSids ? (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            aria-expanded={isExpanded}
+                            aria-label={`${isExpanded ? "Replier" : "Déplier"} ${sidCount} SID(s) pour ${p.peerId}`}
+                            onClick={() =>
+                              setCollapsed((prev) => ({ ...prev, [pairKey]: isExpanded }))
+                            }
+                          >
+                            <span aria-hidden="true">{isExpanded ? "▼ " : "► "}</span>
+                            <span className="mono">{sidCount}</span>
+                          </button>
+                        ) : (
+                          <span className="mono muted">0</span>
+                        )}
+                      </td>
+                      <td className="mono">{p.pushedCw ?? "—"}</td>
+                      <td className="mono">{p.receivedCw ?? "—"}</td>
+                      <td className="mono">{p.hits ?? 0}</td>
+                      <td className="mono">{p.droppedCw ?? "—"}</td>
+                      <td className="mono small" title="Rejets flood (anti-rafale)">
+                        {floodOf(p.dropReasons)}
+                      </td>
+                      <td className="mono small">{formatReasons(p.dropReasons)}</td>
+                      <td className="small">{formatDate(p.lastPushAtMs)}</td>
+                      <td className="small">{formatDate(p.lastReceiveAtMs)}</td>
+                    </tr>
+                    {isExpanded &&
+                      p.sids?.map((s) => {
+                        const serviceKey =
+                          s.serviceKey ||
+                          formatServiceLabel({
+                            serviceKey: s.serviceKey,
+                            caid: s.caid,
+                            provid: s.provid,
+                            srvid: s.srvid,
+                          });
+                        return (
+                          <tr
+                            key={`${p.direction}/${p.peerId}/sid/${s.caid}:${s.provid}:${s.srvid}`}
+                            className="cacheex-sid-row"
+                          >
+                            <td className="mono small" title={formatServiceLabel(s)}>
+                              <span className="cacheex-arrow" aria-hidden="true">»»» </span>
+                              <span>{serviceKey}</span>
+                            </td>
+                            <td className="mono small">
+                              <div className="peer-meta">
+                                <span>{p.remoteIp || "—"}</span>
+                                <span className="muted">{p.remoteNodeId || "—"}</span>
+                              </div>
+                            </td>
+                            <td colSpan={6} className="small">
+                              {s.channelName || "—"}
+                            </td>
+                            <td className="mono">{s.pushedCw ?? 0}</td>
+                            <td className="mono">{s.receivedCw ?? 0}</td>
+                            <td className="mono">{s.hits ?? 0}</td>
+                            <td className="mono">{s.droppedCw ?? 0}</td>
+                            <td className="mono small">—</td>
+                            <td className="mono small">—</td>
+                            <td colSpan={2} className="small">
+                              {formatDate(s.lastActivityAtMs)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

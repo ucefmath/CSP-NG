@@ -13,6 +13,10 @@ csp-web/frontend/dist/
 csp-web/frontend/test-results/
 csp-web/frontend/playwright-report/
 
+# Artefacts Playwright générés à la racine du dépôt (jamais commités)
+test-results/
+playwright-report/
+
 # IDEs
 .idea/
 *.iml

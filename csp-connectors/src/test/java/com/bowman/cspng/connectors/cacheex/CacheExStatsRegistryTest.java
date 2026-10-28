@@ -109,6 +109,71 @@ class CacheExStatsRegistryTest {
     }
 
     @Test
+    void perSidCountersPeerIdentityAndAntiFloodOnDrops() {
+        CacheExStatsRegistry reg = new CacheExStatsRegistry();
+        reg.registerInbound("L3:@STB@", "cs378x", 3, "default", 10, 2000);
+        reg.updatePeerIdentity("L3:@STB@", "77.90.60.222", "1A2B3C4D5E6F7081");
+
+        reg.countReceived("L3:@STB@", 0x1884, 0x000000, 0x32DC);
+        reg.countReceived("L3:@STB@", 0x1884, 0x000000, 0x32DC);
+        reg.countPushed("L3:@STB@", 0x1818, 0x00006C, 0x52ED);
+        reg.countHit("L3:@STB@", 0x1884, 0x000000, 0x32DC);
+        // SID déjà connu -> drop compté sur la paire ET sur ce SID.
+        reg.countDropped("L3:@STB@", CacheExStatsRegistry.REASON_CHECKSUM, 0x1884, 0x000000, 0x32DC);
+        // SID inconnu -> drop compté sur la paire, mais AUCUNE entrée SID créée (anti-flood).
+        reg.countDropped("L3:@STB@", CacheExStatsRegistry.REASON_CHECKSUM, 0x098D, 0x000000, 0x9999);
+
+        assertEquals(1, reg.snapshot().size());
+        CacheExStatsRegistry.PairStats p = reg.snapshot().get(0);
+        assertEquals("77.90.60.222", p.remoteIp());
+        assertEquals("1A2B3C4D5E6F7081", p.remoteNodeId());
+        assertEquals(1L, p.hits());
+        assertEquals(2L, p.droppedCw());
+
+        assertEquals(2, p.sids().size(), "seuls les SID ayant du trafic réel ouvrent une entrée");
+        var sid1884 = p.sids().get(0);
+        assertEquals("1884@000000:32DC", sid1884.serviceKey());
+        assertEquals(2L, sid1884.receivedCw());
+        assertEquals(1L, sid1884.hits());
+        assertEquals(1L, sid1884.droppedCw());
+
+        var sid1818 = p.sids().get(1);
+        assertEquals("1818@00006C:52ED", sid1818.serviceKey());
+        assertEquals(1L, sid1818.pushedCw());
+
+        assertTrue(p.sids().stream().noneMatch(s -> s.serviceKey().contains("9999")),
+            "un drop sur un SID jamais vu ne crée pas d'entrée (anti-flood)");
+
+        reg.reset();
+        CacheExStatsRegistry.PairStats afterReset = reg.snapshot().get(0);
+        assertEquals(0L, afterReset.hits());
+        assertTrue(afterReset.sids().isEmpty(), "reset purge les compteurs par SID");
+    }
+
+    @Test
+    void providZeroReusesExistingSidEntryWithNonZeroProvider() {
+        CacheExStatsRegistry reg = new CacheExStatsRegistry();
+        reg.registerInbound("conn-p", "cs378x", 3, "default", 10, 2000);
+
+        // Reçu initialement avec provider non nul (ex. 0x000068)
+        reg.countReceived("conn-p", 0x1813, 0x000068, 0x32DC);
+
+        // Push / Hit / Drop arrivant avec provid = 0 -> doivent s'agréger sur l'entrée existante
+        reg.countHit("conn-p", 0x1813, 0, 0x32DC);
+        reg.countPushed("conn-p", 0x1813, 0, 0x32DC);
+        reg.countDropped("conn-p", CacheExStatsRegistry.REASON_CHECKSUM, 0x1813, 0, 0x32DC);
+
+        var p = reg.snapshot().get(0);
+        assertEquals(1, p.sids().size(), "une seule entrée SID doit exister");
+        var sid = p.sids().get(0);
+        assertEquals("1813@000068:32DC", sid.serviceKey());
+        assertEquals(1L, sid.receivedCw());
+        assertEquals(1L, sid.hits());
+        assertEquals(1L, sid.pushedCw());
+        assertEquals(1L, sid.droppedCw());
+    }
+
+    @Test
     void snapshotSortedByPeerId() {
         CacheExStatsRegistry r = new CacheExStatsRegistry();
         r.registerOutbound("z-conn", "cccam", 2, "p", 10, 2000);

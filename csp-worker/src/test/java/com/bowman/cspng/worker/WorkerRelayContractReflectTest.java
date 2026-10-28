@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +58,8 @@ class WorkerRelayContractReflectTest {
         "CwCycleStatsView manquant dans reflect-config.json");
     assertTrue(names.contains("com.bowman.cspng.config.RelayWorkerContract$CacheExPairStatsView"),
         "CacheExPairStatsView manquant dans reflect-config.json");
+    assertTrue(names.contains("com.bowman.cspng.config.RelayWorkerContract$CacheExSidStatsView"),
+        "CacheExSidStatsView manquant dans reflect-config.json");
   }
 
   @Test
@@ -234,5 +237,106 @@ class WorkerRelayContractReflectTest {
     }
     assertThrows(IllegalArgumentException.class, () ->
         new RelayWorkerContract.WorkerAck("w1", 1L, true, null, null, manyLogs));
+  }
+
+  /**
+   * SID-map : extension ADDITIVE de {@link RelayWorkerContract.CacheExPairStatsView}
+   * (remoteIp/remoteNodeId/hits/sids). Un worker à jour doit rester lisible par un central
+   * v1.0.0 : la forme 16 clés doit être strictement préservée quand les champs v2 sont absents
+   * (omission NON_NULL), et l'ack doit tenir dans le budget HTTP même au pire cas.
+   */
+  @Test
+  @DisplayName("SID-map : CacheExPairStatsView v2 additif, JSON v1 strict (16 clés) et budget ack 256 KiB")
+  void cacheExPairStatsViewV2RoundTripAndV1JsonCompatibility() throws Exception {
+    // 1. Forme v1.0.0 (constructeur 16 args) : AUCUNE clé v2 ne doit apparaître.
+    var v1 = new RelayWorkerContract.CacheExPairStatsView(
+        "L7:alice", "in", "cccam", 3, "default", true, "ok", 10, 32, true,
+        5L, 4L, 1L, Map.of("invalid", 1L), 123L, 456L);
+    String v1Json = mapper.writeValueAsString(v1);
+    var v1Tree = mapper.readTree(v1Json);
+    assertFalse(v1Tree.has("remoteIp"), "remoteIp doit être omis quand absent : " + v1Json);
+    assertFalse(v1Tree.has("remoteNodeId"), "remoteNodeId doit être omis quand absent : " + v1Json);
+    assertFalse(v1Tree.has("hits"), "hits doit être omis quand absent : " + v1Json);
+    assertFalse(v1Tree.has("sids"), "sids doit être omis quand absent : " + v1Json);
+    assertEquals(16, v1Tree.size(),
+        "une paire sans champs v2 doit émettre strictement les 16 clés v1.0.0 : " + v1Json);
+
+    // 2. Forme v2 complète : peer distant + compteurs de hits + stats par SID.
+    var sid = new RelayWorkerContract.CacheExSidStatsView(
+        0x1884, 0, 0x32DC, 1, 10, 5, 0, 1700000000000L);
+    var v2 = new RelayWorkerContract.CacheExPairStatsView(
+        "L7:alice", "in", "cccam", 3, "default", true, "ok", 10, 32, true,
+        5L, 4L, 1L, Map.of("invalid", 1L), 123L, 456L,
+        "77.90.60.222", "1A2B3C4D5E6F7081", 5L, List.of(sid));
+    String v2Json = mapper.writeValueAsString(v2);
+    assertTrue(v2Json.contains("\"remoteIp\""), "remoteIp attendu en v2 : " + v2Json);
+    assertTrue(v2Json.contains("\"remoteNodeId\""), "remoteNodeId attendu en v2 : " + v2Json);
+    assertTrue(v2Json.contains("\"hits\""), "hits attendu en v2 : " + v2Json);
+    assertTrue(v2Json.contains("\"sids\""), "sids attendu en v2 : " + v2Json);
+    var v2Back = mapper.readValue(v2Json, RelayWorkerContract.CacheExPairStatsView.class);
+    assertEquals("77.90.60.222", v2Back.remoteIp());
+    assertEquals("1A2B3C4D5E6F7081", v2Back.remoteNodeId());
+    assertEquals(Long.valueOf(5L), v2Back.hits());
+    assertNotNull(v2Back.sids(), "sids doit survivre au round-trip");
+    assertEquals(1, v2Back.sids().size());
+    assertEquals(sid, v2Back.sids().get(0), "stats par SID identiques après round-trip");
+    assertEquals("L7:alice", v2Back.peerId());
+    assertEquals(5L, v2Back.pushedCw());
+
+    // 3. Repli v1 : stripCacheExV2Fields retire les champs v2 des paires CacheEx.
+    var ack = new RelayWorkerContract.WorkerAck("w1", 1L, true, null,
+        new RelayWorkerContract.WorkerStatsView(
+            List.of(), null, List.of(), List.of(), List.of(v2), null,
+            List.of(), List.of(), List.of(), null, 1L),
+        List.of());
+    var stripped = WorkerClient.stripCacheExV2Fields(ack);
+    assertNotNull(stripped);
+    assertNotNull(stripped.stats());
+    assertEquals(1, stripped.stats().cacheex().size(), "les paires restent présentes (sans v2)");
+    var strippedPair = stripped.stats().cacheex().get(0);
+    assertEquals("L7:alice", strippedPair.peerId());
+    assertNull(strippedPair.remoteIp(), "remoteIp retiré");
+    assertNull(strippedPair.remoteNodeId(), "remoteNodeId retiré");
+    assertNull(strippedPair.hits(), "hits retiré");
+    assertTrue(strippedPair.sids() == null || strippedPair.sids().isEmpty(), "sids retirés");
+    String strippedJson = mapper.writeValueAsString(stripped);
+    assertFalse(strippedJson.contains("remoteIp"), strippedJson);
+    assertFalse(strippedJson.contains("remoteNodeId"), strippedJson);
+    assertFalse(strippedJson.contains("\"hits\""), strippedJson);
+    assertFalse(strippedJson.contains("\"sids\""), strippedJson);
+
+    // 4. Budget HTTP : 200 logs de 2000 octets + 64 paires × 16 SIDs saturés => <= 256 KiB.
+    var sids = new java.util.ArrayList<RelayWorkerContract.CacheExSidStatsView>();
+    for (int s = 0; s < 16; s++) {
+      sids.add(new RelayWorkerContract.CacheExSidStatsView(
+          0x1884, 0, 0x100 + s, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE,
+          Long.MAX_VALUE));
+    }
+    var pairs = new java.util.ArrayList<RelayWorkerContract.CacheExPairStatsView>();
+    for (int p = 0; p < 64; p++) {
+      pairs.add(new RelayWorkerContract.CacheExPairStatsView(
+          "peer-" + p, "in", "cccam", 3, "default", true, "ok", 10, 32, true,
+          Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, Map.of("invalid", Long.MAX_VALUE),
+          Long.MAX_VALUE, Long.MAX_VALUE,
+          "77.90.60." + p, String.format("1A2B3C4D5E6F70%02X", p), Long.MAX_VALUE, List.copyOf(sids)));
+    }
+    var logs = new java.util.ArrayList<RelayWorkerContract.WorkerLogEntry>();
+    for (int i = 0; i < 200; i++) {
+      logs.add(new RelayWorkerContract.WorkerLogEntry(
+          i, 1700000000000L, "ERROR", "x".repeat(20), "m".repeat(2000)));
+    }
+    var worstCaseAck = new RelayWorkerContract.WorkerAck("w1", 1L, true, null,
+        new RelayWorkerContract.WorkerStatsView(
+            List.of(), null, List.of(), List.of(), pairs, null,
+            List.of(), List.of(), List.of(), null, Long.MAX_VALUE),
+        logs);
+    String budgeted = WorkerClient.serializeAckWithBudget(mapper, worstCaseAck, 262_144);
+    assertNotNull(budgeted);
+    int budgetedBytes = budgeted.getBytes(StandardCharsets.UTF_8).length;
+    assertTrue(budgetedBytes <= 262_144,
+        "ack sérialisé doit tenir dans 262144 octets, obtenu " + budgetedBytes);
+    var budgetedBack = mapper.readValue(budgeted, RelayWorkerContract.WorkerAck.class);
+    assertEquals("w1", budgetedBack.nodeId());
+    assertTrue(budgetedBack.ok());
   }
 }

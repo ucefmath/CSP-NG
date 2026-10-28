@@ -154,4 +154,62 @@ describe("routes admin", () => {
     expect(screen.getByRole("link", { name: "Aller au contenu" })).toBeTruthy();
     vi.unstubAllGlobals();
   });
+
+  test("DcwPage rend un mapping global CAID:Provider (sourceSid=0, targetSid=0)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        const json = (body: unknown) => ({
+          ok: true,
+          status: 200,
+          headers: new Headers({ "Content-Type": "application/json" }),
+          json: async () => body,
+          text: async () => JSON.stringify(body),
+          clone: () => ({ json: async () => body }),
+        });
+        if (String(url).includes("/dcw/policy")) {
+          return json({ enabled: true, version: 1 });
+        }
+        if (String(url).includes("/dcw/rules")) return json([]);
+        if (String(url).includes("/dcw/mappings")) {
+          return json([
+            {
+              id: 42,
+              profile: "telesat",
+              caid: 0x1884,
+              provider: 0,
+              targetCaid: 0x1813,
+              targetProvider: 0x68,
+              sourceSid: 0,
+              targetSid: 0,
+              approved: true,
+              enabled: true,
+              expiresAtMs: 0,
+              version: 1,
+            },
+          ]);
+        }
+        return json({});
+      }),
+    );
+    setSessionUser("tester");
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    const { DcwPage } = await import("../pages/Dcw");
+    const router = createMemoryRouter([{ path: "/", Component: DcwPage }]);
+    render(
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>,
+    );
+
+    const mapTab = await screen.findByRole("tab", { name: "Mappings" });
+    await user.click(mapTab);
+
+    expect(await screen.findByRole("heading", { level: 2, name: /Mappings de service \(CAID:Provider & SIDs\)/ })).toBeTruthy();
+    expect(await screen.findByText("0x1884:0x000000 → 0x1813:0x000068")).toBeTruthy();
+    expect(await screen.findByText("* (tous les SIDs)")).toBeTruthy();
+
+    vi.unstubAllGlobals();
+  });
 });

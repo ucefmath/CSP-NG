@@ -43,6 +43,14 @@ public class CacheHitAttribution implements com.bowman.cspng.cache.CacheHitSink 
 
   private final ConcurrentHashMap<String, Entry> origins = new ConcurrentHashMap<>();
 
+  /** Registry CacheEx facultatif — permet d'enrichir les stats par service lors d'un hit servi. */
+  private volatile CacheExStatsRegistry cacheExStatsRegistry;
+
+  /** Branche le registry CacheEx (null = désactivé). */
+  public void setCacheExStatsRegistry(CacheExStatsRegistry reg) {
+    this.cacheExStatsRegistry = reg;
+  }
+
   /** Normalise l'origine : {@code originAddress} puis {@code connectorName}, sinon {@link #UNKNOWN}. */
   public static String normalize(String originAddress, String connectorName) {
     if (originAddress != null && !originAddress.isBlank()) return originAddress;
@@ -62,6 +70,22 @@ public class CacheHitAttribution implements com.bowman.cspng.cache.CacheHitSink 
     long now = System.currentTimeMillis();
     e.lastHitAtMs = now;
     e.lastActivityMs.set(now);
+  }
+
+  /**
+   * Surcharge enrichie avec les identifiants de service.
+   * Délègue à {@link #recordServedHit(String, String)} puis, si un registry CacheEx
+   * est branché et que {@code connectorName} est non-vide, incrémente le compteur de
+   * hits par service sur la paire correspondante.
+   */
+  @Override
+  public void recordServedHit(String originAddress, String connectorName,
+                              int caid, int provid, int srvid) {
+    recordServedHit(originAddress, connectorName);
+    CacheExStatsRegistry reg = cacheExStatsRegistry;
+    if (reg != null && connectorName != null && !connectorName.isBlank()) {
+      reg.countHit(connectorName, caid, Math.max(0, provid), srvid);
+    }
   }
 
   private void evictOldestOrigin() {

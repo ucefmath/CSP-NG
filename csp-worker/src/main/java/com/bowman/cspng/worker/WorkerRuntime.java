@@ -63,6 +63,14 @@ public final class WorkerRuntime implements AutoCloseable {
 
   private static final Logger LOG = Logger.getLogger(WorkerRuntime.class.getName());
 
+  /**
+   * SID-map : nombre maximum de stats par service (SID) transportées par paire CacheEx
+   * dans l'ack stats worker→central. Borne le poids de l'ack (budget HTTP, cf.
+   * {@link WorkerClient#MAX_ACK_BYTES}) — au-delà, seules les entrées les plus actives
+   * du snapshot (déjà triées par activité) sont retenues.
+   */
+  public static final int MAX_SIDS_TRANSPORT_PER_PAIR = 16;
+
   private final Vertx vertx;
   private final String nodeId;
   private final WorkerSecretResolver secretResolver;
@@ -88,6 +96,10 @@ public final class WorkerRuntime implements AutoCloseable {
       new com.bowman.cspng.connectors.cacheex.PeerQualityTracker();
   private final com.bowman.cspng.connectors.cacheex.CacheHitAttribution cacheHitAttribution =
       new com.bowman.cspng.connectors.cacheex.CacheHitAttribution();
+  {
+    // Câblage du registry CacheEx sur l'attribution des hits (lot T4)
+    cacheHitAttribution.setCacheExStatsRegistry(cacheExStats);
+  }
   private final com.bowman.cspng.connectors.cacheex.PeerQuarantine peerQuarantine =
       new com.bowman.cspng.connectors.cacheex.PeerQuarantine();
   private final com.bowman.cspng.connectors.cacheex.CacheExQuorumTracker quorumTracker =
@@ -1101,11 +1113,26 @@ public final class WorkerRuntime implements AutoCloseable {
     List<RelayWorkerContract.CacheExPairStatsView> cxpairs = new ArrayList<>();
     try {
       for (var ps : cacheExStats.snapshot()) {
+        String remoteIp = ps.remoteIp() != null && !ps.remoteIp().isBlank() ? ps.remoteIp() : null;
+        String remoteNodeId = ps.remoteNodeId() != null && !ps.remoteNodeId().isBlank() ? ps.remoteNodeId() : null;
+        Long hits = ps.hits() > 0 ? ps.hits() : null;
+        List<RelayWorkerContract.CacheExSidStatsView> sids = null;
+        if (ps.sids() != null && !ps.sids().isEmpty()) {
+          List<RelayWorkerContract.CacheExSidStatsView> sv = new ArrayList<>();
+          for (var s : ps.sids()) {
+            sv.add(new RelayWorkerContract.CacheExSidStatsView(
+                s.caid(), s.provid(), s.srvid(), s.pushedCw(), s.receivedCw(), s.hits(),
+                s.droppedCw(), s.lastActivityAtMs()));
+            if (sv.size() >= MAX_SIDS_TRANSPORT_PER_PAIR) break;
+          }
+          sids = sv;
+        }
         cxpairs.add(new RelayWorkerContract.CacheExPairStatsView(
             ps.peerId(), ps.direction(), ps.protocol(), ps.mode(), ps.profile(),
             ps.online(), ps.state(), ps.maxHop(), ps.maxSendQueue(), ps.filterActive(),
             ps.pushedCw(), ps.receivedCw(), ps.droppedCw(), ps.dropReasons(),
-            ps.lastPushAtMs(), ps.lastReceiveAtMs()));
+            ps.lastPushAtMs(), ps.lastReceiveAtMs(),
+            remoteIp, remoteNodeId, hits, sids));
         if (cxpairs.size() >= 64) break;
       }
     } catch (Exception ignored) {
