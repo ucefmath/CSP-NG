@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import type { ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { apiFetch, apiJson, clearSession, describeError, getSessionUser, hasSession, onLogout, setSessionUser } from "../api";
+import { translate, useI18n, useT, type MessageKey } from "../i18n";
 
 // ---------- Toasts ----------
 
@@ -40,36 +41,36 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 // ---------- Session / shell ----------
 
-const NAV_GROUPS: Array<{ title: string; links: Array<{ to: string; label: string }> }> = [
+const NAV_GROUPS: Array<{ titleKey: MessageKey; links: Array<{ to: string; labelKey: MessageKey }> }> = [
   {
-    title: "Pilotage",
+    titleKey: "shell.groupMonitoring",
     links: [
-      { to: "overview", label: "Vue d'ensemble" },
-      { to: "logs", label: "Logs" },
-      { to: "cache", label: "Cache" },
-      { to: "cache-etat", label: "État des caches" },
-      { to: "cacheex", label: "Stats CacheEx" },
-      { to: "dcw", label: "Qualité DCW" },
+      { to: "overview", labelKey: "shell.navOverview" },
+      { to: "logs", labelKey: "shell.navLogs" },
+      { to: "cache", labelKey: "shell.navCache" },
+      { to: "cache-etat", labelKey: "shell.navCacheState" },
+      { to: "cacheex", labelKey: "shell.navCacheEx" },
+      { to: "dcw", labelKey: "shell.navDcw" },
     ],
   },
   {
-    title: "Configuration",
+    titleKey: "shell.groupConfig",
     links: [
-      { to: "general", label: "Général" },
-      { to: "profiles", label: "Profils" },
-      { to: "listeners", label: "Listeners" },
-      { to: "connectors", label: "Connecteurs" },
-      { to: "proxys", label: "Proxys" },
-      { to: "catalog", label: "Catalogue" },
-      { to: "cluster", label: "Cluster UDP" },
+      { to: "general", labelKey: "shell.navGeneral" },
+      { to: "profiles", labelKey: "shell.navProfiles" },
+      { to: "listeners", labelKey: "shell.navListeners" },
+      { to: "connectors", labelKey: "shell.navConnectors" },
+      { to: "proxys", labelKey: "shell.navProxies" },
+      { to: "catalog", labelKey: "shell.navCatalog" },
+      { to: "cluster", labelKey: "shell.navCluster" },
     ],
   },
   {
-    title: "Relais & accès",
+    titleKey: "shell.groupRelayAccess",
     links: [
-      { to: "relais", label: "Relais" },
-      { to: "cw-cycle", label: "Cycle CW" },
-      { to: "users", label: "Utilisateurs" },
+      { to: "relais", labelKey: "shell.navRelays" },
+      { to: "cw-cycle", labelKey: "shell.navCwCycle" },
+      { to: "users", labelKey: "shell.navUsers" },
     ],
   },
 ];
@@ -80,13 +81,14 @@ export function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
   const { push } = useToast();
+  const { lang, setLang, t } = useI18n();
 
   useEffect(() => {
     onLogout(() => {
       clearSession();
       setUser(null);
       navigate("/login", { replace: true });
-      push("Session expirée — reconnectez-vous", "err");
+      push(translate("shell.sessionExpired"), "err");
     });
     return () => onLogout(null);
   }, [navigate, push]);
@@ -110,13 +112,13 @@ export function Shell() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">
-        Aller au contenu
+        {t("shell.skipToContent")}
       </a>
       <header className="topbar" role="banner">
         <button
           type="button"
           className="icon-btn menu-btn"
-          aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-label={menuOpen ? t("shell.closeMenu") : t("shell.openMenu")}
           aria-expanded={menuOpen}
           aria-controls="sidebar"
           onClick={() => setMenuOpen((v) => !v)}
@@ -127,30 +129,53 @@ export function Shell() {
           <span className="brand-text">CSP-NG</span>
         </div>
         <div className="topbar-actions">
-          <span className="mono small" aria-label="Utilisateur connecté">
+          <div role="group" aria-label={t("shell.language")} className="lang-switch">
+            <button
+              type="button"
+              className={lang === "en" ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+              aria-pressed={lang === "en"}
+              aria-label={t("shell.langEn")}
+              onClick={() => setLang("en")}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              className={lang === "fr" ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+              aria-pressed={lang === "fr"}
+              aria-label={t("shell.langFr")}
+              onClick={() => setLang("fr")}
+            >
+              FR
+            </button>
+          </div>
+          <span className="mono small" aria-label={t("shell.loggedInUser")}>
             {user ?? ""}
           </span>
           <button type="button" className="btn btn-ghost btn-sm" onClick={logout}>
-            Déconnexion
+            {t("shell.logout")}
           </button>
         </div>
       </header>
       <div className="layout">
-        <nav id="sidebar" className={menuOpen ? "sidebar open" : "sidebar"} aria-label="Navigation principale">
-          {NAV_GROUPS.map((g) => (
-            <section key={g.title} aria-label={g.title}>
-              <h2 className="nav-group">{g.title}</h2>
-              <ul className="nav-list">
-                {g.links.map((l) => (
-                  <li key={l.to}>
-                    <NavLink to={l.to} className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
-                      {l.label}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
+        <nav id="sidebar" className={menuOpen ? "sidebar open" : "sidebar"} aria-label={t("shell.mainNav")}>
+          {NAV_GROUPS.map((g) => {
+            const title = t(g.titleKey);
+            return (
+              <section key={g.titleKey} aria-label={title}>
+                <h2 className="nav-group">{title}</h2>
+                <ul className="nav-list">
+                  {g.links.map((l) => (
+                    <li key={l.to}>
+                      <NavLink to={l.to} className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+                        {t(l.labelKey)}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
           <div className="sidebar-promo">
             <a
               href="https://m3ubridge.com"
@@ -160,7 +185,7 @@ export function Shell() {
             >
               <span className="sidebar-promo-title">M3U Bridge ↗</span>
               <span className="sidebar-promo-desc">
-                Passerelle M3U / Xtream, EPG &amp; failover multi-sources
+                {t("shell.promoDesc")}
               </span>
             </a>
           </div>
@@ -183,10 +208,11 @@ export function Shell() {
 export function RequireAuth({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const restored = useSessionRestore();
+  const t = useT();
   useEffect(() => {
     if (!restored.restoring && !hasSession()) navigate("/login", { replace: true });
   }, [navigate, restored.restoring]);
-  if (restored.restoring) return <Loading label="Restauration de session…" />;
+  if (restored.restoring) return <Loading label={t("shell.restoringSession")} />;
   if (!hasSession()) return null;
   return <>{children}</>;
 }
@@ -222,10 +248,11 @@ export function useSessionRestore() {
 
 // ---------- Etats ----------
 
-export function Loading({ label = "Chargement…" }: { label?: string }) {
+export function Loading({ label }: { label?: string }) {
+  const t = useT();
   return (
     <div className="card" role="status" aria-live="polite">
-      <p className="muted">{label}</p>
+      <p className="muted">{label ?? t("common.loading")}</p>
     </div>
   );
 }
@@ -235,12 +262,13 @@ export function Empty({ msg }: { msg: string }) {
 }
 
 export function LoadError({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const t = useT();
   return (
     <div className="alert alert-error" role="alert">
       <p>{describeError(error)}</p>
       {onRetry && (
         <button type="button" className="btn btn-sm" onClick={onRetry}>
-          Réessayer
+          {t("common.retry")}
         </button>
       )}
     </div>
@@ -325,17 +353,26 @@ export function Dialog({
   wide?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // onClose passe par une ref : un re-render du parent (onClose inline) ne doit pas
+  // relancer l'effet, sinon le <dialog> serait fermé puis rouvert à chaque rendu.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     const dlg = ref.current;
     if (!dlg) return;
     if (!dlg.open) dlg.showModal();
     const onCancel = (e: Event) => {
       e.preventDefault();
-      onClose();
+      onCloseRef.current();
     };
     const onClick = (e: MouseEvent) => {
+      // Seul un vrai clic pointeur sur le backdrop ferme : on ignore les clics
+      // remontés depuis les enfants et les clics synthétiques (détail 0).
+      if (e.target !== dlg || e.detail === 0) return;
       const r = dlg.getBoundingClientRect();
-      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) onClose();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
+        onCloseRef.current();
+      }
     };
     dlg.addEventListener("cancel", onCancel);
     dlg.addEventListener("click", onClick);
@@ -344,7 +381,8 @@ export function Dialog({
       dlg.removeEventListener("click", onClick);
       if (dlg.open) dlg.close();
     };
-  }, [onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <dialog ref={ref} className={wide ? "drawer wide" : "drawer"} aria-label={title}>
       <h2 className="dialog-title">{title}</h2>
@@ -356,7 +394,7 @@ export function Dialog({
 export function ConfirmDialog({
   title,
   desc,
-  confirmLabel = "Confirmer",
+  confirmLabel,
   onConfirm,
   onClose,
 }: {
@@ -366,13 +404,14 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  const t = useT();
   const [summary] = useState(desc);
   return (
     <Dialog title={title} onClose={onClose}>
       <p className="muted">{summary}</p>
       <div className="dialog-actions">
         <button type="button" className="btn btn-ghost" onClick={onClose}>
-          Annuler
+          {t("common.cancel")}
         </button>
         <button
           type="button"
@@ -383,7 +422,7 @@ export function ConfirmDialog({
           }}
           autoFocus
         >
-          {confirmLabel}
+          {confirmLabel ?? t("common.confirm")}
         </button>
       </div>
     </Dialog>
@@ -391,10 +430,11 @@ export function ConfirmDialog({
 }
 
 export function BackLink() {
+  const t = useT();
   return (
     <p>
       <Link to=".." className="btn btn-ghost btn-sm">
-        ← Retour
+        {t("common.back")}
       </Link>
     </p>
   );

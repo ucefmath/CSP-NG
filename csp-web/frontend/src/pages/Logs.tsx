@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiJson, describeError, formatDate } from "../api";
 import type { LogEntry, LogsResponse } from "../types";
 import { Loading, useToast } from "../components/ui";
+import { useT } from "../i18n";
 
 interface Envelope<T> {
   instanceId: string;
@@ -11,6 +12,7 @@ interface Envelope<T> {
 }
 
 export function LogsPage() {
+  const t = useT();
   const { push } = useToast();
   const [sources, setSources] = useState<string[]>(["main"]);
   const [selectedSource, setSelectedSource] = useState("main");
@@ -113,43 +115,43 @@ export function LogsPage() {
 
   const clearLogs = () => {
     setLogs([]);
-    push("Affichage des logs réinitialisé");
+    push(t("logs.toastReset"));
   };
 
   return (
     <div className="card logs-page">
       <div className="toolbar">
-        <h1>Journaux d'événements (Logs)</h1>
+        <h1>{t("logs.title")}</h1>
 
         <div className="logs-controls">
           <label htmlFor="log-source" className="small muted">
-            Source :
+            {t("logs.sourceLabel")}
           </label>
           <select
             id="log-source"
             className="select-sm"
             value={selectedSource}
             onChange={(e) => setSelectedSource(e.target.value)}
-            aria-label="Source des logs"
+            aria-label={t("logs.sourceAria")}
           >
             {sources.map((s) => (
               <option key={s} value={s}>
-                {s === "main" ? "Serveur principal (main)" : s}
+                {s === "main" ? t("logs.sourceMain") : s}
               </option>
             ))}
           </select>
 
           <label htmlFor="log-level" className="small muted">
-            Niveau min :
+            {t("logs.levelLabel")}
           </label>
           <select
             id="log-level"
             className="select-sm"
             value={minLevel}
             onChange={(e) => setMinLevel(e.target.value)}
-            aria-label="Niveau minimum des logs"
+            aria-label={t("logs.levelAria")}
           >
-            <option value="DEBUG">DEBUG (tous)</option>
+            <option value="DEBUG">{t("logs.levelDebug")}</option>
             <option value="INFO">INFO</option>
             <option value="WARN">WARN</option>
             <option value="ERROR">ERROR</option>
@@ -161,15 +163,15 @@ export function LogsPage() {
             onClick={() => setIsLive((v) => !v)}
             aria-pressed={isLive}
           >
-            {isLive ? "● En direct (Live)" : "⏸ Figé (Pause)"}
+            {isLive ? t("logs.liveActive") : t("logs.livePaused")}
           </button>
 
-          <button type="button" className="btn btn-ghost btn-sm" onClick={clearLogs} aria-label="Vider l'affichage">
-            Vider l'affichage
+          <button type="button" className="btn btn-ghost btn-sm" onClick={clearLogs} aria-label={t("logs.clear")}>
+            {t("logs.clear")}
           </button>
 
           <span className="small muted logs-counter">
-            {logs.length} ligne{logs.length > 1 ? "s" : ""}
+            {logs.length > 1 ? t("logs.lineCountPlural", { count: logs.length }) : t("logs.lineCountSingular", { count: logs.length })}
           </span>
         </div>
       </div>
@@ -181,7 +183,7 @@ export function LogsPage() {
         ref={terminalRef}
         onScroll={handleScroll}
         role="region"
-        aria-label="Console des logs"
+        aria-label={t("logs.consoleAria")}
         tabIndex={0}
       >
         {loading && logs.length === 0 ? (
@@ -189,7 +191,7 @@ export function LogsPage() {
             <Loading />
           </div>
         ) : logs.length === 0 ? (
-          <div className="terminal-empty">Aucun log disponible pour cette source et ce niveau.</div>
+          <div className="terminal-empty">{t("logs.empty")}</div>
         ) : (
           <div className="terminal-content mono">
             {logs.map((log) => {

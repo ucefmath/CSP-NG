@@ -1,5 +1,7 @@
 import { Fragment, useState } from "react";
 import { apiFetch, apiJson, describeError, formatDate } from "../api";
+import { formatHexId, parseHexList } from "../hex";
+import { translate, useT, type MessageKey } from "../i18n";
 import type {
   CacheExStats,
   CacheHitsResponse,
@@ -15,16 +17,16 @@ import { Empty, Field, LoadError, Loading, useSnapshot, useToast } from "../comp
 
 // Causes de rejet backend (CacheExStatsRegistry.REASONS, toujours pré-renseignées
 // côté backend : les zéros affichés sont des compteurs réels, pas des valeurs fabriquées).
-const REASON_LABELS: Record<string, string> = {
-  loop: "boucle",
-  hop: "hop",
-  checksum: "checksum",
-  filtered: "filtre",
-  invalid: "invalide",
-  queue: "file",
-  flood: "flood",
-  quarantine: "quarantaine",
-  quorum: "quorum (en attente/divergent)",
+const REASON_KEY_MAP: Record<string, MessageKey> = {
+  loop: "cacheex.reasonLoop",
+  hop: "cacheex.reasonHop",
+  checksum: "cacheex.reasonChecksum",
+  filtered: "cacheex.reasonFiltered",
+  invalid: "cacheex.reasonInvalid",
+  queue: "cacheex.reasonQueue",
+  flood: "cacheex.reasonFlood",
+  quarantine: "cacheex.reasonQuarantine",
+  quorum: "cacheex.reasonQuorum",
 };
 
 export function formatServiceLabel(s: { serviceKey?: string; caid?: number; provid?: number; srvid?: number; channelName?: string | null }): string {
@@ -33,31 +35,37 @@ export function formatServiceLabel(s: { serviceKey?: string; caid?: number; prov
 }
 
 export function formatReasons(reasons: Record<string, number> | null | undefined): string {
-  if (!reasons) return "inconnu";
+  if (!reasons) return translate("cacheex.unknown");
   const parts = Object.entries(reasons)
     .filter(([, v]) => (v ?? 0) > 0)
-    .map(([k, v]) => `${REASON_LABELS[k] ?? k}:${v}`);
+    .map(([k, v]) => {
+      const key = REASON_KEY_MAP[k];
+      const label = key ? translate(key) : k;
+      return `${label}:${v}`;
+    });
   return parts.length ? parts.join(" ") : "—";
 }
 
 function floodOf(reasons: Record<string, number> | null | undefined): string {
-  if (!reasons) return "inconnu";
+  if (!reasons) return translate("cacheex.unknown");
   if (!("flood" in reasons)) return "—";
   const v = reasons.flood ?? 0;
   return String(v);
 }
+
 function directionHint(mode: number | undefined, direction: string | undefined): string {
   if (direction === "outbound") {
-    if (mode === 2) return "nous recevons du serveur";
-    if (mode === 3) return "nous émettons vers le serveur";
+    if (mode === 2) return translate("cacheex.dirOutMode2");
+    if (mode === 3) return translate("cacheex.dirOutMode3");
   } else if (direction === "inbound") {
-    if (mode === 2) return "nous émettons vers le client";
-    if (mode === 3) return "nous recevons du client";
+    if (mode === 2) return translate("cacheex.dirInMode2");
+    if (mode === 3) return translate("cacheex.dirInMode3");
   }
   return "—";
 }
 
 export function CacheExPage() {
+  const t = useT();
   const { push } = useToast();
   const [resetting, setResetting] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -71,7 +79,7 @@ export function CacheExPage() {
     try {
       const res = await apiFetch("/api/admin/cacheex/stats/reset", { method: "POST" });
       if (!res.ok) throw new Error(res.statusText);
-      push("Compteurs CacheEx réinitialisés");
+      push(t("cacheex.toastResetOk"));
       st.reload();
     } catch (e) {
       push(describeError(e), "err");
@@ -80,16 +88,16 @@ export function CacheExPage() {
     }
   }
 
-  if (st.loading) return <Loading label="Chargement des stats CacheEx…" />;
+  if (st.loading) return <Loading label={t("cacheex.loading")} />;
   if (st.error) {
     const s = (st.error as { status?: number }).status;
     if (s === 404)
       return (
         <div className="card">
-          <h1>Stats CacheEx</h1>
-          <p className="muted">Endpoint indisponible sur ce backend (404) — fonctionnalité livrée par l'agent backend.</p>
+          <h1>{t("cacheex.title404")}</h1>
+          <p className="muted">{t("cacheex.endpointUnavailable")}</p>
           <button type="button" className="btn btn-sm" onClick={st.reload}>
-            Réessayer
+            {t("common.retry")}
           </button>
         </div>
       );
@@ -102,41 +110,40 @@ export function CacheExPage() {
     <>
     <div className="card">
       <div className="toolbar">
-        <h1>Stats CacheEx par pair</h1>
+        <h1>{t("cacheex.title")}</h1>
         <button type="button" className="btn btn-ghost btn-sm" onClick={st.reload}>
-          Actualiser
+          {t("cacheex.refresh")}
         </button>
         <button type="button" className="btn btn-ghost btn-sm" disabled={resetting} onClick={reset}>
-          {resetting ? "…" : "Réinitialiser compteurs"}
+          {resetting ? "…" : t("cacheex.resetCounters")}
         </button>
       </div>
       <p className="muted small">
-        Généré : {formatDate(d?.generatedAtMs)}. Modes asymétriques : mode 2 = réception des push, mode 3 = émission
-        des push. Une paire sans trafic n'apparaît pas (jamais de zéros fabriqués).
+        {t("cacheex.summary", { generated: formatDate(d?.generatedAtMs) })}
       </p>
       {!pairs.length ? (
-        <Empty msg="Aucune paire avec trafic — pas de stats à afficher (ce n'est pas zéro)." />
+        <Empty msg={t("cacheex.noPairs")} />
       ) : (
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Pair</th>
-                <th>IP / Node ID</th>
-                <th>Direction</th>
-                <th>Proto</th>
-                <th>Mode</th>
-                <th>Sens</th>
-                <th>État</th>
-                <th>SIDs</th>
-                <th>Poussés</th>
-                <th>Reçus</th>
-                <th>Hits</th>
-                <th>Jetés</th>
-                <th>Flood</th>
-                <th>Causes</th>
-                <th>Dernier push</th>
-                <th>Dernière réception</th>
+                <th>{t("cacheex.thPeer")}</th>
+                <th>{t("cacheex.thIpNodeId")}</th>
+                <th>{t("cacheex.thDirection")}</th>
+                <th>{t("cacheex.thProto")}</th>
+                <th>{t("cacheex.thMode")}</th>
+                <th>{t("cacheex.thSens")}</th>
+                <th>{t("cacheex.thState")}</th>
+                <th>{t("cacheex.thSids")}</th>
+                <th>{t("cacheex.thPushed")}</th>
+                <th>{t("cacheex.thReceived")}</th>
+                <th>{t("cacheex.thHits")}</th>
+                <th>{t("cacheex.thDropped")}</th>
+                <th>{t("cacheex.thFlood")}</th>
+                <th>{t("cacheex.thCauses")}</th>
+                <th>{t("cacheex.thLastPush")}</th>
+                <th>{t("cacheex.thLastReceive")}</th>
               </tr>
             </thead>
             <tbody>
@@ -155,13 +162,13 @@ export function CacheExPage() {
                           <span className="muted">{p.remoteNodeId || "—"}</span>
                         </div>
                       </td>
-                      <td>{p.direction === "outbound" ? "sortant" : "entrant"}</td>
+                      <td>{p.direction === "outbound" ? t("cacheex.dirOutbound") : t("cacheex.dirInbound")}</td>
                       <td className="mono">{p.protocol ?? "—"}</td>
                       <td className="mono">{p.mode ?? "—"}</td>
                       <td className="small">{directionHint(p.mode, p.direction)}</td>
                       <td>
                         <span className={p.online ? "badge badge-ok" : "badge badge-muted"}>
-                          {p.state ?? (p.online ? "connecté" : "—")}
+                          {p.state ?? (p.online ? t("cacheex.connected") : "—")}
                         </span>
                       </td>
                       <td>
@@ -170,7 +177,10 @@ export function CacheExPage() {
                             type="button"
                             className="btn btn-ghost btn-sm"
                             aria-expanded={isExpanded}
-                            aria-label={`${isExpanded ? "Replier" : "Déplier"} ${sidCount} SID(s) pour ${p.peerId}`}
+                            aria-label={t(isExpanded ? "cacheex.ariaCollapseSids" : "cacheex.ariaExpandSids", {
+                              count: sidCount,
+                              peer: p.peerId,
+                            })}
                             onClick={() =>
                               setCollapsed((prev) => ({ ...prev, [pairKey]: isExpanded }))
                             }
@@ -186,7 +196,7 @@ export function CacheExPage() {
                       <td className="mono">{p.receivedCw ?? "—"}</td>
                       <td className="mono">{p.hits ?? 0}</td>
                       <td className="mono">{p.droppedCw ?? "—"}</td>
-                      <td className="mono small" title="Rejets flood (anti-rafale)">
+                      <td className="mono small" title={t("cacheex.titleFloodDrop")}>
                         {floodOf(p.dropReasons)}
                       </td>
                       <td className="mono small">{formatReasons(p.dropReasons)}</td>
@@ -241,9 +251,7 @@ export function CacheExPage() {
         </div>
       )}
       <p className="muted small">
-        File d'émission maxSendQueue pleine → cause « file » (queue). Rejets « flood » :
-        anti-rafale pair (colonne dédiée). « quarantaine » : pair exclu temporairement
-        du routage (mode enforce). Filtre actif : gate effective du pair.
+        {t("cacheex.queueFootnote")}
       </p>
     </div>
     <PeerQualitySection />
@@ -259,6 +267,7 @@ export function ratioLabel(bps: number | undefined): string {
 }
 
 function PeerQualitySection() {
+  const t = useT();
   const quality = useSnapshot(async () => {
     const { body } = await apiJson<PeerQualityResponse>("/api/admin/peer-quality/quality");
     return body;
@@ -272,35 +281,32 @@ function PeerQualitySection() {
   return (
     <div className="card">
       <div className="toolbar">
-        <h2>Qualité des pairs (fenêtre temporelle)</h2>
+        <h2>{t("cacheex.qualityHeading")}</h2>
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => { quality.reload(); hits.reload(); }}>
-          Actualiser
+          {t("cacheex.refresh")}
         </button>
       </div>
       <p className="muted small">
-        Population éligible : CW acceptées + invalides (contenu imputable). Drops de
-        routage/protocole (boucle, hop, file, flood, filtre) exclus. Hits = réponses
-        réellement servies par origine connue (« unknown » explicite, jamais confondu
-        avec le volume reçu/poussé).
+        {t("cacheex.qualityFootnote")}
       </p>
       {quality.loading ? (
-        <Loading label="Chargement qualité…" />
+        <Loading label={t("cacheex.loadingQuality")} />
       ) : quality.error ? (
         <LoadError error={quality.error} onRetry={quality.reload} />
       ) : !peers.length ? (
-        <Empty msg="Aucune donnée éligible dans la fenêtre — pas de qualité à afficher." />
+        <Empty msg={t("cacheex.noQualityData")} />
       ) : (
         <div className="table-wrap">
-          <table aria-label="Qualité des pairs">
+          <table aria-label={t("cacheex.ariaQualityTable")}>
             <thead>
               <tr>
-                <th>Nœud</th>
-                <th>Pair</th>
-                <th>Acceptées</th>
-                <th>Invalides</th>
-                <th>Total éligible</th>
-                <th>Ratio invalide</th>
-                <th>Quarantiné</th>
+                <th>{t("cacheex.thNode")}</th>
+                <th>{t("cacheex.thPeer")}</th>
+                <th>{t("cacheex.thAccepted")}</th>
+                <th>{t("cacheex.thInvalid")}</th>
+                <th>{t("cacheex.thEligibleTotal")}</th>
+                <th>{t("cacheex.thInvalidRatio")}</th>
+                <th>{t("cacheex.thQuarantined")}</th>
               </tr>
             </thead>
             <tbody>
@@ -312,29 +318,29 @@ function PeerQualitySection() {
                   <td className="mono">{p.invalid ?? "—"}</td>
                   <td className="mono">{p.total ?? "—"}</td>
                   <td className="mono">{ratioLabel(p.invalidRatioBps)}</td>
-                  <td>{p.quarantined ? <span className="badge badge-warn">oui</span> : "—"}</td>
+                  <td>{p.quarantined ? <span className="badge badge-warn">{t("common.yes")}</span> : "—"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-      <h3>Hits servis par origine</h3>
+      <h3>{t("cacheex.hitsHeading")}</h3>
       {hits.loading ? (
-        <Loading label="Chargement hits…" />
+        <Loading label={t("cacheex.loadingHits")} />
       ) : hits.error ? (
         <LoadError error={hits.error} onRetry={hits.reload} />
       ) : !origins.length ? (
-        <Empty msg="Aucun hit servi — pas d'attribution à afficher." />
+        <Empty msg={t("cacheex.noHitsData")} />
       ) : (
         <div className="table-wrap">
-          <table aria-label="Hits servis par origine">
+          <table aria-label={t("cacheex.ariaHitsTable")}>
             <thead>
               <tr>
-                <th>Nœud</th>
-                <th>Origine</th>
-                <th>Hits</th>
-                <th>Dernier hit</th>
+                <th>{t("cacheex.thNode")}</th>
+                <th>{t("cacheex.thOrigin")}</th>
+                <th>{t("cacheex.thHits")}</th>
+                <th>{t("cacheex.thLastHit")}</th>
               </tr>
             </thead>
             <tbody>
@@ -355,6 +361,7 @@ function PeerQualitySection() {
 }
 
 function QuarantineSection() {
+  const t = useT();
   const { push } = useToast();
   const [saving, setSaving] = useState(false);
   const [releasing, setReleasing] = useState<string | null>(null);
@@ -393,7 +400,7 @@ function QuarantineSection() {
         },
       });
       if (!res.ok) throw new Error(res.statusText);
-      push("Quarantaine mise à jour (relayée aux workers)");
+      push(t("cacheex.toastQuarantineUpdated"));
       setTouched(false);
       st.reload();
     } catch (e) {
@@ -407,7 +414,7 @@ function QuarantineSection() {
     const id = peerId.trim();
     if (!id) return;
     if (nodeId && nodeId !== "central") {
-      push("La levée manuelle s'applique uniquement au nœud central ; les workers expirent automatiquement.", "err");
+      push(t("cacheex.toastReleaseCentralOnly"), "err");
       return;
     }
     setReleasing(id);
@@ -418,9 +425,9 @@ function QuarantineSection() {
       });
       if (!res.ok) throw new Error(res.statusText);
       if (body?.released) {
-        push(`Quarantaine centrale levée : ${id}`);
+        push(t("cacheex.toastQuarantineReleased", { id }));
       } else {
-        push(body?.note ?? `Pair non trouvé dans la quarantaine centrale : ${id}`, "err");
+        push(body?.note ?? t("cacheex.toastPeerNotFoundInQuarantine", { id }), "err");
       }
       setReleaseId("");
       st.reload();
@@ -435,26 +442,22 @@ function QuarantineSection() {
   return (
     <div className="card">
       <div className="toolbar">
-        <h2>Quarantaine temporaire (opt-in)</h2>
+        <h2>{t("cacheex.quarantineHeading")}</h2>
         <button type="button" className="btn btn-ghost btn-sm" onClick={st.reload}>
-          Actualiser
+          {t("cacheex.refresh")}
         </button>
       </div>
       <p className="muted small">
-        Désactivée par défaut. Mode observe (défaut) : comptabilise sans exclure. Enforce :
-        exclusion temporaire du routage uniquement — jamais un bannissement (source UDP
-        usurpable). État mémoire borné (expiration + levée admin centrale). Levée manuelle
-        applicable uniquement au nœud central ; la quarantaine des workers expire
-        automatiquement en mémoire.
+        {t("cacheex.quarantineFootnote")}
       </p>
       {st.loading ? (
-        <Loading label="Chargement quarantaine…" />
+        <Loading label={t("cacheex.loadingQuarantine")} />
       ) : st.error ? (
         <LoadError error={st.error} onRetry={st.reload} />
       ) : (
         <>
           <div className="form-grid">
-            <Field label="Activée" htmlFor="q-enabled">
+            <Field label={t("cacheex.fieldEnabled")} htmlFor="q-enabled">
               <input
                 id="q-enabled"
                 type="checkbox"
@@ -462,17 +465,17 @@ function QuarantineSection() {
                 onChange={(e) => { setForm({ ...shown, enabled: e.target.checked }); setTouched(true); }}
               />
             </Field>
-            <Field label="Mode" htmlFor="q-mode">
+            <Field label={t("cacheex.fieldMode")} htmlFor="q-mode">
               <select
                 id="q-mode"
                 value={shown.mode}
                 onChange={(e) => { setForm({ ...shown, mode: e.target.value }); setTouched(true); }}
               >
-                <option value="observe">observe (sans exclusion)</option>
-                <option value="enforce">enforce (exclusion routage)</option>
+                <option value="observe">{t("cacheex.optObserveNoExclusion")}</option>
+                <option value="enforce">{t("cacheex.optEnforceRoutingExclusion")}</option>
               </select>
             </Field>
-            <Field label="Échantillons min" htmlFor="q-min">
+            <Field label={t("cacheex.fieldMinSamples")} htmlFor="q-min">
               <input
                 id="q-min"
                 type="number"
@@ -482,7 +485,7 @@ function QuarantineSection() {
                 onChange={(e) => { setForm({ ...shown, minSamples: e.target.value }); setTouched(true); }}
               />
             </Field>
-            <Field label="Ratio invalide (bps /10000)" htmlFor="q-ratio">
+            <Field label={t("cacheex.fieldInvalidRatioBps")} htmlFor="q-ratio">
               <input
                 id="q-ratio"
                 type="number"
@@ -492,7 +495,7 @@ function QuarantineSection() {
                 onChange={(e) => { setForm({ ...shown, invalidRatioBps: e.target.value }); setTouched(true); }}
               />
             </Field>
-            <Field label="Durée (ms)" htmlFor="q-dur">
+            <Field label={t("cacheex.fieldDurationMs")} htmlFor="q-dur">
               <input
                 id="q-dur"
                 type="number"
@@ -505,22 +508,22 @@ function QuarantineSection() {
             </Field>
           </div>
           <button type="button" className="btn btn-sm" disabled={saving} onClick={save}>
-            {saving ? "…" : "Enregistrer (version " + (cfg?.version ?? "?") + ")"}
+            {saving ? "…" : t("cacheex.saveVersion", { version: cfg?.version ?? "?" })}
           </button>
-          <h3>Entrées actives ({entries.length}) — observées : {st.data?.observed ?? "—"}, exclues : {st.data?.enforced ?? "—"}</h3>
+          <h3>{t("cacheex.activeEntriesHeading", { count: entries.length, observed: st.data?.observed ?? "—", enforced: st.data?.enforced ?? "—" })}</h3>
           {!entries.length ? (
-            <Empty msg="Aucune quarantaine active." />
+            <Empty msg={t("cacheex.noActiveQuarantine")} />
           ) : (
             <div className="table-wrap">
-              <table aria-label="Quarantaines actives">
+              <table aria-label={t("cacheex.ariaQuarantinesTable")}>
                 <thead>
                   <tr>
-                    <th>Nœud</th>
-                    <th>Pair</th>
-                    <th>Raison</th>
-                    <th>Expire</th>
-                    <th>Mode</th>
-                    <th>Action</th>
+                    <th>{t("cacheex.thNode")}</th>
+                    <th>{t("cacheex.thPeer")}</th>
+                    <th>{t("cacheex.thReason")}</th>
+                    <th>{t("cacheex.thExpires")}</th>
+                    <th>{t("cacheex.fieldMode")}</th>
+                    <th>{t("cacheex.thAction")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -532,27 +535,27 @@ function QuarantineSection() {
                         <td className="mono">{e.peerId}</td>
                         <td className="mono small">{e.reason ?? "—"}</td>
                         <td className="small">{formatDate(e.expiresAtMs)}</td>
-                        <td>{e.observedOnly ? "observée" : "exclue"}</td>
-                    <td>
-                      {isWorker ? (
-                        <span
-                          className="badge badge-muted small"
-                          title="La quarantaine des workers expire automatiquement en mémoire"
-                          aria-label="Expiration worker automatique en mémoire"
-                        >
-                          Auto-expire (worker)
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          disabled={releasing === e.peerId}
-                          onClick={() => release(e.peerId, e.nodeId)}
-                        >
-                          {releasing === e.peerId ? "…" : "Lever"}
-                        </button>
-                      )}
-                    </td>
+                        <td>{e.observedOnly ? t("cacheex.observedOnly") : t("cacheex.enforcedExclusion")}</td>
+                        <td>
+                          {isWorker ? (
+                            <span
+                              className="badge badge-muted small"
+                              title={t("cacheex.workerBadgeTitle")}
+                              aria-label={t("cacheex.workerBadgeAria")}
+                            >
+                              {t("cacheex.workerBadgeLabel")}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              disabled={releasing === e.peerId}
+                              onClick={() => release(e.peerId, e.nodeId)}
+                            >
+                              {releasing === e.peerId ? "…" : t("cacheex.releaseBtn")}
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -561,7 +564,7 @@ function QuarantineSection() {
             </div>
           )}
           <div className="form-grid">
-            <Field label="Lever un pair (id exact)" htmlFor="q-release">
+            <Field label={t("cacheex.fieldReleasePeerId")} htmlFor="q-release">
               <input
                 id="q-release"
                 type="text"
@@ -572,7 +575,7 @@ function QuarantineSection() {
             </Field>
           </div>
           <button type="button" className="btn btn-ghost btn-sm" disabled={!releaseId.trim() || releasing !== null} onClick={() => release(releaseId, "central")}>
-            Lever (centrale)
+            {t("cacheex.releaseCentralBtn")}
           </button>
         </>
       )}
@@ -581,6 +584,7 @@ function QuarantineSection() {
 }
 
 function QuorumSection() {
+  const t = useT();
   const { push } = useToast();
   const [saving, setSaving] = useState(false);
   const st = useSnapshot(async () => {
@@ -596,10 +600,15 @@ function QuorumSection() {
         mode: cfg?.mode ?? "off",
         minOrigins: String(cfg?.minOrigins ?? 2),
         profiles: (cfg?.profiles ?? []).join(","),
-        caids: (cfg?.caids ?? []).join(","),
+        caids: (cfg?.caids ?? []).map((n) => formatHexId(n, "caid")).join(", "),
       };
 
   async function save() {
+    const r = parseHexList(shown.caids, "caid", { min: 1 });
+    if (!r.ok) {
+      push(t("cacheex.toastInvalidCaid", { token: r.token }), "err");
+      return;
+    }
     setSaving(true);
     try {
       const { res } = await apiJson("/api/admin/peer-quality/quorum", {
@@ -610,12 +619,12 @@ function QuorumSection() {
           windowMs: cfg?.windowMs ?? 30000,
           maxKeys: cfg?.maxKeys ?? 1024,
           profiles: shown.profiles.split(",").map((s) => s.trim()).filter(Boolean),
-          caids: shown.caids.split(",").map((s) => Number(s.trim())).filter((n) => Number.isFinite(n)),
+          caids: r.values,
           version: cfg?.version ?? 1,
         },
       });
       if (!res.ok) throw new Error(res.statusText);
-      push("Quorum mis à jour (relayé aux workers)");
+      push(t("cacheex.toastQuorumUpdated"));
       setTouched(false);
       st.reload();
     } catch (e) {
@@ -630,36 +639,33 @@ function QuorumSection() {
   return (
     <div className="card">
       <div className="toolbar">
-        <h2>Quorum CacheEx ciblé</h2>
+        <h2>{t("cacheex.quorumHeading")}</h2>
         <button type="button" className="btn btn-ghost btn-sm" onClick={st.reload}>
-          Actualiser
+          {t("cacheex.refresh")}
         </button>
       </div>
       <p className="muted small">
-        Off par défaut. Comparaison exacte de CW déjà valides pour une même identité ECM
-        (profil/CAID/provider/SID/parité exacte/hash — sans corps ECM, limite des push).
-        Minimum 2 origines de transport vérifiées distinctes (pas de preuve cryptographique).
-        Enforce : pas d'injection sans quorum, jamais de repli silencieux.
+        {t("cacheex.quorumFootnote")}
       </p>
       {st.loading ? (
-        <Loading label="Chargement quorum…" />
+        <Loading label={t("cacheex.loadingQuorum")} />
       ) : st.error ? (
         <LoadError error={st.error} onRetry={st.reload} />
       ) : (
         <>
           <div className="form-grid">
-            <Field label="Mode" htmlFor="qq-mode">
+            <Field label={t("cacheex.fieldMode")} htmlFor="qq-mode">
               <select
                 id="qq-mode"
                 value={shown.mode}
                 onChange={(e) => { setForm({ ...shown, mode: e.target.value }); setTouched(true); }}
               >
-                <option value="off">off (désactivé)</option>
-                <option value="observe">observe (injecte + comptabilise)</option>
-                <option value="enforce">enforce (quorum exigé)</option>
+                <option value="off">{t("cacheex.optQuorumOff")}</option>
+                <option value="observe">{t("cacheex.optQuorumObserve")}</option>
+                <option value="enforce">{t("cacheex.optQuorumEnforce")}</option>
               </select>
             </Field>
-            <Field label="Origines min" htmlFor="qq-min">
+            <Field label={t("cacheex.fieldMinOrigins")} htmlFor="qq-min">
               <input
                 id="qq-min"
                 type="number"
@@ -669,7 +675,7 @@ function QuorumSection() {
                 onChange={(e) => { setForm({ ...shown, minOrigins: e.target.value }); setTouched(true); }}
               />
             </Field>
-            <Field label="Profils (CSV, vide = tous)" htmlFor="qq-prof">
+            <Field label={t("cacheex.fieldProfiles")} htmlFor="qq-prof">
               <input
                 id="qq-prof"
                 type="text"
@@ -677,48 +683,55 @@ function QuorumSection() {
                 onChange={(e) => { setForm({ ...shown, profiles: e.target.value }); setTouched(true); }}
               />
             </Field>
-            <Field label="CAIDs (CSV, vide = tous)" htmlFor="qq-caids">
+            <Field label={t("cacheex.fieldCaidsHex")} htmlFor="qq-caids">
               <input
                 id="qq-caids"
                 type="text"
                 value={shown.caids}
                 onChange={(e) => { setForm({ ...shown, caids: e.target.value }); setTouched(true); }}
+                placeholder={t("cacheex.placeholderCaids")}
               />
             </Field>
           </div>
           <button type="button" className="btn btn-sm" disabled={saving} onClick={save}>
-            {saving ? "…" : "Enregistrer (version " + (cfg?.version ?? "?") + ")"}
+            {saving ? "…" : t("cacheex.saveVersion", { version: cfg?.version ?? "?" })}
           </button>
-          <h3>Compteurs</h3>
+          <h3>{t("cacheex.countersHeading")}</h3>
           <p className="mono small">
-            clés : {stats?.keys ?? "—"} · observées : {stats?.observed ?? "—"} · quorum : {stats?.quorum ?? "—"} ·
-            en attente : {stats?.pending ?? "—"} · divergences : {stats?.mismatch ?? "—"} · expirées : {stats?.expired ?? "—"}
+            {t("cacheex.countersSummary", {
+              keys: stats?.keys ?? "—",
+              observed: stats?.observed ?? "—",
+              quorum: stats?.quorum ?? "—",
+              pending: stats?.pending ?? "—",
+              mismatch: stats?.mismatch ?? "—",
+              expired: stats?.expired ?? "—",
+            })}
           </p>
-          <h3>Clés suivies ({keys.length})</h3>
+          <h3>{t("cacheex.trackedKeysHeading", { count: keys.length })}</h3>
           {!keys.length ? (
-            <Empty msg="Aucune clé suivie dans la fenêtre." />
+            <Empty msg={t("cacheex.noTrackedKeys")} />
           ) : (
             <div className="table-wrap">
-              <table aria-label="Clés quorum suivies">
+              <table aria-label={t("cacheex.ariaQuorumKeysTable")}>
                 <thead>
                   <tr>
-                    <th>Profil</th>
-                    <th>CAID</th>
-                    <th>SID</th>
-                    <th>Parité</th>
-                    <th>Origines</th>
-                    <th>Quorum</th>
+                    <th>{t("cacheex.thQuorumProfile")}</th>
+                    <th>{t("cacheex.thQuorumCaid")}</th>
+                    <th>{t("cacheex.thQuorumSid")}</th>
+                    <th>{t("cacheex.thQuorumParity")}</th>
+                    <th>{t("cacheex.thQuorumOrigins")}</th>
+                    <th>{t("cacheex.thQuorumQuorum")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {keys.map((k, i) => (
                     <tr key={`${k.profile ?? ""}/${k.caid}/${k.sid}/${k.parity}/${k.dataHash}/${i}`}>
                       <td className="mono">{k.profile ?? "—"}</td>
-                      <td className="mono">{k.caid ?? "—"}</td>
-                      <td className="mono">{k.sid ?? "—"}</td>
+                      <td className="mono">{k.caid != null ? formatHexId(k.caid, "caid") : "—"}</td>
+                      <td className="mono">{k.sid != null ? formatHexId(k.sid, "sid") : "—"}</td>
                       <td className="mono">{k.parity ?? "—"}</td>
                       <td className="mono small">{(k.origins ?? []).join(" ") || "—"}</td>
-                      <td>{k.quorumReached ? <span className="badge badge-ok">atteint</span> : "en attente"}</td>
+                      <td>{k.quorumReached ? <span className="badge badge-ok">{t("cacheex.quorumReached")}</span> : t("cacheex.quorumPending")}</td>
                     </tr>
                   ))}
                 </tbody>

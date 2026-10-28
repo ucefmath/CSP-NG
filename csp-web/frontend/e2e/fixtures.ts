@@ -119,7 +119,17 @@ export async function mockApi(page: Page, opts: {
   snapshot?: unknown;
   users?: unknown;
   overrides?: Array<{ match: (url: string, method: string) => boolean; handle: (route: Route) => Promise<void> }>;
+  /** Langue initiale persistée dans localStorage (`null` = aucune valeur, défaut applicatif `en`). */
+  lang?: "en" | "fr" | null;
 } = {}): Promise<MockApi> {
+  // Les specs existantes sont écrites en français : on pré-remplit `csp.lang`
+  // avant le premier chargement, sauf demande explicite de tester le défaut.
+  if (opts.lang !== null) {
+    const initialLang = opts.lang ?? "fr";
+    await page.addInitScript((l: string) => {
+      if (!localStorage.getItem("csp.lang")) localStorage.setItem("csp.lang", l);
+    }, initialLang);
+  }
   const captured: Captured[] = [];
   const snap = opts.snapshot ?? snapshotFixture();
   const users = opts.users ?? usersFixture();
@@ -359,8 +369,8 @@ export async function mockApi(page: Page, opts: {
 /** Connexion standard du mock (admin / correct-12-chars). */
 export async function login(page: Page) {
   await page.goto("/admin/login");
-  await page.getByLabel("Identifiant").fill("admin");
-  await page.getByLabel("Mot de passe").fill("correct-12-chars");
-  await page.getByRole("button", { name: "Se connecter" }).click();
-  await page.getByRole("heading", { level: 1, name: "Vue d'ensemble" }).waitFor();
+  await page.getByLabel(/^(Identifiant|Username)$/).fill("admin");
+  await page.getByLabel(/^(Mot de passe|Password)$/).fill("correct-12-chars");
+  await page.getByRole("button", { name: /^(Se connecter|Sign in)$/ }).click();
+  await page.getByRole("heading", { level: 1, name: /^(Vue d'ensemble|Overview)$/ }).waitFor();
 }

@@ -1,0 +1,36 @@
+import { defineMessages } from '../define';
+
+export const cluster = defineMessages(
+  {
+    title: 'UDP Cluster',
+    subtitle: 'Secrets displayed as references only (never values).',
+    versionError: 'version ≥ 1',
+    saved: 'Saved — version {version}',
+    toastUpdated: 'Cluster updated',
+    sectionEssential: 'Essential',
+    enabled: 'Enabled',
+    autoAddPeers: 'Auto add peers',
+    remoteHosts: 'remoteHosts (csv)',
+    blacklist: 'blacklist (csv)',
+    sectionAdvanced: 'Advanced',
+    trackerUrlRef: 'trackerUrlRef (secret reference)',
+    currentVersion: 'Version: v{version}',
+    saving: 'Saving…',
+  },
+  {
+    title: 'Cluster UDP',
+    subtitle: 'Secrets affichés comme références uniquement (jamais de valeur).',
+    versionError: 'version ≥ 1',
+    saved: 'Enregistré — version {version}',
+    toastUpdated: 'Cluster mis à jour',
+    sectionEssential: 'Essentiel',
+    enabled: 'Activé',
+    autoAddPeers: 'Ajout auto des pairs',
+    remoteHosts: 'remoteHosts (csv)',
+    blacklist: 'blacklist (csv)',
+    sectionAdvanced: 'Avancé',
+    trackerUrlRef: 'trackerUrlRef (référence secret)',
+    currentVersion: 'Version : v{version}',
+    saving: 'Enregistrement…',
+  },
+);

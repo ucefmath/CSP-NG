@@ -1,6 +1,9 @@
 // Client API : cookie de session meme origine, CSRF X-CSP-Requested-With sur
 // mutations, timeout 15 s, erreurs normalisees. Aucun secret en stockage web.
 
+import { formatHexId, parseHexList } from "./hex";
+import { translate } from "./i18n";
+
 export interface ApiError {
   status: number;
   code?: string;
@@ -41,13 +44,16 @@ export function normalizeError(status: number, body: unknown, fallback: string):
 
 export function describeError(err: unknown): string {
   const e = err as Partial<ApiError>;
-  let m = e.message || "Erreur";
-  if (e.status === 409) m = "Conflit de version — rechargez (409)";
-  else if (e.status === 426) m = "TLS requis — utilisez HTTPS (426)";
+  let m = e.message || translate("api.defaultError");
+  if (e.status === 409) m = translate("api.conflict409");
+  else if (e.status === 426) m = translate("api.tls426");
   else if (e.status === 403) m = e.code === "CSRF_INVALID"
-    ? "Session/CSRF invalide — reconnectez-vous (403)"
-    : "Interdit — rôle admin requis (403)";
-  else if (e.status === 404) m = `Ressource introuvable (404)${e.message && e.message !== "Erreur" ? " — " + e.message : ""}`;
+    ? translate("api.csrf403")
+    : translate("api.forbidden403");
+  else if (e.status === 404) {
+    const defErr = translate("api.defaultError");
+    m = `${translate("api.notFound404")}${e.message && e.message !== defErr && e.message !== "Erreur" ? " — " + e.message : ""}`;
+  }
   if (e.correlationId) m += ` [${e.correlationId}]`;
   return m;
 }
@@ -86,9 +92,9 @@ export async function apiFetch(path: string, opts: FetchOpts = {}): Promise<Resp
   } catch (e) {
     cancel();
     if (e instanceof DOMException && e.name === "TimeoutError") {
-      throw { status: 0, code: "TIMEOUT", message: "Délai dépassé (15 s)" } satisfies ApiError;
+      throw { status: 0, code: "TIMEOUT", message: translate("api.timeout") } satisfies ApiError;
     }
-    throw { status: 0, code: "NETWORK", message: "Réseau indisponible" } satisfies ApiError;
+    throw { status: 0, code: "NETWORK", message: translate("api.network") } satisfies ApiError;
   }
   cancel();
   if (res.status === 401) {
@@ -105,7 +111,7 @@ export async function apiFetch(path: string, opts: FetchOpts = {}): Promise<Resp
     } catch {
       body = null;
     }
-    throw normalizeError(401, body, "Non authentifié");
+    throw normalizeError(401, body, translate("api.unauthenticated"));
   }
   return res;
 }
@@ -130,7 +136,7 @@ export async function apiJson<T>(path: string, opts: FetchOpts = {}): Promise<{ 
       }
     }
   }
-  if (!res.ok) throw normalizeError(res.status, body, res.statusText || "Erreur");
+  if (!res.ok) throw normalizeError(res.status, body, res.statusText || translate("api.defaultError"));
   return { res, body: body as T };
 }
 
@@ -154,22 +160,20 @@ export function isValidDesKeyHex(s: string | null | undefined): boolean {
 }
 
 export function parseSidList(raw: string): { ok: true; values: number[] } | { ok: false; error: string } {
-  if (!raw || !raw.trim()) return { ok: true, values: [] };
-  const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
-  const out: number[] = [];
-  for (const p of parts) {
-    let v: number;
-    if (/^0x[0-9a-fA-F]+$/.test(p)) v = parseInt(p, 16);
-    else if (/^\d+$/.test(p)) v = parseInt(p, 10);
-    else return { ok: false, error: `SID invalide : ${p} (hex 0x… ou décimal)` };
-    if (Number.isNaN(v) || v < 0 || v > 65535) return { ok: false, error: `SID hors plage 0-65535 : ${p}` };
-    out.push(v);
+  const r = parseHexList(raw, "sid");
+  if (!r.ok) {
+    return {
+      ok: false,
+      error: r.code === "range"
+        ? translate("api.sidOutOfRange", { token: r.token })
+        : translate("api.sidInvalid", { token: r.token }),
+    };
   }
-  return { ok: true, values: [...new Set(out)].sort((a, b) => a - b) };
+  return { ok: true, values: [...new Set(r.values)].sort((a, b) => a - b) };
 }
 
 export function formatSid(n: number): string {
-  return "0x" + n.toString(16).padStart(4, "0");
+  return formatHexId(n, "sid");
 }
 
 export function formatDate(ms: number | null | undefined): string {
@@ -180,9 +184,9 @@ export function formatDate(ms: number | null | undefined): string {
 
 /** Décrit la fraîcheur d'une stat : absent/périmé => "inconnu", jamais de faux zéro. */
 export function freshnessLabel(ageMs: number | null | undefined, fresh: boolean | undefined): string {
-  if (ageMs === null || ageMs === undefined) return "inconnu (jamais reçu)";
-  if (fresh === false) return `périmé (${Math.round(ageMs / 1000)} s)`;
-  return `frais (${Math.round(ageMs / 1000)} s)`;
+  if (ageMs === null || ageMs === undefined) return translate("api.freshnessUnknown");
+  if (fresh === false) return translate("api.freshnessStale", { s: Math.round(ageMs / 1000) });
+  return translate("api.freshnessFresh", { s: Math.round(ageMs / 1000) });
 }
 
 /** Parse une C-line CCcam "C: host port user pass [deskey]" en payload connecteur partiel. */
@@ -191,16 +195,16 @@ export function parseCLine(line: string): {
   value: { host: string; port: number; username: string; password: string };
 } | { ok: false; error: string } {
   const t = line.trim();
-  if (!t) return { ok: false, error: "Ligne vide" };
+  if (!t) return { ok: false, error: translate("api.clineEmpty") };
   const parts = t.split(/\s+/);
   if (parts.length < 5 || (parts[0] !== "C:" && parts[0] !== "C")) {
-    return { ok: false, error: "Format attendu : C: host port user pass" };
+    return { ok: false, error: translate("api.clineFormat") };
   }
   const [, host, portRaw, username, password] = parts;
   const port = parseInteger(portRaw, NaN);
-  if (!host) return { ok: false, error: "Hôte manquant" };
-  if (Number.isNaN(port) || port < 1 || port > 65535) return { ok: false, error: "Port 1-65535 requis" };
-  if (!username) return { ok: false, error: "Identifiant manquant" };
-  if (!password) return { ok: false, error: "Mot de passe manquant (saisi ensuite comme secret)" };
+  if (!host) return { ok: false, error: translate("api.clineHost") };
+  if (Number.isNaN(port) || port < 1 || port > 65535) return { ok: false, error: translate("api.clinePort") };
+  if (!username) return { ok: false, error: translate("api.clineUser") };
+  if (!password) return { ok: false, error: translate("api.clinePass") };
   return { ok: true, value: { host, port, username, password } };
 }

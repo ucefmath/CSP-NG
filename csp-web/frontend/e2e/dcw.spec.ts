@@ -69,7 +69,7 @@ test.describe("dcw", () => {
     await page.getByRole("tab", { name: "Règles" }).click();
     await page.getByRole("button", { name: "Nouvelle règle" }).click();
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel("CAID (0 = joker, 0..65535)").fill("1830");
+    await dialog.getByLabel("CAID hex (0 = joker)").fill("1830");
     await dialog.getByLabel("Action", { exact: true }).selectOption("observe");
     await dialog.getByLabel(/Digest SHA-256/).fill("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
     await dialog.getByRole("button", { name: "Créer" }).click();
@@ -77,7 +77,7 @@ test.describe("dcw", () => {
     const post = api.last("/api/admin/dcw/rules", "POST");
     const b = post?.body as Record<string, unknown>;
     expect(b).toMatchObject({
-      profile: null, caid: 1830, provider: null, sid: 0, sourceId: null,
+      profile: null, caid: 0x1830, provider: null, sid: 0, sourceId: null,
       digestSha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       badDcwHex: null, action: "observe", checksumMode: "ignore", notes: null, enabled: true,
     });
@@ -133,14 +133,14 @@ test.describe("dcw", () => {
     await dialog.getByLabel(/Profil/).fill("hdplus");
     await dialog.getByLabel(/CAID/).fill("1830");
     await dialog.getByLabel(/Provider/).fill("0");
-    await dialog.getByLabel(/SID Source/).fill("0x64");
-    await dialog.getByLabel(/SID Cible/).fill("200");
+    await dialog.getByLabel(/SID Source/).fill("0064");
+    await dialog.getByLabel(/SID Cible/).fill("0200");
     await dialog.getByRole("button", { name: "Créer" }).click();
     await expect(dialog).toBeHidden();
     const post = api.last("/api/admin/dcw/mappings", "POST");
     expect(post?.body).toMatchObject({
-      profile: "hdplus", caid: 1830, provider: 0,
-      sourceSid: 100, targetSid: 200, approved: true, enabled: true, expiresAtMs: 0,
+      profile: "hdplus", caid: 0x1830, provider: 0,
+      sourceSid: 0x64, targetSid: 0x200, approved: true, enabled: true, expiresAtMs: 0,
     });
   });
 

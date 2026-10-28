@@ -1,0 +1,38 @@
+import { defineMessages } from '../define';
+
+export const logs = defineMessages(
+  {
+    title: 'Event Logs',
+    toastReset: 'Log display reset',
+    sourceLabel: 'Source:',
+    sourceAria: 'Log source',
+    sourceMain: 'Main server (main)',
+    levelLabel: 'Min level:',
+    levelAria: 'Minimum log level',
+    levelDebug: 'DEBUG (all)',
+    liveActive: '● Live',
+    livePaused: '⏸ Paused',
+    clear: 'Clear display',
+    lineCountSingular: '{count} line',
+    lineCountPlural: '{count} lines',
+    consoleAria: 'Logs console',
+    empty: 'No logs available for this source and level.',
+  },
+  {
+    title: "Journaux d'événements (Logs)",
+    toastReset: 'Affichage des logs réinitialisé',
+    sourceLabel: 'Source :',
+    sourceAria: 'Source des logs',
+    sourceMain: 'Serveur principal (main)',
+    levelLabel: 'Niveau min :',
+    levelAria: 'Niveau minimum des logs',
+    levelDebug: 'DEBUG (tous)',
+    liveActive: '● En direct (Live)',
+    livePaused: '⏸ Figé (Pause)',
+    clear: "Vider l'affichage",
+    lineCountSingular: '{count} ligne',
+    lineCountPlural: '{count} lignes',
+    consoleAria: 'Console des logs',
+    empty: 'Aucun log disponible pour cette source et ce niveau.',
+  },
+);

@@ -207,7 +207,7 @@ describe("routes admin", () => {
     await user.click(mapTab);
 
     expect(await screen.findByRole("heading", { level: 2, name: /Mappings de service \(CAID:Provider & SIDs\)/ })).toBeTruthy();
-    expect(await screen.findByText("0x1884:0x000000 → 0x1813:0x000068")).toBeTruthy();
+    expect(await screen.findByText("1884:000000 → 1813:000068")).toBeTruthy();
     expect(await screen.findByText("* (tous les SIDs)")).toBeTruthy();
 
     vi.unstubAllGlobals();

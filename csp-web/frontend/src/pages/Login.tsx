@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { apiJson, hasSession, setSessionUser } from "../api";
-import { Field, useToast } from "../components/ui";
-import { useSessionRestore } from "../components/ui";
+import { Field, useSessionRestore, useToast } from "../components/ui";
+import { useT } from "../i18n";
 
 export function LoginPage() {
+  const t = useT();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,11 +22,11 @@ export function LoginPage() {
     e.preventDefault();
     setError("");
     if (!username.trim()) {
-      setError("Identifiant requis");
+      setError(t("login.usernameRequired"));
       return;
     }
     if (!password) {
-      setError("Mot de passe requis");
+      setError(t("login.passwordRequired"));
       return;
     }
     setBusy(true);
@@ -34,15 +35,15 @@ export function LoginPage() {
       const { body } = await apiJson<{ name?: string }>("/api/admin/me");
       setSessionUser(body.name || username.trim());
       setPassword("");
-      push(`Connecté en tant que ${body.name || username.trim()}`);
+      push(t("login.connectedAs", { user: body.name || username.trim() }));
       navigate("/overview", { replace: true });
     } catch (err: unknown) {
       const s = (err as { status?: number }).status;
-      let msg = (err as { message?: string }).message || "Échec de connexion";
-      if (s === 401) msg = "Identifiants invalides";
-      else if (s === 426) msg = "TLS requis — utilisez HTTPS";
-      else if (s === 429) msg = "Trop de tentatives — réessayez plus tard (429)";
-      else if (s === 0) msg = "Réseau indisponible";
+      let msg = (err as { message?: string }).message || t("login.loginFailed");
+      if (s === 401) msg = t("login.invalidCredentials");
+      else if (s === 426) msg = t("login.tlsRequired");
+      else if (s === 429) msg = t("login.rateLimited");
+      else if (s === 0) msg = t("login.networkUnavailable");
       const cid = (err as { correlationId?: string }).correlationId;
       if (cid) msg += ` [${cid}]`;
       setError(msg);
@@ -55,15 +56,15 @@ export function LoginPage() {
   return (
     <div className="login-view">
       <a className="skip-link" href="#login-form">
-        Aller au formulaire de connexion
+        {t("login.skipToForm")}
       </a>
       <div className="login-card" role="dialog" aria-modal="true" aria-labelledby="login-title">
         <h1 id="login-title" className="login-title">
           CSP-NG
         </h1>
-        <p className="login-subtitle">Console d'administration</p>
+        <p className="login-subtitle">{t("login.subtitle")}</p>
         <form id="login-form" onSubmit={submit} noValidate>
-          <Field label="Identifiant" htmlFor="login-user">
+          <Field label={t("login.username")} htmlFor="login-user">
             <input
               id="login-user"
               name="username"
@@ -76,7 +77,7 @@ export function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
             />
           </Field>
-          <Field label="Mot de passe" htmlFor="login-pass">
+          <Field label={t("login.password")} htmlFor="login-pass">
             <input
               id="login-pass"
               name="password"
@@ -93,7 +94,7 @@ export function LoginPage() {
             </p>
           )}
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
-            {busy ? "Connexion…" : "Se connecter"}
+            {busy ? t("login.submitting") : t("login.submit")}
           </button>
         </form>
         <div className="login-promo">
@@ -103,7 +104,7 @@ export function LoginPage() {
             rel="noopener noreferrer"
             className="login-promo-link"
           >
-            <strong>M3U Bridge ↗</strong> — Un seul endpoint stable pour vos sources M3U &amp; Xtream (EPG, VOD, failover)
+            <strong>M3U Bridge ↗</strong> — {t("login.promoDesc")}
           </a>
         </div>
       </div>

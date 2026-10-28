@@ -1,5 +1,13 @@
 import { cleanup } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
+import { setLang } from "../i18n";
+
+// Les tests unitaires existants sont écrits en français : on force la langue
+// avant chaque test (les `beforeEach` des fichiers de test s'exécutent ensuite
+// et peuvent donc la redéfinir, ex. i18n.test.tsx remet DEFAULT_LANG).
+beforeEach(() => {
+  setLang("fr");
+});
 
 afterEach(() => {
   cleanup();

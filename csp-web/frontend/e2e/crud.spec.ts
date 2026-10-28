@@ -64,7 +64,7 @@ test.describe("crud générique", () => {
     await dialog.getByLabel("Nom").fill("bob");
     await dialog.getByLabel(/Mot de passe/).fill("mot-de-passe-tres-long");
     await dialog.getByLabel("hdplus", { exact: true }).check();
-    await dialog.getByLabel("allowedServices (profil: sids — vide = inchangé en édition)").fill("hdplus: 0x1234, 100");
+    await dialog.getByLabel("allowedServices (profil: sids — vide = inchangé en édition)").fill("hdplus: 1234, 0100");
     await dialog.getByRole("button", { name: "Créer" }).click();
     await expect(dialog).toBeHidden();
     const post = api.last("/api/admin/users", "POST");
@@ -72,7 +72,7 @@ test.describe("crud générique", () => {
     expect(b).toMatchObject({
       name: "bob", password: "mot-de-passe-tres-long",
       profiles: ["hdplus"],
-      allowedServices: { hdplus: [100, 0x1234] },
+      allowedServices: { hdplus: [0x100, 0x1234] },
       blockedServices: {},
     });
   });
@@ -99,7 +99,7 @@ test.describe("crud générique", () => {
     const api = await mockApi(page);
     await login(page);
     await page.goto("/admin/cw-cycle");
-    await page.getByLabel(/CAID/).fill("0x500, 0x100");
+    await page.getByLabel(/CAID/).fill("0500, 0100");
     await page.getByRole("button", { name: "Enregistrer" }).click();
     await expect(page.getByText(/Enregistré/)).toBeVisible();
     const put = api.last("/api/admin/config/cw-cycle", "PUT");

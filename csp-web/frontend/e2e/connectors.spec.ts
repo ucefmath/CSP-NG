@@ -48,7 +48,11 @@ test.describe("connecteurs", () => {
     await dialog.getByLabel("Nom").fill("conn-cs");
     await dialog.getByLabel("Hôte").fill("cs.example.net");
     await dialog.getByLabel(/Port/).fill("37800");
+    // Régression : changer de protocole ne doit pas fermer le dialogue.
+    await dialog.getByLabel("Protocole").selectOption("newcamd");
+    await expect(dialog).toBeVisible();
     await dialog.getByLabel("Protocole").selectOption("cs378x");
+    await expect(dialog).toBeVisible();
     await dialog.getByLabel("cacheexMode").selectOption("3");
     await dialog.getByLabel(/cacheexMaxHop/).fill("5");
     await dialog.getByRole("button", { name: "Créer" }).click();

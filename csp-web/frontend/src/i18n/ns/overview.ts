@@ -1,0 +1,38 @@
+import { defineMessages } from '../define';
+
+export const overview = defineMessages(
+  {
+    title: 'Overview',
+    profiles: 'Profiles',
+    connectors: 'Connectors',
+    listeners: 'Listeners',
+    users: 'Users',
+    proxies: 'Proxies',
+    snapshot: 'Snapshot',
+    open: 'Open',
+    status: 'Status',
+    api: 'API:',
+    operational: 'operational',
+    proxyRoot: 'proxy root:',
+    cacheExStats: 'CacheEx Stats',
+    dcwQuality: 'DCW Quality',
+    relays: 'Relays',
+  },
+  {
+    title: "Vue d'ensemble",
+    profiles: 'Profils',
+    connectors: 'Connecteurs',
+    listeners: 'Listeners',
+    users: 'Utilisateurs',
+    proxies: 'Proxys',
+    snapshot: 'Snapshot',
+    open: 'Ouvrir',
+    status: 'État',
+    api: 'API :',
+    operational: 'opérationnelle',
+    proxyRoot: 'racine proxy :',
+    cacheExStats: 'Stats CacheEx',
+    dcwQuality: 'Qualité DCW',
+    relays: 'Relais',
+  },
+);

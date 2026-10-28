@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { apiJson, describeError, parseInteger } from "../api";
 import { Empty, Field, LoadError, Loading, fetchSnapshot, useSnapshot, useToast } from "../components/ui";
+import { useT } from "../i18n";
 
 export function GeneralPage() {
+  const t = useT();
   const snap = useSnapshot(fetchSnapshot);
   const { push } = useToast();
   const [proxyName, setProxyName] = useState<string | null>(null);
@@ -12,7 +14,7 @@ export function GeneralPage() {
 
   if (snap.loading) return <Loading />;
   if (snap.error) return <LoadError error={snap.error} onRetry={snap.reload} />;
-  if (!snap.data) return <Empty msg="Aucune donnée" />;
+  if (!snap.data) return <Empty msg={t("common.noData")} />;
   const root = snap.data.root ?? {};
   const current = proxyName ?? (root.proxyName || "");
 
@@ -21,7 +23,7 @@ export function GeneralPage() {
     setErr("");
     setMsg("");
     if (!current.trim()) {
-      setErr("Nom du proxy requis");
+      setErr(t("general.proxyNameRequired"));
       return;
     }
     setSaving(true);
@@ -30,8 +32,8 @@ export function GeneralPage() {
         method: "PUT",
         body: { proxyName: current.trim(), version: root.version ?? 1 },
       });
-      setMsg(`Enregistré — nouvelle version ${body.version}`);
-      push("Général mis à jour");
+      setMsg(t("general.saved", { version: body.version }));
+      push(t("general.toastUpdated"));
       snap.reload();
     } catch (e) {
       const m = describeError(e);
@@ -44,18 +46,18 @@ export function GeneralPage() {
 
   return (
     <div className="card">
-      <h1>Général</h1>
-      <p className="muted small">Nom du proxy. Version optimiste : rechargée après chaque enregistrement.</p>
+      <h1>{t("general.title")}</h1>
+      <p className="muted small">{t("general.subtitle")}</p>
       <form onSubmit={submit} noValidate>
-        <section aria-label="Essentiel">
-          <h2>Essentiel</h2>
-          <Field label="Nom du proxy" htmlFor="f-proxyName">
+        <section aria-label={t("general.sectionEssential")}>
+          <h2>{t("general.sectionEssential")}</h2>
+          <Field label={t("general.proxyName")} htmlFor="f-proxyName">
             <input id="f-proxyName" type="text" value={current} onChange={(e) => setProxyName(e.target.value)} required />
           </Field>
         </section>
-        <section aria-label="Version" className="section">
+        <section aria-label={t("general.sectionVersion")} className="section">
           <p className="muted small">
-            Version actuelle : <code className="mono">v{root.version ?? "—"}</code> (envoyée automatiquement au PUT)
+            {t("general.currentVersion")} <code className="mono">v{root.version ?? "—"}</code>{t("general.sentAutomatically")}
           </p>
         </section>
         {err && (
@@ -70,11 +72,11 @@ export function GeneralPage() {
         )}
         <div className="toolbar">
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? "Enregistrement…" : "Enregistrer"}
+            {saving ? t("general.saving") : t("common.save")}
           </button>
         </div>
       </form>
-      <p className="muted small">Portée body ≤ 64 K — charge utile minimale.</p>
+      <p className="muted small">{t("general.bodyScope")}</p>
       {void parseInteger}
     </div>
   );

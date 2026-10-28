@@ -113,7 +113,7 @@ test.describe("qualité pairs & quorum CacheEx", () => {
     await quorumSection.getByLabel("Mode").selectOption("enforce");
     await quorumSection.getByLabel("Origines min").fill("3");
     await quorumSection.getByLabel("Profils (CSV, vide = tous)").fill("hdplus,skyde");
-    await quorumSection.getByLabel("CAIDs (CSV, vide = tous)").fill("1830, 2434");
+    await quorumSection.getByLabel("CAIDs hex (CSV, vide = tous)").fill("1830, 2434");
 
     await quorumSection.getByRole("button", { name: /Enregistrer \(version 1\)/ }).click();
     await expect(page.getByText("Quorum mis à jour (relayé aux workers)")).toBeVisible();
@@ -124,7 +124,7 @@ test.describe("qualité pairs & quorum CacheEx", () => {
       mode: "enforce",
       minOrigins: 3,
       profiles: ["hdplus", "skyde"],
-      caids: [1830, 2434],
+      caids: [0x1830, 0x2434],
       version: 1,
     });
 
@@ -133,6 +133,24 @@ test.describe("qualité pairs & quorum CacheEx", () => {
     await expect(keysTable).toBeVisible();
     await expect(keysTable.getByText("node:0102030405060708")).toBeVisible();
     await expect(keysTable.getByText("atteint")).toBeVisible();
+  });
+
+  test("quorum : saisie CAID non hex refusée côté client (toast + aucun PUT)", async ({ page }) => {
+    const api = await mockApi(page);
+    await login(page);
+    await page.goto("/admin/cacheex");
+
+    const quorumSection = page.locator(".card").filter({ hasText: "Quorum CacheEx ciblé" });
+    const quorumPuts = () =>
+      api.captured.filter((c) => c.url.includes("/api/admin/peer-quality/quorum") && c.method === "PUT");
+    const putsBefore = quorumPuts().length;
+
+    await quorumSection.getByLabel("CAIDs hex (CSV, vide = tous)").fill("1830, zz");
+    await quorumSection.getByRole("button", { name: /Enregistrer \(version 1\)/ }).click();
+
+    // Rejet strict côté client : message explicite, jamais de filtrage silencieux
+    await expect(page.getByText("CAID invalide : zz")).toBeVisible();
+    expect(quorumPuts()).toHaveLength(putsBefore);
   });
 
   test("accessibilité axe-core : page CacheEx sans violation critique", async ({ page }) => {

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { apiJson, describeError, formatDate } from "../api";
 import { Empty, LoadError, Loading, fetchSnapshot, useSnapshot, useToast } from "../components/ui";
+import { formatHexId } from "../hex";
+import { useT } from "../i18n";
 
 interface Capability {
   id: number;
@@ -22,11 +24,8 @@ interface CapSource {
   updatedAt?: string | null;
 }
 
-function hex(n: number, pad: number) {
-  return "0x" + Number(n).toString(16).toUpperCase().padStart(pad, "0");
-}
-
 export function CatalogPage() {
+  const t = useT();
   const snap = useSnapshot(fetchSnapshot);
   const { push } = useToast();
   const [profile, setProfile] = useState<string | null>(null);
@@ -42,8 +41,8 @@ export function CatalogPage() {
   if (!profiles.length) {
     return (
       <div className="card">
-        <h1>Catalogue de cartes</h1>
-        <Empty msg="Aucun profil disponible." />
+        <h1>{t("catalog.title")}</h1>
+        <Empty msg={t("catalog.noProfiles")} />
       </div>
     );
   }
@@ -68,7 +67,7 @@ export function CatalogPage() {
   async function setState(id: number, state: string, version: number) {
     try {
       await apiJson(`/api/admin/catalog/capabilities/${id}/state`, { method: "PUT", body: { state, version } });
-      push(`Capacité ${state === "published" ? "publiée" : "bloquée"}`);
+      push(state === "published" ? t("catalog.toastPublished") : t("catalog.toastBlocked"));
       load(current);
     } catch (e) {
       push(describeError(e), "err");
@@ -92,10 +91,10 @@ export function CatalogPage() {
 
   return (
     <div className="card">
-      <h1>Catalogue de cartes</h1>
-      <p className="muted small">Capacités de cartes persistantes : publication / blocage, sources par connecteur.</p>
+      <h1>{t("catalog.title")}</h1>
+      <p className="muted small">{t("catalog.subtitle")}</p>
       <div className="field">
-        <label htmlFor="cat-prof">Profil</label>
+        <label htmlFor="cat-prof">{t("catalog.profileLabel")}</label>
         <select
           id="cat-prof"
           value={current}
@@ -107,39 +106,39 @@ export function CatalogPage() {
         >
           {profiles.map((p) => (
             <option key={p.name} value={p.name}>
-              {p.name} (caid: {hex(p.caId ?? 0, 4)})
+              {p.name} (caid: {formatHexId(p.caId ?? 0, "caid")})
             </option>
           ))}
         </select>
       </div>
       {caps === null && !loadingCaps ? (
         <button type="button" className="btn btn-primary btn-sm" onClick={() => load(current)}>
-          Charger le catalogue
+          {t("catalog.loadCatalog")}
         </button>
       ) : loadingCaps ? (
-        <p className="muted">Chargement du catalogue…</p>
+        <p className="muted">{t("catalog.loadingCatalog")}</p>
       ) : capError ? (
         <LoadError error={capError} onRetry={() => load(current)} />
       ) : !caps?.length ? (
-        <Empty msg="Aucune capacité découverte ou déclarée pour ce profil." />
+        <Empty msg={t("catalog.emptyCatalog")} />
       ) : (
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>CAID</th>
-                <th>Provider</th>
-                <th>Card ID (persistant)</th>
-                <th>Statut</th>
-                <th>Version</th>
-                <th>Actions</th>
+                <th>{t("catalog.thCaid")}</th>
+                <th>{t("catalog.thProvider")}</th>
+                <th>{t("catalog.thCardId")}</th>
+                <th>{t("catalog.thStatus")}</th>
+                <th>{t("catalog.thVersion")}</th>
+                <th>{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {caps.map((c) => (
                 <tr key={c.id}>
-                  <td><code className="mono">{hex(c.caid, 4)}</code></td>
-                  <td><code className="mono">{hex(c.provider, 6)}</code></td>
+                  <td><code className="mono">{formatHexId(c.caid, "caid")}</code></td>
+                  <td><code className="mono">{formatHexId(c.provider, "provid")}</code></td>
                   <td><code className="mono">{String(c.cardId)}</code></td>
                   <td>
                     <span className={c.state === "published" ? "badge badge-ok" : c.state === "blocked" ? "badge badge-danger" : "badge badge-muted"}>
@@ -150,16 +149,16 @@ export function CatalogPage() {
                   <td>
                     {c.state !== "published" && (
                       <button type="button" className="btn btn-primary btn-sm" onClick={() => setState(c.id, "published", c.version)}>
-                        Publier
+                        {t("catalog.publish")}
                       </button>
                     )}
                     {c.state !== "blocked" && (
                       <button type="button" className="btn btn-ghost btn-sm" onClick={() => setState(c.id, "blocked", c.version)}>
-                        Bloquer
+                        {t("catalog.block")}
                       </button>
                     )}
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => toggleSources(c.id)} aria-expanded={openSources === c.id}>
-                      {openSources === c.id ? "Masquer sources" : "Sources"}
+                      {openSources === c.id ? t("catalog.hideSources") : t("catalog.showSources")}
                     </button>
                   </td>
                 </tr>
@@ -170,20 +169,20 @@ export function CatalogPage() {
       )}
       {openSources !== null && (
         <div className="card" aria-live="polite">
-          <h2>Sources de la capacité #{openSources}</h2>
+          <h2>{t("catalog.sourcesHeading", { id: openSources })}</h2>
           {!(sources[openSources] ?? []).length ? (
-            <Empty msg="Aucune source connue." />
+            <Empty msg={t("catalog.noSources")} />
           ) : (
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Connecteur</th>
-                    <th>Card ID d'origine</th>
-                    <th>Confiance</th>
-                    <th>Hop</th>
-                    <th>Reshare</th>
-                    <th>Màj</th>
+                    <th>{t("catalog.thConnector")}</th>
+                    <th>{t("catalog.thOriginCardId")}</th>
+                    <th>{t("catalog.thTrust")}</th>
+                    <th>{t("catalog.thHop")}</th>
+                    <th>{t("catalog.thReshare")}</th>
+                    <th>{t("catalog.thUpdated")}</th>
                   </tr>
                 </thead>
                 <tbody>

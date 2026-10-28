@@ -26,9 +26,9 @@ describe("parseSidList", () => {
   test("vide => []", () => {
     expect(parseSidList("")).toEqual({ ok: true, values: [] });
   });
-  test("hex + decimal, dedup + tri", () => {
+  test("hex direct (avec ou sans 0x), dedup + tri", () => {
     const r = parseSidList("0x1234, 100, 0x1234");
-    expect(r).toEqual({ ok: true, values: [100, 0x1234] });
+    expect(r).toEqual({ ok: true, values: [0x100, 0x1234] });
   });
   test("invalide => erreur", () => {
     const r = parseSidList("xyz");
@@ -41,7 +41,7 @@ describe("parseSidList", () => {
 
 describe("formatSid", () => {
   test("pad 4 hex", () => {
-    expect(formatSid(0x1a)).toBe("0x001a");
+    expect(formatSid(0x1a)).toBe("001A");
   });
 });
 

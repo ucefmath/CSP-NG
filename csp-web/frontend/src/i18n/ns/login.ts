@@ -1,0 +1,46 @@
+import { defineMessages } from '../define';
+
+export const login = defineMessages(
+  {
+    skipToForm: 'Skip to login form',
+    subtitle: 'Administration console',
+    usernameRequired: 'Username required',
+    passwordRequired: 'Password required',
+    connectedAs: 'Signed in as {user}',
+    loginFailed: 'Sign in failed',
+    invalidCredentials: 'Invalid credentials',
+    tlsRequired: 'TLS required — please use HTTPS',
+    rateLimited: 'Too many attempts — try again later (429)',
+    networkUnavailable: 'Network unavailable',
+    username: 'Username',
+    password: 'Password',
+    submitting: 'Signing in…',
+    submit: 'Sign in',
+    promoDesc: 'A single stable endpoint for your M3U & Xtream sources (EPG, VOD, failover)',
+
+    notFoundTitle: 'Page not found',
+    notFoundDesc: 'This administration route does not exist.',
+    notFoundBack: 'Back to overview',
+  },
+  {
+    skipToForm: 'Aller au formulaire de connexion',
+    subtitle: "Console d'administration",
+    usernameRequired: 'Identifiant requis',
+    passwordRequired: 'Mot de passe requis',
+    connectedAs: 'Connecté en tant que {user}',
+    loginFailed: 'Échec de connexion',
+    invalidCredentials: 'Identifiants invalides',
+    tlsRequired: 'TLS requis — utilisez HTTPS',
+    rateLimited: 'Trop de tentatives — réessayez plus tard (429)',
+    networkUnavailable: 'Réseau indisponible',
+    username: 'Identifiant',
+    password: 'Mot de passe',
+    submitting: 'Connexion…',
+    submit: 'Se connecter',
+    promoDesc: 'Un seul endpoint stable pour vos sources M3U & Xtream (EPG, VOD, failover)',
+
+    notFoundTitle: 'Page introuvable',
+    notFoundDesc: "Cette route d'administration n'existe pas.",
+    notFoundBack: "Retour à la vue d'ensemble",
+  },
+);

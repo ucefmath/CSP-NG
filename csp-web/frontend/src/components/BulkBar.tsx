@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiJson, describeError } from "../api";
+import { useT } from "../i18n";
 import type { BulkItem } from "../types";
 import { Dialog, useToast } from "./ui";
 
@@ -37,6 +38,7 @@ export function BulkBar<T extends { version: number }>({
   labelOf: (id: string) => string;
   onDone: () => void;
 }) {
+  const t = useT();
   const { push } = useToast();
   const [open, setOpen] = useState(false);
   const [modes, setModes] = useState<Record<string, BulkMode>>({});
@@ -60,33 +62,33 @@ export function BulkBar<T extends { version: number }>({
         const raw = (values[f.key] ?? "").trim();
         if (raw === "__unchanged__" || raw === "") continue;
         if (raw === "__null__") {
-          if (!f.resettable) return { ok: false, error: `${f.label} : réinitialisation non autorisée` };
+          if (!f.resettable) return { ok: false, error: t("components.resetNotAllowed", { field: f.label }) };
           patch[f.key] = null;
           continue;
         }
-        if (raw !== "true" && raw !== "false") return { ok: false, error: `${f.label} : true/false ou inchangé` };
+        if (raw !== "true" && raw !== "false") return { ok: false, error: t("components.booleanExpected", { field: f.label }) };
         patch[f.key] = raw === "true";
       } else if (f.type === "multiselect") {
         if (mode !== "replace") continue;
         const opts = f.options ?? [];
         patch[f.key] = (sets[f.key] ?? []).filter((v) => opts.includes(v));
       } else if (mode === "reset") {
-        if (!f.resettable) return { ok: false, error: `${f.label} : réinitialisation non autorisée` };
+        if (!f.resettable) return { ok: false, error: t("components.resetNotAllowed", { field: f.label }) };
         patch[f.key] = null;
       } else {
         const raw = (values[f.key] ?? "").trim();
-        if (raw === "") return { ok: false, error: `${f.label} : valeur requise (ou repassez en « inchangé »)` };
+        if (raw === "") return { ok: false, error: t("components.valueRequired", { field: f.label }) };
         if (f.type === "number") {
           const n = Number(raw);
-          if (!Number.isInteger(n)) return { ok: false, error: `${f.label} : entier requis` };
+          if (!Number.isInteger(n)) return { ok: false, error: t("components.integerRequired", { field: f.label }) };
           patch[f.key] = n;
         } else {
           patch[f.key] = raw;
         }
       }
     }
-    if (Object.keys(patch).length === 0) return { ok: false, error: "Aucune modification (tout est « inchangé »)" };
-    if (Object.keys(patch).length > 24) return { ok: false, error: "24 champs maximum" };
+    if (Object.keys(patch).length === 0) return { ok: false, error: t("components.noChanges") };
+    if (Object.keys(patch).length > 24) return { ok: false, error: t("components.maxFields") };
     return { ok: true, patch };
   }
 
@@ -104,7 +106,7 @@ export function BulkBar<T extends { version: number }>({
         method: "PUT",
         body: { items, patch: parsed.patch },
       });
-      push(`Bulk ${resource} : ${body.updated.length} élément(s) mis à jour`);
+      push(t("components.updatedToast", { resource, count: body.updated.length }));
       setOpen(false);
       setModes({});
       setValues({});
@@ -136,24 +138,20 @@ export function BulkBar<T extends { version: number }>({
 
   return (
     <>
-      <div className="bulkbar" role="region" aria-label="Édition groupée">
+      <div className="bulkbar" role="region" aria-label={t("components.bulkRegion")}>
         <span className="small">
-          <strong>{selected.length}</strong> sélectionné(s)
+          <strong>{selected.length}</strong> {t("components.selectedCount", { count: selected.length }).replace(String(selected.length), "").trim()}
         </span>
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setOpen(true)}>
-          Édition groupée…
+          {t("components.bulkEditBtn")}
         </button>
       </div>
       {open && (
-        <Dialog title={`Édition groupée — ${resource} (${selected.length})`} onClose={() => setOpen(false)} wide>
+        <Dialog title={t("components.dialogTitle", { resource, count: selected.length })} onClose={() => setOpen(false)} wide>
           {!confirming ? (
             <>
               <p className="muted small">
-                Options communes. « Inchangé » = champ absent du patch, ligne non touchée.
-                « Réinitialiser » = remise à la valeur par défaut/NULL — <strong>uniquement
-                proposée quand le backend l'autorise</strong> (sinon 400). Ensembles :
-                « Remplacer » écrase tout l'ensemble (vide = vide l'ensemble).
-                Application atomique : tout échoue si une ligne est en conflit de version.
+                {t("components.introText")}
               </p>
               <div className="form-grid cols-2">
                 {fields.map((f) => {
@@ -167,12 +165,12 @@ export function BulkBar<T extends { version: number }>({
                           value={values[f.key] ?? "__unchanged__"}
                           onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
                         >
-                          <option value="__unchanged__">— Inchangé —</option>
-                          <option value="true">Activé (true)</option>
-                          <option value="false">Désactivé (false)</option>
+                          <option value="__unchanged__">{t("components.unchangedOpt")}</option>
+                          <option value="true">{t("components.enabledTrue")}</option>
+                          <option value="false">{t("components.disabledFalse")}</option>
                           {f.resettable && (
                             <option value="__null__">
-                              Réinitialiser{f.resetHint ? ` (${f.resetHint})` : ""}
+                              {t("components.resetOpt", { hint: f.resetHint ? ` (${f.resetHint})` : "" })}
                             </option>
                           )}
                         </select>
@@ -192,10 +190,10 @@ export function BulkBar<T extends { version: number }>({
                             checked={replacing}
                             onChange={(e) => setMode(f.key, e.target.checked ? "replace" : "unchanged")}
                           />
-                          <span>Remplacer l'ensemble (vide = vide l'ensemble)</span>
+                          <span>{t("components.replaceSet")}</span>
                         </label>
                         {!opts.length ? (
-                          <p className="chip-empty">Aucune option disponible.</p>
+                          <p className="chip-empty">{t("components.noOption")}</p>
                         ) : (
                           <div className="chip-group">
                             {opts.map((o) => (
@@ -218,37 +216,37 @@ export function BulkBar<T extends { version: number }>({
                   }
                   return (
                     <div className="field" key={f.key}>
-                      <label htmlFor={`bulk-${f.key}-mode`}>{f.label} — mode</label>
+                      <label htmlFor={`bulk-${f.key}-mode`}>{t("components.modeLabel", { field: f.label })}</label>
                       <select
                         id={`bulk-${f.key}-mode`}
                         value={mode}
                         onChange={(e) => setMode(f.key, e.target.value as BulkMode)}
                       >
-                        <option value="unchanged">— Inchangé —</option>
-                        <option value="set">Définir une valeur</option>
+                        <option value="unchanged">{t("components.unchangedOpt")}</option>
+                        <option value="set">{t("components.setValueOpt")}</option>
                         {f.resettable && (
                           <option value="reset">
-                            Réinitialiser{f.resetHint ? ` (${f.resetHint})` : ""}
+                            {t("components.resetOpt", { hint: f.resetHint ? ` (${f.resetHint})` : "" })}
                           </option>
                         )}
                       </select>
                       {mode === "set" && (
                         <>
                           <label className="sr-only" htmlFor={`bulk-${f.key}`}>
-                            {f.label} — valeur
+                            {t("components.valueLabel", { field: f.label })}
                           </label>
                           <input
                             id={`bulk-${f.key}`}
                             type="text"
                             value={values[f.key] ?? ""}
-                            placeholder={f.type === "number" ? "Entier" : "Valeur"}
+                            placeholder={f.type === "number" ? t("components.intPlaceholder") : t("components.valPlaceholder")}
                             onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
                           />
                         </>
                       )}
                       {mode === "reset" && (
                         <p className="muted small" role="note">
-                          Sera réinitialisé{f.resetHint ? ` (${f.resetHint})` : ""}.
+                          {t("components.willBeReset", { hint: f.resetHint ? ` (${f.resetHint})` : "" })}
                         </p>
                       )}
                       {f.help && <p className="muted small">{f.help}</p>}
@@ -263,17 +261,17 @@ export function BulkBar<T extends { version: number }>({
               )}
               <div className="dialog-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>
-                  Annuler
+                  {t("common.cancel")}
                 </button>
                 <button type="button" className="btn btn-primary" onClick={() => { setError(""); setConfirming(true); }}>
-                  Relire…
+                  {t("components.reviewBtn")}
                 </button>
               </div>
             </>
           ) : (
             <>
-              <h3>Résumé de confirmation</h3>
-              <p className="muted small">{selected.length} élément(s) :</p>
+              <h3>{t("components.confirmSummary")}</h3>
+              <p className="muted small">{t("components.elementsCount", { count: selected.length })}</p>
               <ul className="small">
                 {selected.map((s) => (
                   <li key={s.id}>
@@ -286,8 +284,7 @@ export function BulkBar<T extends { version: number }>({
                 <>
                   <pre className="mono small patch-preview">{JSON.stringify(patchPreview, null, 2)}</pre>
                   <p className="muted small">
-                    Légende : valeur = modification ; <code className="mono">null</code> = réinitialisation
-                    ; tableau = remplacement complet de l'ensemble.
+                    {t("components.legend")}
                   </p>
                 </>
               ) : (
@@ -302,10 +299,10 @@ export function BulkBar<T extends { version: number }>({
               )}
               <div className="dialog-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setConfirming(false)}>
-                  Retour
+                  {t("components.backBtn")}
                 </button>
                 <button type="button" className="btn btn-primary" disabled={busy || !patchPreview} onClick={submit}>
-                  {busy ? "Envoi…" : "Appliquer (atomique)"}
+                  {busy ? t("components.sendingBtn") : t("components.applyBtn")}
                 </button>
               </div>
             </>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch, apiJson, describeError } from "../api";
 import { ConfirmDialog, Dialog, Empty, Field, Loading, fetchSnapshot, useSnapshot, useToast } from "../components/ui";
+import { translate, useT } from "../i18n";
 
 type Rec = Record<string, unknown>;
 const str = (v: unknown) => (v === null || v === undefined ? "" : String(v));
@@ -17,6 +18,7 @@ async function get<T>(path: string): Promise<T> {
 }
 
 export function RelaisPage() {
+  const t = useT();
   const { push } = useToast();
   const [nodes, setNodes] = useState<Rec[]>([]);
   const [caches, setCaches] = useState<Rec[]>([]);
@@ -73,14 +75,14 @@ export function RelaisPage() {
     }
   }
 
-  if (loading) return <Loading label="Chargement relais…" />;
+  if (loading) return <Loading label={t("relais.loading")} />;
   if (error) {
     return (
       <div className="card" role="alert">
-        <h1>Relais</h1>
-        <p className="field-error">Erreur relais : {describeError(error)}</p>
+        <h1>{t("relais.errorTitle")}</h1>
+        <p className="field-error">{t("relais.errorMsg", { error: describeError(error) })}</p>
         <button type="button" className="btn btn-sm" onClick={load}>
-          Réessayer
+          {t("relais.retryBtn")}
         </button>
       </div>
     );
@@ -92,34 +94,32 @@ export function RelaisPage() {
 
   return (
     <div>
-      <h1>Relais — nodes, caches, liens, pairs UDP</h1>
+      <h1>{t("relais.title")}</h1>
       <p className="muted small">
-        Nodes relais sans accès PG (canal HTTPS mTLS). Caches distants débranchés par défaut. Kind local | node
-        (CSPv2 authentifié) | udp (échange allowlisté, strict). TTL config worker :{" "}
-        {str((status?.workerConfigTtlMs as number | undefined) ?? "—")} ms.
+        {t("relais.subtitle", { ttl: str((status?.workerConfigTtlMs as number | undefined) ?? "—") })}
       </p>
 
       <div className="card">
         <div className="toolbar">
-          <h2>Nodes relais (identité mTLS SAN)</h2>
+          <h2>{t("relais.nodesCardTitle")}</h2>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setNodeDlg("new")}>
-            Nouveau Node
+            {t("relais.newNodeBtn")}
           </button>
         </div>
         {!nodes.length ? (
-          <Empty msg="Aucun node — cliquez sur « Nouveau Node » pour autoriser un worker." />
+          <Empty msg={t("relais.noNodes")} />
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Node</th>
-                  <th>Display</th>
-                  <th>Statut</th>
-                  <th>Endpoint CSPv2</th>
-                  <th>Desired / Applied</th>
-                  <th>Version</th>
-                  <th>Actions</th>
+                  <th>{t("relais.thNode")}</th>
+                  <th>{t("relais.thDisplay")}</th>
+                  <th>{t("relais.thStatus")}</th>
+                  <th>{t("relais.thEndpoint")}</th>
+                  <th>{t("relais.thDesiredApplied")}</th>
+                  <th>{t("relais.thVersion")}</th>
+                  <th>{t("relais.thActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -135,22 +135,27 @@ export function RelaisPage() {
                       <td>{str(n.displayName) || "—"}</td>
                       <td>
                         <span className={revoked ? "badge badge-danger" : enabled && authorized ? "badge badge-ok" : "badge badge-warn"}>
-                          {revoked ? "révoqué" : enabled ? (authorized ? "actif" : "non-autorisé") : "désactivé"}
+                          {revoked ? t("relais.badgeRevoked") : enabled ? (authorized ? t("relais.badgeActive") : t("relais.badgeUnauthorized")) : t("relais.badgeDisabled")}
                         </span>
                       </td>
-                      <td className="mono small">{n.cspHost && n.cspPort ? `${n.cspHost}:${n.cspPort}` : "accept-only"}</td>
+                      <td className="mono small">{n.cspHost && n.cspPort ? `${n.cspHost}:${n.cspPort}` : t("relais.acceptOnly")}</td>
                       <td className="mono small">
-                        des={str(n.desiredVersion)} / app={st && st.appliedVersion != null ? `v${st.appliedVersion}` : "jamais"}
-                        {st ? `${st.expired ? " [expiré]" : ""}${st.stale ? " [stale]" : ""}` : ""}
+                        {t("relais.desAppVersions", {
+                          des: str(n.desiredVersion),
+                          app: st && st.appliedVersion != null ? `v${st.appliedVersion}` : t("relais.never"),
+                        })}
+                        {st ? `${st.expired ? t("relais.tagExpired") : ""}${st.stale ? t("relais.tagStale") : ""}` : ""}
                       </td>
                       <td className="mono small">v{str(n.version)}</td>
                       <td>
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNodeDlg(n)}>Éditer</button>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNodeDlg(n)}>
+                          {t("relais.btnEdit")}
+                        </button>
                         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAssign({ node: name, kind: "listeners" })}>
-                          Listeners
+                          {t("relais.btnListeners")}
                         </button>
                         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAssign({ node: name, kind: "connectors" })}>
-                          Connecteurs
+                          {t("relais.btnConnectors")}
                         </button>
                       </td>
                     </tr>
@@ -164,24 +169,24 @@ export function RelaisPage() {
 
       <div className="card">
         <div className="toolbar">
-          <h2>Caches relais (local | node CSPv2 | udp)</h2>
+          <h2>{t("relais.cachesCardTitle")}</h2>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setCacheDlg("new")}>
-            Nouveau Cache
+            {t("relais.newCacheBtn")}
           </button>
         </div>
         {!caches.length ? (
-          <Empty msg="Aucun cache relais." />
+          <Empty msg={t("relais.noCaches")} />
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Nom</th>
-                  <th>Type</th>
-                  <th>État</th>
-                  <th>Node</th>
-                  <th>Version</th>
-                  <th>Actions</th>
+                  <th>{t("relais.thName")}</th>
+                  <th>{t("relais.thType")}</th>
+                  <th>{t("relais.thState")}</th>
+                  <th>{t("relais.thNode")}</th>
+                  <th>{t("relais.thVersion")}</th>
+                  <th>{t("relais.thActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -191,16 +196,18 @@ export function RelaisPage() {
                     <td>{str(c.kind)}</td>
                     <td>
                       <span className={c.enabled ? "badge badge-ok" : "badge badge-muted"}>
-                        {c.enabled ? "activé" : "désactivé"}
+                        {c.enabled ? t("relais.badgeEnabled") : t("relais.badgeCacheDisabled")}
                       </span>
                     </td>
                     <td className="mono small">{str(c.nodeName) || "—"}</td>
                     <td className="mono small">v{str(c.version)}</td>
                     <td>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCacheDlg(c)}>Éditer</button>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCacheDlg(c)}>
+                        {t("relais.btnEdit")}
+                      </button>
                       {str(c.kind) === "udp" && (
                         <button type="button" className="btn btn-ghost btn-sm" onClick={() => loadPeers(str(c.name))}>
-                          Pairs
+                          {t("relais.btnPeers")}
                         </button>
                       )}
                     </td>
@@ -212,16 +219,16 @@ export function RelaisPage() {
         )}
         {peersCache && (
           <div className="section" aria-live="polite">
-            <h3>Pairs UDP de « {peersCache} »</h3>
+            <h3>{t("relais.peersTitle", { name: peersCache })}</h3>
             {!peers.length ? (
-              <Empty msg="Aucun pair." />
+              <Empty msg={t("relais.noPeers")} />
             ) : (
               <ul className="small">
                 {peers.map((p) => (
                   <li key={str(p.id ?? `${p.host}:${p.port}`)}>
-                    <code className="mono">{str(p.host)}:{str(p.port)}</code> — {p.enabled ? "actif" : "inactif"}{" "}
+                    <code className="mono">{str(p.host)}:{str(p.port)}</code> — {p.enabled ? t("relais.peerActive") : t("relais.peerInactive")}{" "}
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => removePeer(p, peersCache, load, push)}>
-                      Retirer
+                      {t("relais.btnRemove")}
                     </button>
                   </li>
                 ))}
@@ -234,25 +241,25 @@ export function RelaisPage() {
 
       <div className="card">
         <div className="toolbar">
-          <h2>Liens listener → cache</h2>
+          <h2>{t("relais.linksCardTitle")}</h2>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setLinkDlg("new")}>
-            Nouveau lien
+            {t("relais.newLinkBtn")}
           </button>
         </div>
         {!links.length ? (
-          <Empty msg="Aucun lien." />
+          <Empty msg={t("relais.noLinks")} />
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Listener</th>
-                  <th>Cache</th>
-                  <th>Consultation</th>
-                  <th>Alimentation</th>
-                  <th>Export</th>
-                  <th>Actif</th>
-                  <th>Actions</th>
+                  <th>{t("relais.thListener")}</th>
+                  <th>{t("relais.thCache")}</th>
+                  <th>{t("relais.thConsult")}</th>
+                  <th>{t("relais.thFeed")}</th>
+                  <th>{t("relais.thExport")}</th>
+                  <th>{t("relais.thLinkActive")}</th>
+                  <th>{t("relais.thActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -260,36 +267,38 @@ export function RelaisPage() {
                   <tr key={`${str(l.listenerId)}/${str(l.cacheName)}`}>
                     <td className="mono">#{str(l.listenerId)}</td>
                     <td className="mono">{str(l.cacheName)}</td>
-                    <td>{l.canConsult ? "oui" : "non"}</td>
-                    <td>{l.canFeed ? "oui" : "non"}</td>
-                    <td>{l.canExport ? "oui" : "non"}</td>
+                    <td>{l.canConsult ? t("relais.yes") : t("relais.no")}</td>
+                    <td>{l.canFeed ? t("relais.yes") : t("relais.no")}</td>
+                    <td>{l.canExport ? t("relais.yes") : t("relais.no")}</td>
                     <td>
                       <span className={l.enabled ? "badge badge-ok" : "badge badge-muted"}>
-                        {l.enabled ? "actif" : "inactif"}
+                        {l.enabled ? t("relais.linkActive") : t("relais.linkInactive")}
                       </span>
                     </td>
                     <td>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLinkDlg(l)}>Éditer</button>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLinkDlg(l)}>
+                        {t("relais.btnEdit")}
+                      </button>
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
                         onClick={() =>
                           setDeleting({
                             kind: "lien",
-                            label: `lien listener #${str(l.listenerId)} → ${str(l.cacheName)}`,
+                            label: t("relais.linkDeleteLabel", { listenerId: str(l.listenerId), cacheName: str(l.cacheName) }),
                             run: async () => {
                               const res = await apiFetch(
                                 `/api/admin/config/relay/links/${str(l.listenerId)}/${encodeURIComponent(str(l.cacheName))}?version=${str((l as Rec).version ?? 1)}`,
                                 { method: "DELETE" },
                               );
                               if (!res.ok) throw new Error(res.statusText);
-                              push("Lien supprimé");
+                              push(t("relais.toastLinkDeleted"));
                               load();
                             },
                           })
                         }
                       >
-                        Supprimer
+                        {t("relais.btnDelete")}
                       </button>
                     </td>
                   </tr>
@@ -341,8 +350,8 @@ export function RelaisPage() {
       )}
       {deleting && (
         <ConfirmDialog
-          title="Supprimer"
-          desc={`${deleting.label} — irréversible.`}
+          title={t("relais.confirmDeleteTitle")}
+          desc={t("relais.confirmDeleteDesc", { label: deleting.label })}
           onClose={() => setDeleting(null)}
           onConfirm={() => {
             deleting.run().catch((e) => push(describeError(e), "err"));
@@ -357,7 +366,7 @@ export function RelaisPage() {
 async function removePeer(p: Rec, cacheName: string, reload: () => void, push: (m: string, k?: "ok" | "err") => void) {
   try {
     await apiFetch(`/api/admin/config/relay/peers/${str(p.id)}`, { method: "DELETE" });
-    push("Pair retiré");
+    push(translate("relais.toastPeerRemoved"));
     reload();
   } catch (e) {
     push(describeError(e), "err");
@@ -366,6 +375,7 @@ async function removePeer(p: Rec, cacheName: string, reload: () => void, push: (
 }
 
 function PeerForm({ cacheName, onSaved }: { cacheName: string; onSaved: () => void }) {
+  const t = useT();
   const { push } = useToast();
   const [host, setHost] = useState("");
   const [port, setPort] = useState("");
@@ -374,14 +384,14 @@ function PeerForm({ cacheName, onSaved }: { cacheName: string; onSaved: () => vo
     e.preventDefault();
     setErr("");
     const p = Number(port);
-    if (!host.trim()) return setErr("Hôte requis");
-    if (!Number.isInteger(p) || p < 1 || p > 65535) return setErr("Port 1-65535");
+    if (!host.trim()) return setErr(t("relais.errHostRequired"));
+    if (!Number.isInteger(p) || p < 1 || p > 65535) return setErr(t("relais.errPortRange"));
     try {
       await apiJson(`/api/admin/config/relay/caches/${encodeURIComponent(cacheName)}/peers`, {
         method: "PUT",
         body: { host: host.trim(), port: p, enabled: true },
       });
-      push("Pair ajouté");
+      push(t("relais.toastPeerAdded"));
       setHost("");
       setPort("");
       onSaved();
@@ -394,16 +404,17 @@ function PeerForm({ cacheName, onSaved }: { cacheName: string; onSaved: () => vo
   return (
     <form onSubmit={submit} noValidate>
       <div className="form-grid cols-2">
-        <Field label="Hôte" htmlFor="peer-host"><input id="peer-host" value={host} onChange={(e) => setHost(e.target.value)} required /></Field>
-        <Field label="Port" htmlFor="peer-port"><input id="peer-port" type="number" value={port} onChange={(e) => setPort(e.target.value)} required /></Field>
+        <Field label={t("relais.fieldHost")} htmlFor="peer-host"><input id="peer-host" value={host} onChange={(e) => setHost(e.target.value)} required /></Field>
+        <Field label={t("relais.fieldPort")} htmlFor="peer-port"><input id="peer-port" type="number" value={port} onChange={(e) => setPort(e.target.value)} required /></Field>
       </div>
       {err && <p className="field-error" role="alert">{err}</p>}
-      <button type="submit" className="btn btn-primary btn-sm">Ajouter le pair</button>
+      <button type="submit" className="btn btn-primary btn-sm">{t("relais.btnAddPeer")}</button>
     </form>
   );
 }
 
 function NodeDialog({ existing, onClose, onSaved }: { existing: Rec | null; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const { push } = useToast();
   const isEdit = !!existing;
   const [f, setF] = useState({
@@ -420,7 +431,7 @@ function NodeDialog({ existing, onClose, onSaved }: { existing: Rec | null; onCl
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
-    if (!f.nodeName.trim()) return setErr("Nom requis");
+    if (!f.nodeName.trim()) return setErr(t("relais.errNodeNameRequired"));
     setBusy(true);
     try {
       const { body } = await apiJson<{ version: number }>(
@@ -439,7 +450,7 @@ function NodeDialog({ existing, onClose, onSaved }: { existing: Rec | null; onCl
           },
         },
       );
-      push(`Node enregistré (v${body.version})`);
+      push(t("relais.toastNodeSaved", { version: body.version }));
       onSaved();
     } catch (e) {
       const m = describeError(e);
@@ -450,23 +461,23 @@ function NodeDialog({ existing, onClose, onSaved }: { existing: Rec | null; onCl
     }
   }
   return (
-    <Dialog title={isEdit ? "Éditer node" : "Nouveau node"} onClose={onClose}>
+    <Dialog title={isEdit ? t("relais.nodeDialogEditTitle") : t("relais.nodeDialogNewTitle")} onClose={onClose}>
       <form onSubmit={submit} noValidate>
-        <Field label="Nom (SAN urn:csp:node:<id>)" htmlFor="nd-name">
+        <Field label={t("relais.fieldNodeName")} htmlFor="nd-name">
           <input id="nd-name" value={f.nodeName} onChange={(e) => setF({ ...f, nodeName: e.target.value })} disabled={isEdit} required />
         </Field>
-        <Field label="Display name" htmlFor="nd-disp"><input id="nd-disp" value={f.displayName} onChange={(e) => setF({ ...f, displayName: e.target.value })} /></Field>
+        <Field label={t("relais.fieldDisplayName")} htmlFor="nd-disp"><input id="nd-disp" value={f.displayName} onChange={(e) => setF({ ...f, displayName: e.target.value })} /></Field>
         <div className="form-grid cols-2">
-          <Field label="cspHost (vide = accept-only)" htmlFor="nd-host"><input id="nd-host" value={f.cspHost} onChange={(e) => setF({ ...f, cspHost: e.target.value })} /></Field>
-          <Field label="cspPort" htmlFor="nd-port"><input id="nd-port" type="number" value={f.cspPort} onChange={(e) => setF({ ...f, cspPort: e.target.value })} /></Field>
+          <Field label={t("relais.fieldCspHost")} htmlFor="nd-host"><input id="nd-host" value={f.cspHost} onChange={(e) => setF({ ...f, cspHost: e.target.value })} /></Field>
+          <Field label={t("relais.fieldCspPort")} htmlFor="nd-port"><input id="nd-port" type="number" value={f.cspPort} onChange={(e) => setF({ ...f, cspPort: e.target.value })} /></Field>
         </div>
-        <label className="check-row"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} /><span>Activé</span></label>
-        <label className="check-row"><input type="checkbox" checked={f.authorized} onChange={(e) => setF({ ...f, authorized: e.target.checked })} /><span>Autorisé</span></label>
-        <label className="check-row"><input type="checkbox" checked={f.revoked} onChange={(e) => setF({ ...f, revoked: e.target.checked })} /><span>Révoqué</span></label>
+        <label className="check-row"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} /><span>{t("relais.checkEnabled")}</span></label>
+        <label className="check-row"><input type="checkbox" checked={f.authorized} onChange={(e) => setF({ ...f, authorized: e.target.checked })} /><span>{t("relais.checkAuthorized")}</span></label>
+        <label className="check-row"><input type="checkbox" checked={f.revoked} onChange={(e) => setF({ ...f, revoked: e.target.checked })} /><span>{t("relais.checkRevoked")}</span></label>
         {err && <p className="field-error" role="alert">{err}</p>}
         <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Annuler</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : isEdit ? "Enregistrer" : "Créer"}</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>{t("relais.btnCancel")}</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : isEdit ? t("relais.btnSave") : t("relais.btnCreate")}</button>
         </div>
       </form>
     </Dialog>
@@ -474,6 +485,7 @@ function NodeDialog({ existing, onClose, onSaved }: { existing: Rec | null; onCl
 }
 
 function CacheDialog({ existing, nodes, onClose, onSaved }: { existing: Rec | null; nodes: string[]; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const { push } = useToast();
   const isEdit = !!existing;
   const [f, setF] = useState({
@@ -490,7 +502,7 @@ function CacheDialog({ existing, nodes, onClose, onSaved }: { existing: Rec | nu
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
-    if (!f.name.trim()) return setErr("Nom requis");
+    if (!f.name.trim()) return setErr(t("relais.errCacheNameRequired"));
     setBusy(true);
     try {
       const { body } = await apiJson<{ version: number }>(
@@ -509,7 +521,7 @@ function CacheDialog({ existing, nodes, onClose, onSaved }: { existing: Rec | nu
           },
         },
       );
-      push(`Cache enregistré (v${body.version})`);
+      push(t("relais.toastCacheSaved", { version: body.version }));
       onSaved();
     } catch (e) {
       const m = describeError(e);
@@ -520,22 +532,22 @@ function CacheDialog({ existing, nodes, onClose, onSaved }: { existing: Rec | nu
     }
   }
   return (
-    <Dialog title={isEdit ? "Éditer cache" : "Nouveau cache"} onClose={onClose}>
+    <Dialog title={isEdit ? t("relais.cacheDialogEditTitle") : t("relais.cacheDialogNewTitle")} onClose={onClose}>
       <form onSubmit={submit} noValidate>
-        <Field label="Nom" htmlFor="rc-name">
+        <Field label={t("relais.fieldCacheName")} htmlFor="rc-name">
           <input id="rc-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} disabled={isEdit} required />
         </Field>
         <div className="field">
-          <label htmlFor="rc-kind">Type (kind)</label>
+          <label htmlFor="rc-kind">{t("relais.fieldCacheKind")}</label>
           <select id="rc-kind" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}>
-            <option value="local">local</option>
-            <option value="node">node (CSPv2 authentifié)</option>
-            <option value="udp">udp (échange allowlisté)</option>
+            <option value="local">{t("relais.kindLocal")}</option>
+            <option value="node">{t("relais.kindNode")}</option>
+            <option value="udp">{t("relais.kindUdp")}</option>
           </select>
         </div>
         {f.kind === "node" && (
           <div className="field">
-            <label htmlFor="rc-node">Node distant</label>
+            <label htmlFor="rc-node">{t("relais.fieldRemoteNode")}</label>
             <select id="rc-node" value={f.nodeName} onChange={(e) => setF({ ...f, nodeName: e.target.value })}>
               <option value="">—</option>
               {nodes.map((n) => (
@@ -545,15 +557,15 @@ function CacheDialog({ existing, nodes, onClose, onSaved }: { existing: Rec | nu
           </div>
         )}
         <div className="form-grid cols-2">
-          <Field label="maxAgeMs" htmlFor="rc-age"><input id="rc-age" type="number" value={f.maxAgeMs} onChange={(e) => setF({ ...f, maxAgeMs: e.target.value })} /></Field>
-          <Field label="maxEntries" htmlFor="rc-entries"><input id="rc-entries" type="number" value={f.maxEntries} onChange={(e) => setF({ ...f, maxEntries: e.target.value })} /></Field>
-          <Field label="maxInflight" htmlFor="rc-infl"><input id="rc-infl" type="number" value={f.maxInflight} onChange={(e) => setF({ ...f, maxInflight: e.target.value })} /></Field>
+          <Field label={t("relais.fieldMaxAgeMs")} htmlFor="rc-age"><input id="rc-age" type="number" value={f.maxAgeMs} onChange={(e) => setF({ ...f, maxAgeMs: e.target.value })} /></Field>
+          <Field label={t("relais.fieldMaxEntries")} htmlFor="rc-entries"><input id="rc-entries" type="number" value={f.maxEntries} onChange={(e) => setF({ ...f, maxEntries: e.target.value })} /></Field>
+          <Field label={t("relais.fieldMaxInflight")} htmlFor="rc-infl"><input id="rc-infl" type="number" value={f.maxInflight} onChange={(e) => setF({ ...f, maxInflight: e.target.value })} /></Field>
         </div>
-        <label className="check-row"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} /><span>Activé</span></label>
+        <label className="check-row"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} /><span>{t("relais.checkEnabled")}</span></label>
         {err && <p className="field-error" role="alert">{err}</p>}
         <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Annuler</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : isEdit ? "Enregistrer" : "Créer"}</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>{t("relais.btnCancel")}</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : isEdit ? t("relais.btnSave") : t("relais.btnCreate")}</button>
         </div>
       </form>
     </Dialog>
@@ -561,6 +573,7 @@ function CacheDialog({ existing, nodes, onClose, onSaved }: { existing: Rec | nu
 }
 
 function LinkDialog({ existing, caches, onClose, onSaved }: { existing: Rec | null; caches: string[]; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const { push } = useToast();
   const snap = useSnapshot(fetchSnapshot);
   const isEdit = !!existing;
@@ -578,17 +591,17 @@ function LinkDialog({ existing, caches, onClose, onSaved }: { existing: Rec | nu
     e.preventDefault();
     setErr("");
     const lid = Number(f.listenerId);
-    if (!Number.isInteger(lid) || lid < 1) return setErr("listenerId ≥ 1");
-    if (!f.cacheName) return setErr("Cache requis");
+    if (!Number.isInteger(lid) || lid < 1) return setErr(t("relais.errListenerIdMin"));
+    if (!f.cacheName) return setErr(t("relais.errCacheRequired"));
     if (!f.canConsult && !f.canFeed && !f.canExport)
-      return setErr("Au moins un sens requis (consultation, alimentation ou export)");
+      return setErr(t("relais.errAtLeastOneDirection"));
     setBusy(true);
     try {
       await apiJson(`/api/admin/config/relay/links/${lid}/${encodeURIComponent(f.cacheName)}`, {
         method: "PUT",
         body: { listenerId: lid, cacheName: f.cacheName, canConsult: f.canConsult, canFeed: f.canFeed, canExport: f.canExport, enabled: f.enabled, version: num(existing?.version) ?? 1 },
       });
-      push("Lien enregistré");
+      push(t("relais.toastLinkSaved"));
       onSaved();
     } catch (e) {
       const m = describeError(e);
@@ -599,10 +612,10 @@ function LinkDialog({ existing, caches, onClose, onSaved }: { existing: Rec | nu
     }
   }
   return (
-    <Dialog title={isEdit ? "Éditer lien" : "Nouveau lien listener → cache"} onClose={onClose}>
+    <Dialog title={isEdit ? t("relais.linkDialogEditTitle") : t("relais.linkDialogNewTitle")} onClose={onClose}>
       <form onSubmit={submit} noValidate>
         <div className="field">
-          <label htmlFor="rl-lid">Listener (référence labellisée)</label>
+          <label htmlFor="rl-lid">{t("relais.fieldListenerSelect")}</label>
           <select
             id="rl-lid"
             value={f.listenerId}
@@ -610,7 +623,7 @@ function LinkDialog({ existing, caches, onClose, onSaved }: { existing: Rec | nu
             disabled={isEdit}
             required
           >
-            <option value="">— Choisir un listener —</option>
+            <option value="">{t("relais.chooseListenerOption")}</option>
             {(snap.data?.profileListeners ?? []).map((l) => (
               <option key={l.id} value={String(l.id)}>
                 #{l.id} — {l.profileName} / {l.protocol} :{l.port}
@@ -618,25 +631,25 @@ function LinkDialog({ existing, caches, onClose, onSaved }: { existing: Rec | nu
             ))}
           </select>
           {!snap.data?.profileListeners?.length && !snap.loading && (
-            <p className="muted small">Aucun listener connu — créez d'abord un listener.</p>
+            <p className="muted small">{t("relais.noKnownListeners")}</p>
           )}
         </div>
         <div className="field">
-          <label htmlFor="rl-cache">Cache</label>
+          <label htmlFor="rl-cache">{t("relais.fieldCacheSelect")}</label>
           <select id="rl-cache" value={f.cacheName} onChange={(e) => setF({ ...f, cacheName: e.target.value })} disabled={isEdit}>
             {caches.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
-        <label className="check-row"><input type="checkbox" checked={f.canConsult} onChange={(e) => setF({ ...f, canConsult: e.target.checked })} /><span>Consultation (canConsult)</span></label>
-        <label className="check-row"><input type="checkbox" checked={f.canFeed} onChange={(e) => setF({ ...f, canFeed: e.target.checked })} /><span>Alimentation (canFeed)</span></label>
-        <label className="check-row"><input type="checkbox" checked={f.canExport} onChange={(e) => setF({ ...f, canExport: e.target.checked })} /><span>Export (canExport)</span></label>
-        <label className="check-row"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} /><span>Lien actif</span></label>
+        <label className="check-row"><input type="checkbox" checked={f.canConsult} onChange={(e) => setF({ ...f, canConsult: e.target.checked })} /><span>{t("relais.checkCanConsult")}</span></label>
+        <label className="check-row"><input type="checkbox" checked={f.canFeed} onChange={(e) => setF({ ...f, canFeed: e.target.checked })} /><span>{t("relais.checkCanFeed")}</span></label>
+        <label className="check-row"><input type="checkbox" checked={f.canExport} onChange={(e) => setF({ ...f, canExport: e.target.checked })} /><span>{t("relais.checkCanExport")}</span></label>
+        <label className="check-row"><input type="checkbox" checked={f.enabled} onChange={(e) => setF({ ...f, enabled: e.target.checked })} /><span>{t("relais.checkLinkEnabled")}</span></label>
         {err && <p className="field-error" role="alert">{err}</p>}
         <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Annuler</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : isEdit ? "Enregistrer" : "Créer"}</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>{t("relais.btnCancel")}</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : isEdit ? t("relais.btnSave") : t("relais.btnCreate")}</button>
         </div>
       </form>
     </Dialog>
@@ -644,6 +657,7 @@ function LinkDialog({ existing, caches, onClose, onSaved }: { existing: Rec | nu
 }
 
 function AssignDialog({ node, kind, onClose }: { node: string; kind: "listeners" | "connectors"; onClose: () => void }) {
+  const t = useT();
   const { push } = useToast();
   const [items, setItems] = useState<Rec[]>([]);
   const [target, setTarget] = useState("");
@@ -661,7 +675,7 @@ function AssignDialog({ node, kind, onClose }: { node: string; kind: "listeners"
     setErr("");
     if (!target.trim()) return;
     if (kind === "listeners" && !/^\d+$/.test(target.trim())) {
-      setErr("Listener : id numérique requis");
+      setErr(t("relais.errListenerIdNumeric"));
       return;
     }
     try {
@@ -670,7 +684,7 @@ function AssignDialog({ node, kind, onClose }: { node: string; kind: "listeners"
         method: "PUT",
         body: { enabled: true, version: 1 },
       });
-      push(kind === "listeners" ? "Listener affecté" : "Connecteur affecté");
+      push(kind === "listeners" ? t("relais.toastListenerAssigned") : t("relais.toastConnectorAssigned"));
       setTarget("");
       const { body } = await apiJson<Rec[]>(`/api/admin/config/relay/nodes/${encodeURIComponent(node)}/${kind}`);
       setItems(Array.isArray(body) ? body : []);
@@ -684,7 +698,7 @@ function AssignDialog({ node, kind, onClose }: { node: string; kind: "listeners"
       await apiFetch(`/api/admin/config/relay/nodes/${encodeURIComponent(node)}/${kind}/${encodeURIComponent(id)}?version=${version}`, {
         method: "DELETE",
       });
-      push("Affectation retirée");
+      push(t("relais.toastAssignmentRemoved"));
       const { body } = await apiJson<Rec[]>(`/api/admin/config/relay/nodes/${encodeURIComponent(node)}/${kind}`);
       setItems(Array.isArray(body) ? body : []);
     } catch (e) {
@@ -700,7 +714,7 @@ function AssignDialog({ node, kind, onClose }: { node: string; kind: "listeners"
         method: "PUT",
         body: { enabled: !it.enabled, version },
       });
-      push("Affectation mise à jour");
+      push(t("relais.toastAssignmentUpdated"));
       const { body } = await apiJson<Rec[]>(`/api/admin/config/relay/nodes/${encodeURIComponent(node)}/${kind}`);
       setItems(Array.isArray(body) ? body : []);
     } catch (e) {
@@ -709,10 +723,16 @@ function AssignDialog({ node, kind, onClose }: { node: string; kind: "listeners"
   }
 
   return (
-    <Dialog title={`Affectations ${kind} — ${node}`} onClose={onClose}>
+    <Dialog
+      title={t("relais.assignDialogTitle", {
+        kind: kind === "listeners" ? t("relais.kindListeners") : t("relais.kindConnectors"),
+        node,
+      })}
+      onClose={onClose}
+    >
       {err && <p className="field-error" role="alert">{err}</p>}
       {!items.length ? (
-        <Empty msg="Aucune affectation." />
+        <Empty msg={t("relais.noAssignments")} />
       ) : (
         <ul className="small">
           {items.map((it, i) => {
@@ -722,14 +742,14 @@ function AssignDialog({ node, kind, onClose }: { node: string; kind: "listeners"
               <li key={id}>
                 <code className="mono">{id}</code>{" "}
                 <span className={it.enabled ? "badge badge-ok" : "badge badge-muted"}>
-                  {it.enabled ? "actif" : "inactif"}
+                  {it.enabled ? t("relais.assignmentActive") : t("relais.assignmentInactive")}
                 </span>{" "}
                 (v{version}){" "}
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => toggle(it)}>
-                  {it.enabled ? "Désactiver" : "Activer"}
+                  {it.enabled ? t("relais.btnDisable") : t("relais.btnEnable")}
                 </button>{" "}
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => remove(id, version)}>
-                  Retirer
+                  {t("relais.btnRemove")}
                 </button>
               </li>
             );
@@ -737,12 +757,12 @@ function AssignDialog({ node, kind, onClose }: { node: string; kind: "listeners"
         </ul>
       )}
       <form onSubmit={add} noValidate>
-        <Field label={kind === "listeners" ? "Listener entrant (id)" : "Connecteur (nom)"} htmlFor="as-target">
+        <Field label={kind === "listeners" ? t("relais.fieldInboundListenerId") : t("relais.fieldConnectorName")} htmlFor="as-target">
           <input id="as-target" value={target} onChange={(e) => setTarget(e.target.value)} required />
         </Field>
         <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Fermer</button>
-          <button type="submit" className="btn btn-primary btn-sm">Affecter</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>{t("relais.btnClose")}</button>
+          <button type="submit" className="btn btn-primary btn-sm">{t("relais.btnAssign")}</button>
         </div>
       </form>
     </Dialog>

@@ -5,19 +5,23 @@ import { BulkBar, SelectBox } from "../components/BulkBar";
 import type { BulkFieldDef } from "../components/BulkBar";
 import { SecretField, SecretRefView } from "../components/SecretField";
 import { ConfirmDialog, Dialog, Empty, Field, LoadError, Loading, fetchSnapshot, fetchUsers, useSnapshot, useToast } from "../components/ui";
+import { useT, translate, type MessageKey } from "../i18n";
 
-const BULK_SCALAR_FIELDS: BulkFieldDef[] = [
-  { key: "displayName", label: "displayName (vide = inchangé)", type: "text", resettable: true, resetHint: "NULL" },
-  { key: "email", label: "email (vide = inchangé)", type: "text", resettable: true, resetHint: "NULL" },
-  { key: "enabled", label: "Activé", type: "boolean" },
-  { key: "debug", label: "Debug", type: "boolean" },
-  { key: "mapExcluded", label: "mapExcluded", type: "boolean" },
-  { key: "maxConnections", label: "maxConnections", type: "number" },
-  { key: "ipMask", label: "ipMask (vide = inchangé)", type: "text", resettable: true, resetHint: "NULL" },
-  { key: "allowedEcmRate", label: "allowedEcmRate", type: "number" },
-];
+function getBulkScalarFields(t: (k: MessageKey, params?: Record<string, string | number>) => string): BulkFieldDef[] {
+  return [
+    { key: "displayName", label: t("users.bulkDisplayName"), type: "text", resettable: true, resetHint: "NULL" },
+    { key: "email", label: t("users.bulkEmail"), type: "text", resettable: true, resetHint: "NULL" },
+    { key: "enabled", label: t("users.bulkEnabled"), type: "boolean" },
+    { key: "debug", label: t("users.bulkDebug"), type: "boolean" },
+    { key: "mapExcluded", label: t("users.bulkMapExcluded"), type: "boolean" },
+    { key: "maxConnections", label: t("users.bulkMaxConnections"), type: "number" },
+    { key: "ipMask", label: t("users.bulkIpMask"), type: "text", resettable: true, resetHint: "NULL" },
+    { key: "allowedEcmRate", label: t("users.bulkAllowedEcmRate"), type: "number" },
+  ];
+}
 
 export function UsersPage() {
+  const t = useT();
   const snap = useSnapshot(fetchSnapshot);
   const users = useSnapshot(fetchUsers);
   const { push } = useToast();
@@ -26,6 +30,8 @@ export function UsersPage() {
   const [deleting, setDeleting] = useState<UserEntry | null>(null);
   const [secretsOf, setSecretsOf] = useState<UserEntry | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const bulkScalarFields = useMemo(() => getBulkScalarFields(t), [t]);
 
   const list = useMemo(() => {
     const all = users.data ?? [];
@@ -60,7 +66,7 @@ export function UsersPage() {
         }
         throw { status: res.status, ...((b ?? {}) as object) };
       }
-      push("Utilisateur supprimé");
+      push(t("users.toastDeleted"));
       users.reload();
     } catch (e) {
       push(describeError(e), "err");
@@ -70,37 +76,37 @@ export function UsersPage() {
   return (
     <div className="card">
       <div className="toolbar">
-        <h1>Utilisateurs</h1>
+        <h1>{t("users.title")}</h1>
         <input
           type="search"
           className="search-input"
-          placeholder="Rechercher…"
-          aria-label="Rechercher un utilisateur"
+          placeholder={t("users.searchPlaceholder")}
+          aria-label={t("users.searchAria")}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing("new")}>
-          Créer utilisateur
+          {t("users.createUserBtn")}
         </button>
       </div>
       <BulkBar
         resource="users"
         selected={selectedItems}
         fields={[
-          ...BULK_SCALAR_FIELDS,
+          ...bulkScalarFields,
           {
             key: "profiles",
-            label: "profiles (ensemble)",
+            label: t("users.bulkProfiles"),
             type: "multiselect",
             options: (snap.data?.profiles ?? []).map((p) => p.name),
-            help: "Remplacement complet de l'ensemble des profils autorisés.",
+            help: t("users.bulkProfilesHelp"),
           },
           {
             key: "allowedConnectors",
-            label: "allowedConnectors (ensemble)",
+            label: t("users.bulkAllowedConnectors"),
             type: "multiselect",
             options: (snap.data?.connectors ?? []).map((c) => c.name),
-            help: "Remplacement complet de l'ensemble des connecteurs autorisés.",
+            help: t("users.bulkAllowedConnectorsHelp"),
           },
         ]}
         labelOf={(id) => id}
@@ -109,48 +115,48 @@ export function UsersPage() {
           users.reload();
         }}
       />
-      <p className="muted small">Bulk users : scalaires + remplacement complet des ensembles profiles/allowedConnectors (services via édition unitaire). Jamais admin/secrets en bulk.</p>
+      <p className="muted small">{t("users.bulkNotice")}</p>
       {!list.length ? (
-        <Empty msg={(users.data ?? []).length ? "Aucun résultat" : "Aucun utilisateur"} />
+        <Empty msg={(users.data ?? []).length ? t("users.noResult") : t("users.emptyList")} />
       ) : (
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th><span className="sr-only">Sélection</span></th>
-                <th>Nom</th>
-                <th>Display</th>
-                <th>Email</th>
-                <th>Rôle</th>
-                <th>État</th>
-                <th>Profils</th>
-                <th>Version</th>
-                <th>Actions</th>
+                <th><span className="sr-only">{t("users.thSelect")}</span></th>
+                <th>{t("users.thName")}</th>
+                <th>{t("users.thDisplay")}</th>
+                <th>{t("users.thEmail")}</th>
+                <th>{t("users.thRole")}</th>
+                <th>{t("users.thState")}</th>
+                <th>{t("users.thProfiles")}</th>
+                <th>{t("users.thVersion")}</th>
+                <th>{t("users.thActions")}</th>
               </tr>
             </thead>
             <tbody>
               {list.map((u) => (
                 <tr key={u.name}>
                   <td>
-                    <SelectBox checked={selected.has(u.name)} onChange={(v) => toggle(u.name, v)} label={`Sélectionner ${u.name}`} />
+                    <SelectBox checked={selected.has(u.name)} onChange={(v) => toggle(u.name, v)} label={t("users.selectUser", { name: u.name })} />
                   </td>
                   <td className="mono">{u.name}</td>
                   <td>{u.displayName ?? "—"}</td>
                   <td>{u.email ?? "—"}</td>
                   <td>
-                    <span className={u.admin ? "badge badge-ok" : ""}>{u.admin ? "admin" : "user"}</span>
+                    <span className={u.admin ? "badge badge-ok" : ""}>{u.admin ? t("users.badgeAdmin") : t("users.badgeUser")}</span>
                   </td>
                   <td>
                     <span className={u.enabled ? "badge badge-ok" : "badge badge-warn"}>
-                      {u.enabled ? "enabled" : "disabled"}
+                      {u.enabled ? t("users.badgeEnabled") : t("users.badgeDisabled")}
                     </span>
                   </td>
                   <td className="mono small">{(u.profiles ?? []).join(", ") || "—"}</td>
                   <td className="mono">v{u.version}</td>
                   <td>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(u)}>Éditer</button>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSecretsOf(u)}>Secrets</button>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDeleting(u)}>Supprimer</button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(u)}>{t("users.btnEdit")}</button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSecretsOf(u)}>{t("users.btnSecrets")}</button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDeleting(u)}>{t("users.btnDelete")}</button>
                   </td>
                 </tr>
               ))}
@@ -172,8 +178,8 @@ export function UsersPage() {
       )}
       {deleting && (
         <ConfirmDialog
-          title="Supprimer l'utilisateur"
-          desc={`« ${deleting.name} » (v${deleting.version}) — irréversible.`}
+          title={t("users.dialogDeleteTitle")}
+          desc={t("users.dialogDeleteDesc", { name: deleting.name, version: deleting.version })}
           onClose={() => setDeleting(null)}
           onConfirm={() => doDelete(deleting)}
         />
@@ -197,11 +203,11 @@ function parseMapText(text: string): { ok: true; value: Record<string, number[]>
     const t = line.trim();
     if (!t) continue;
     const idx = t.indexOf(":");
-    if (idx === -1) return { ok: false, error: `Ligne invalide (attendu « profil: sids ») : ${t}` };
+    if (idx === -1) return { ok: false, error: translate("users.errMapInvalidLine", { line: t }) };
     const prof = t.slice(0, idx).trim();
-    if (!prof) return { ok: false, error: `Profil vide : ${t}` };
+    if (!prof) return { ok: false, error: translate("users.errMapEmptyProfile", { line: t }) };
     const parsed = parseSidList(t.slice(idx + 1).trim());
-    if (!parsed.ok) return { ok: false, error: `${prof} : ${parsed.error}` };
+    if (!parsed.ok) return { ok: false, error: translate("users.errMapProfileError", { prof, error: parsed.error }) };
     out[prof] = parsed.values;
   }
   return { ok: true, value: out };
@@ -214,11 +220,12 @@ function Chips({ id, legend, options, selected, onChange }: {
   selected: Set<string>;
   onChange: (s: Set<string>) => void;
 }) {
+  const t = useT();
   if (!options.length) {
     return (
       <fieldset className="field">
         <legend className="small">{legend}</legend>
-        <p className="chip-empty">Aucune option disponible.</p>
+        <p className="chip-empty">{t("users.chipsEmpty")}</p>
       </fieldset>
     );
   }
@@ -260,6 +267,7 @@ function UserDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useT();
   const { push } = useToast();
   const isEdit = !!existing;
   const [name, setName] = useState(existing?.name ?? "");
@@ -286,13 +294,13 @@ function UserDialog({
     e.preventDefault();
     setErr("");
     const n = name.trim();
-    if (!n) return setErr("Nom requis");
-    if (!isEdit && password.length < 4) return setErr("Mot de passe ≥ 4 caractères");
-    if (isEdit && password && password.length < 4) return setErr("Mot de passe ≥ 4 si renseigné");
+    if (!n) return setErr(t("users.errNameRequired"));
+    if (!isEdit && password.length < 4) return setErr(t("users.errPasswordMin4"));
+    if (isEdit && password && password.length < 4) return setErr(t("users.errPasswordMin4Edit"));
     const mc = parseInteger(maxConnections, NaN);
     const rate = parseInteger(allowedEcmRate, NaN);
-    if (Number.isNaN(mc)) return setErr("maxConnections : nombre requis");
-    if (Number.isNaN(rate)) return setErr("allowedEcmRate : nombre requis");
+    if (Number.isNaN(mc)) return setErr(t("users.errMaxConnectionsRequired"));
+    if (Number.isNaN(rate)) return setErr(t("users.errAllowedEcmRateRequired"));
     let allowedServices: Record<string, number[]> | null = null;
     let blockedServices: Record<string, number[]> | null = null;
     if (!isEdit) {
@@ -339,7 +347,7 @@ function UserDialog({
             allowedConnectors: [...selConnectors],
           },
         });
-        push(`Utilisateur créé : ${body.name}`);
+        push(t("users.toastCreated", { name: body.name }));
         onSaved();
       } else {
         const version = existing.version;
@@ -363,7 +371,7 @@ function UserDialog({
           method: "PUT",
           body: bodyObj,
         });
-        push(`Utilisateur mis à jour : ${body.name}`);
+        push(t("users.toastUpdated", { name: body.name }));
         onSaved();
       }
     } catch (e) {
@@ -376,57 +384,57 @@ function UserDialog({
   }
 
   return (
-    <Dialog title={isEdit ? "Éditer utilisateur" : "Créer utilisateur"} onClose={onClose} wide>
+    <Dialog title={isEdit ? t("users.dialogEditTitle") : t("users.dialogCreateTitle")} onClose={onClose} wide>
       <form onSubmit={submit} noValidate>
-        <section aria-label="Essentiel">
-          <h3>Essentiel</h3>
+        <section aria-label={t("users.sectionEssential")}>
+          <h3>{t("users.sectionEssential")}</h3>
           <div className="form-grid cols-2">
-            <Field label="Nom" htmlFor="u-name">
+            <Field label={t("users.fieldName")} htmlFor="u-name">
               <input id="u-name" value={name} onChange={(e) => setName(e.target.value)} disabled={isEdit} required />
             </Field>
-            <Field label="Display" htmlFor="u-disp"><input id="u-disp" value={displayName} onChange={(e) => setDisplayName(e.target.value)} /></Field>
-            <Field label="Email" htmlFor="u-email"><input id="u-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-            <Field label={isEdit ? "Mot de passe (vide = inchangé, 4+ si renseigné)" : "Mot de passe (4+ requis)"} htmlFor="u-pass">
+            <Field label={t("users.fieldDisplayName")} htmlFor="u-disp"><input id="u-disp" value={displayName} onChange={(e) => setDisplayName(e.target.value)} /></Field>
+            <Field label={t("users.fieldEmail")} htmlFor="u-email"><input id="u-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+            <Field label={isEdit ? t("users.fieldPasswordEdit") : t("users.fieldPasswordCreate")} htmlFor="u-pass">
               <input id="u-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required={!isEdit} />
             </Field>
-            <Field label="maxConnections" htmlFor="u-mc"><input id="u-mc" type="number" value={maxConnections} onChange={(e) => setMaxConnections(e.target.value)} required /></Field>
-            <Field label="allowedEcmRate" htmlFor="u-rate"><input id="u-rate" type="number" value={allowedEcmRate} onChange={(e) => setAllowedEcmRate(e.target.value)} required /></Field>
-            <Field label="ipMask" htmlFor="u-ip"><input id="u-ip" value={ipMask} onChange={(e) => setIpMask(e.target.value)} /></Field>
+            <Field label={t("users.fieldMaxConnections")} htmlFor="u-mc"><input id="u-mc" type="number" value={maxConnections} onChange={(e) => setMaxConnections(e.target.value)} required /></Field>
+            <Field label={t("users.fieldAllowedEcmRate")} htmlFor="u-rate"><input id="u-rate" type="number" value={allowedEcmRate} onChange={(e) => setAllowedEcmRate(e.target.value)} required /></Field>
+            <Field label={t("users.fieldIpMask")} htmlFor="u-ip"><input id="u-ip" value={ipMask} onChange={(e) => setIpMask(e.target.value)} /></Field>
           </div>
           <div className="form-grid cols-2">
-            <label className="check-row"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /><span>Activé</span></label>
-            <label className="check-row"><input type="checkbox" checked={admin} onChange={(e) => setAdmin(e.target.checked)} /><span>Admin (jamais en bulk)</span></label>
-            <label className="check-row"><input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} /><span>Debug</span></label>
-            <label className="check-row"><input type="checkbox" checked={mapExcluded} onChange={(e) => setMapExcluded(e.target.checked)} /><span>mapExcluded</span></label>
+            <label className="check-row"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /><span>{t("users.fieldEnabled")}</span></label>
+            <label className="check-row"><input type="checkbox" checked={admin} onChange={(e) => setAdmin(e.target.checked)} /><span>{t("users.fieldAdmin")}</span></label>
+            <label className="check-row"><input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} /><span>{t("users.fieldDebug")}</span></label>
+            <label className="check-row"><input type="checkbox" checked={mapExcluded} onChange={(e) => setMapExcluded(e.target.checked)} /><span>{t("users.fieldMapExcluded")}</span></label>
           </div>
         </section>
-        <section aria-label="ACL" className="section">
-          <h3>ACL — services et accès</h3>
-          <Chips id="chip-prof" legend="Profils (sélection = autorisés)" options={profiles} selected={selProfiles} onChange={setSelProfiles} />
-          <Chips id="chip-conn" legend="allowedConnectors" options={connectors} selected={selConnectors} onChange={setSelConnectors} />
+        <section aria-label={t("users.sectionAclAria")} className="section">
+          <h3>{t("users.sectionAclTitle")}</h3>
+          <Chips id="chip-prof" legend={t("users.legendProfiles")} options={profiles} selected={selProfiles} onChange={setSelProfiles} />
+          <Chips id="chip-conn" legend={t("users.legendAllowedConnectors")} options={connectors} selected={selConnectors} onChange={setSelConnectors} />
           <div className="field">
-            <label htmlFor="ta-allowed">allowedServices (profil: sids — vide = inchangé en édition)</label>
-            <textarea id="ta-allowed" value={allowedText} disabled={allowedCleared} onChange={(e) => setAllowedText(e.target.value)} placeholder={"ex : hdplus: 0x1234, 0x5678\nsky: 100, 200"} />
+            <label htmlFor="ta-allowed">{t("users.fieldAllowedServices")}</label>
+            <textarea id="ta-allowed" value={allowedText} disabled={allowedCleared} onChange={(e) => setAllowedText(e.target.value)} placeholder={t("users.placeholderAllowedServices")} />
             {isEdit && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setAllowedCleared(true); setAllowedText(""); }}>
-                {allowedCleared ? "Vide (sera envoyé vide)" : "Vider allowedServices"}
+                {allowedCleared ? t("users.btnAllowedCleared") : t("users.btnClearAllowed")}
               </button>
             )}
           </div>
           <div className="field">
-            <label htmlFor="ta-blocked">blockedServices</label>
-            <textarea id="ta-blocked" value={blockedText} disabled={blockedCleared} onChange={(e) => setBlockedText(e.target.value)} placeholder="ex : hdplus: 0x9999" />
+            <label htmlFor="ta-blocked">{t("users.fieldBlockedServices")}</label>
+            <textarea id="ta-blocked" value={blockedText} disabled={blockedCleared} onChange={(e) => setBlockedText(e.target.value)} placeholder={t("users.placeholderBlockedServices")} />
             {isEdit && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setBlockedCleared(true); setBlockedText(""); }}>
-                {blockedCleared ? "Vide (sera envoyé vide)" : "Vider blockedServices"}
+                {blockedCleared ? t("users.btnBlockedCleared") : t("users.btnClearBlocked")}
               </button>
             )}
           </div>
         </section>
         {err && <p className="field-error" role="alert">{err}</p>}
         <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Annuler</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : isEdit ? "Enregistrer" : "Créer"}</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>{t("users.btnCancel")}</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : isEdit ? t("users.btnSave") : t("users.btnCreate")}</button>
         </div>
       </form>
     </Dialog>
@@ -445,6 +453,7 @@ function epochToLocal(v: string | number): string {
 }
 
 function UserSecretsDialog({ user, onClose }: { user: UserEntry; onClose: () => void }) {
+  const t = useT();
   const { push } = useToast();
   const [protocol, setProtocol] = useState("cccam");
   const [secret, setSecret] = useState<ProtocolSecret | null>(null);
@@ -495,16 +504,16 @@ function UserSecretsDialog({ user, onClose }: { user: UserEntry; onClose: () => 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
-    if (!secretRef.trim()) return setErr("secretRef requis");
-    if (!/^(env:|file:)/.test(secretRef.trim())) return setErr("secretRef : env: ou file: requis");
+    if (!secretRef.trim()) return setErr(t("users.errSecretRefRequired"));
+    if (!/^(env:|file:)/.test(secretRef.trim())) return setErr(t("users.errSecretRefFormat"));
     const mode = cxMode.trim() === "" ? null : Number(cxMode);
-    if (mode !== null && ![2, 3].includes(mode)) return setErr("cacheex.mode : 2 ou 3 (vide = off)");
+    if (mode !== null && ![2, 3].includes(mode)) return setErr(t("users.errCxModeRange"));
     const maxHop = cxMaxHop.trim() === "" ? null : Number(cxMaxHop);
-    if (maxHop !== null && (!Number.isInteger(maxHop) || maxHop < 0 || maxHop > 10)) return setErr("cacheex.maxHop : 0-10");
+    if (maxHop !== null && (!Number.isInteger(maxHop) || maxHop < 0 || maxHop > 10)) return setErr(t("users.errCxMaxHopRange"));
     let validUntilIso: string | null = null;
     if (validUntil.trim()) {
       const ms = new Date(validUntil).getTime();
-      if (Number.isNaN(ms)) return setErr("validUntil : date invalide");
+      if (Number.isNaN(ms)) return setErr(t("users.errValidUntilInvalid"));
       validUntilIso = new Date(ms).toISOString();
     }
     setBusy(true);
@@ -527,7 +536,7 @@ function UserSecretsDialog({ user, onClose }: { user: UserEntry; onClose: () => 
         method: "PUT",
         body,
       });
-      push(`Secret ${protocol} enregistré`);
+      push(t("users.toastSecretSaved", { protocol }));
       load(protocol);
     } catch (e) {
       const m = describeError(e);
@@ -541,12 +550,12 @@ function UserSecretsDialog({ user, onClose }: { user: UserEntry; onClose: () => 
   async function revoke() {
     const version = secret?.version ?? 0;
     if (!(version >= 1)) {
-      push("Aucun secret versionné à révoquer", "err");
+      push(t("users.toastNoVersionedSecret"), "err");
       return;
     }
     try {
       await apiFetch(`/api/admin/users/${encodeURIComponent(user.name)}/secrets/${protocol}/revoke?version=${version}`, { method: "POST" });
-      push(`Secret ${protocol} révoqué`);
+      push(t("users.toastSecretRevoked", { protocol }));
       load(protocol);
     } catch (e) {
       push(describeError(e), "err");
@@ -554,9 +563,9 @@ function UserSecretsDialog({ user, onClose }: { user: UserEntry; onClose: () => 
   }
 
   return (
-    <Dialog title={`Secrets protocoles — ${user.name}`} onClose={onClose} wide>
+    <Dialog title={t("users.dialogSecretsTitle", { name: user.name })} onClose={onClose} wide>
       <div className="field">
-        <label htmlFor="us-proto">Protocole</label>
+        <label htmlFor="us-proto">{t("users.fieldProtocol")}</label>
         <select id="us-proto" value={protocol} onChange={(e) => setProtocol(e.target.value)}>
           {PROTOCOLS.map((p) => (
             <option key={p} value={p}>{p}</option>
@@ -564,65 +573,65 @@ function UserSecretsDialog({ user, onClose }: { user: UserEntry; onClose: () => 
         </select>
       </div>
       {loading ? (
-        <p className="muted">Chargement…</p>
+        <p className="muted">{t("users.loading")}</p>
       ) : (
         <form onSubmit={save} noValidate>
           <p className="muted small">
-            Métadonnées uniquement — la valeur n'est jamais lue. Ref actuelle :{" "}
+            {t("users.secretsNotice")}
             <SecretRefView value={secret?.secretRef} />
           </p>
           <SecretField
-            label="secretRef"
+            label={t("users.fieldSecretRef")}
             value={secretRef}
             onChange={setSecretRef}
             purpose="user-protocol-secret"
             owner={user.name}
-            help="env:VAR ou file:/chemin. Valeur directe matérialisée serveur."
+            help={t("users.fieldSecretRefHelp")}
           />
           <div className="form-grid cols-2">
             <label className="check-row">
               <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-              <span>Secret actif</span>
+              <span>{t("users.fieldSecretActive")}</span>
             </label>
-            <Field label="validUntil (vide = permanent)" htmlFor="us-valid">
+            <Field label={t("users.fieldValidUntil")} htmlFor="us-valid">
               <input id="us-valid" type="datetime-local" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
             </Field>
           </div>
           {secret && (
             <p className="muted small">
-              Version : v{secret.version ?? "—"} (envoyée en ?version ; 0 = création) — màj par {secret.updatedBy ?? "—"}
+              {t("users.secretMeta", {
+                version: secret.version ?? "—",
+                updatedBy: secret.updatedBy ?? "—",
+              })}
             </p>
           )}
-          <section aria-label="CacheEx entrant" className="section">
-            <h3>CacheEx entrant (CCcam / CS378x)</h3>
-            <p className="muted small">
-              Mode 2 = csp-ng pousse vers les sessions du user (le client reçoit) ; mode 3 = csp-ng reçoit les push
-              du user (le client émet). Vide = off.
-            </p>
+          <section aria-label={t("users.sectionCacheexAria")} className="section">
+            <h3>{t("users.sectionCacheexTitle")}</h3>
+            <p className="muted small">{t("users.cacheexNotice")}</p>
             <div className="form-grid cols-2">
               <div className="field">
-                <label htmlFor="us-cxmode">cacheex.mode</label>
+                <label htmlFor="us-cxmode">{t("users.fieldCxMode")}</label>
                 <select id="us-cxmode" value={cxMode} onChange={(e) => setCxMode(e.target.value)}>
-                  <option value="">off</option>
-                  <option value="2">2 — nous émettons vers le client</option>
-                  <option value="3">3 — nous recevons du client</option>
+                  <option value="">{t("users.cxModeOff")}</option>
+                  <option value="2">{t("users.cxMode2")}</option>
+                  <option value="3">{t("users.cxMode3")}</option>
                 </select>
               </div>
-              <Field label="cacheex.maxHop (0-10, vide = 10)" htmlFor="us-cxhop">
+              <Field label={t("users.fieldCxMaxHop")} htmlFor="us-cxhop">
                 <input id="us-cxhop" type="number" value={cxMaxHop} onChange={(e) => setCxMaxHop(e.target.value)} />
               </Field>
-              <Field label="cacheex.filter" htmlFor="us-cxfilter">
-                <input id="us-cxfilter" value={cxFilter} onChange={(e) => setCxFilter(e.target.value)} placeholder="ex : 0100:00006A" />
+              <Field label={t("users.fieldCxFilter")} htmlFor="us-cxfilter">
+                <input id="us-cxfilter" value={cxFilter} onChange={(e) => setCxFilter(e.target.value)} placeholder={t("users.placeholderCxFilter")} />
               </Field>
             </div>
           </section>
           {err && <p className="field-error" role="alert">{err}</p>}
           <div className="dialog-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>Fermer</button>
+            <button type="button" className="btn btn-ghost" onClick={onClose}>{t("users.btnClose")}</button>
             {secret?.secretRef && (
-              <button type="button" className="btn btn-ghost" onClick={revoke}>Révoquer</button>
+              <button type="button" className="btn btn-ghost" onClick={revoke}>{t("users.btnRevoke")}</button>
             )}
-            <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : "Enregistrer"}</button>
+            <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "…" : t("users.btnSaveSecret")}</button>
           </div>
         </form>
       )}

@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+import { useT } from "../i18n";
 
 export interface PaginationProps {
   page: number; // 1-based
@@ -19,18 +20,20 @@ export function Pagination({
   pageSizeOptions = [10, 25, 50, 100],
   onPageChange,
   onPageSizeChange,
-  label = "éléments",
+  label,
 }: PaginationProps) {
+  const t = useT();
   const safeTotalPages = Math.max(1, totalPages);
   const safePage = Math.min(Math.max(1, page), safeTotalPages);
   const canPrev = safePage > 1;
   const canNext = safePage < safeTotalPages;
+  const itemLabel = label ?? t("components.items");
 
   return (
-    <nav className="pagination" aria-label="Pagination">
+    <nav className="pagination" aria-label={t("components.pagination")}>
       <div className="pagination-info">
         <span>
-          Page <strong>{totalElements === 0 ? 0 : safePage}</strong> / <strong>{totalPages}</strong> — {totalElements} {label}
+          {t("components.page")} <strong>{totalElements === 0 ? 0 : safePage}</strong> / <strong>{totalPages}</strong> — {totalElements} {itemLabel}
         </span>
       </div>
       <div className="pagination-controls">
@@ -38,7 +41,7 @@ export function Pagination({
           type="button"
           className="btn btn-ghost btn-sm"
           disabled={!canPrev}
-          aria-label="Première page"
+          aria-label={t("components.firstPage")}
           onClick={() => onPageChange(1)}
         >
           «
@@ -47,7 +50,7 @@ export function Pagination({
           type="button"
           className="btn btn-ghost btn-sm"
           disabled={!canPrev}
-          aria-label="Page précédente"
+          aria-label={t("components.prevPage")}
           onClick={() => onPageChange(safePage - 1)}
         >
           ‹
@@ -59,7 +62,7 @@ export function Pagination({
           type="button"
           className="btn btn-ghost btn-sm"
           disabled={!canNext}
-          aria-label="Page suivante"
+          aria-label={t("components.nextPage")}
           onClick={() => onPageChange(safePage + 1)}
         >
           ›
@@ -68,7 +71,7 @@ export function Pagination({
           type="button"
           className="btn btn-ghost btn-sm"
           disabled={!canNext}
-          aria-label="Dernière page"
+          aria-label={t("components.lastPage")}
           onClick={() => onPageChange(safeTotalPages)}
         >
           »
@@ -77,14 +80,14 @@ export function Pagination({
       {onPageSizeChange && (
         <div className="pagination-size">
           <label htmlFor="pagination-size-select" className="small muted">
-            Lignes par page :
+            {t("components.rowsPerPage")}
           </label>
           <select
             id="pagination-size-select"
             className="pagination-select"
             value={pageSize}
             onChange={(e: ChangeEvent<HTMLSelectElement>) => onPageSizeChange(Number(e.target.value))}
-            aria-label="Nombre d'éléments par page"
+            aria-label={t("components.itemsPerPage")}
           >
             {pageSizeOptions.map((opt) => (
               <option key={opt} value={opt}>

@@ -1,5 +1,6 @@
 import { useId, useState } from "react";
 import { apiJson, describeError, isValidDesKeyHex } from "../api";
+import { useT } from "../i18n";
 import type { MaterializeResponse, SecretPurpose } from "../types";
 import { Field, useToast } from "./ui";
 
@@ -24,6 +25,7 @@ export function SecretField({
   required?: boolean;
   help?: string;
 }) {
+  const t = useT();
   const { push } = useToast();
   const [mode, setMode] = useState<"ref" | "direct">(value && !isRef(value) ? "direct" : "ref");
   const [direct, setDirect] = useState("");
@@ -42,11 +44,11 @@ export function SecretField({
     setError("");
     const v = direct;
     if (!v) {
-      setError("Saisissez une valeur à matérialiser");
+      setError(t("components.enterValue"));
       return;
     }
     if (kind === "deskey" && !isValidDesKeyHex(v)) {
-      setError("Clé DES attendue : 28 caractères hex (14 octets, espaces/« : » tolérés)");
+      setError(t("components.desKeyFormat"));
       return;
     }
     const slug = owner
@@ -58,7 +60,7 @@ export function SecretField({
       .replace(/[._-]+$/, "")
       .slice(0, 64);
     if (!slug) {
-      setError("Nom propriétaire invalide pour la matérialisation");
+      setError(t("components.invalidOwner"));
       return;
     }
     setBusy(true);
@@ -71,7 +73,7 @@ export function SecretField({
       setDirect("");
       setRevealed(false);
       setMode("ref");
-      push(`Secret matérialisé (${body.secretRef}) — pensez à Enregistrer`);
+      push(t("components.materializedToast", { ref: body.secretRef }));
     } catch (e) {
       const m = describeError(e);
       setError(m);
@@ -83,14 +85,14 @@ export function SecretField({
 
   return (
     <div className="secret-field">
-      <div className="seg" role="group" aria-label={`${label} : mode de saisie`}>
+      <div className="seg" role="group" aria-label={t("components.inputMode", { label })}>
         <button
           type="button"
           className={mode === "ref" ? "seg-btn active" : "seg-btn"}
           aria-pressed={mode === "ref"}
           onClick={() => setMode("ref")}
         >
-          Référence
+          {t("components.reference")}
         </button>
         <button
           type="button"
@@ -98,7 +100,7 @@ export function SecretField({
           aria-pressed={mode === "direct"}
           onClick={() => setMode("direct")}
         >
-          Valeur directe
+          {t("components.directValue")}
         </button>
       </div>
       {mode === "ref" ? (
@@ -109,7 +111,7 @@ export function SecretField({
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="env:NOM_VAR ou file:/chemin/absolu"
+            placeholder={t("components.refPlaceholder")}
             required={required}
             autoComplete="off"
             spellCheck={false}
@@ -117,7 +119,7 @@ export function SecretField({
           {help && <p className="muted small">{help}</p>}
         </Field>
       ) : (
-        <Field label={`${label} — valeur directe (jamais stockée en clair, matérialisée serveur)`} htmlFor={directId} error={error || undefined}>
+        <Field label={t("components.directLabel", { label })} htmlFor={directId} error={error || undefined}>
           <div className="secret-row">
             <input
               id={directId}
@@ -128,15 +130,14 @@ export function SecretField({
               spellCheck={false}
             />
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRevealed((v) => !v)} aria-pressed={revealed}>
-              {revealed ? "Masquer" : "Révéler"}
+              {revealed ? t("components.hide") : t("components.reveal")}
             </button>
             <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={materialize}>
-              {busy ? "…" : "Matérialiser"}
+              {busy ? "…" : t("components.materialize")}
             </button>
           </div>
           <p className="muted small">
-            Crée un nouveau fichier opaque 0600 côté serveur et remplace le champ par sa référence file:. Chaque
-            appel crée un fichier distinct.
+            {t("components.materializeHelp")}
           </p>
         </Field>
       )}
@@ -146,9 +147,10 @@ export function SecretField({
 
 // Affichage d'une ref existante sans jamais exposer de valeur.
 export function SecretRefView({ value }: { value: string | null | undefined }) {
+  const t = useT();
   if (!value) return <span className="muted">—</span>;
   return (
-    <code className="mono small" title="Référence opaque — la valeur n'est jamais lue">
+    <code className="mono small" title={t("components.opaqueRefTitle")}>
       {value}
     </code>
   );
