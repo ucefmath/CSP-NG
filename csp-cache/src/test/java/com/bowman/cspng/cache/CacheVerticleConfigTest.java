@@ -70,4 +70,18 @@ class CacheVerticleConfigTest {
     assertThrows(IllegalArgumentException.class,
         () -> new CacheVerticleConfig(-1, 100_000L, 500L, -1));
   }
+
+  @Test
+  void getMaxCacheWaitNeverReturnsZeroInPercentageMode() {
+    // 0% of maxCwWait=0 would give 0 — must be clamped to 1
+    CacheVerticleConfig config = new CacheVerticleConfig(30_000L, 100_000L, -1, 80);
+    assertEquals(1L, config.getMaxCacheWait(0L));
+  }
+
+  @Test
+  void getMaxCacheWaitNeverReturnsZeroInAbsoluteMode() {
+    // min(0, 500) = 0 — must be clamped to 1
+    CacheVerticleConfig config = new CacheVerticleConfig(30_000L, 100_000L, 500L, -1);
+    assertEquals(1L, config.getMaxCacheWait(0L));
+  }
 }

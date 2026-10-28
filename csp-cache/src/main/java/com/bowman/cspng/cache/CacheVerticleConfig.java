@@ -42,10 +42,13 @@ public record CacheVerticleConfig(
    * <p>Legacy : {@code DefaultCache.getMaxCacheWait(long maxCwWait)} l.53-56.
    */
   public long getMaxCacheWait(long maxCwWait) {
+    long computed;
     if (maxCacheWaitPercent > 0) {
-      return (long) ((maxCacheWaitPercent / 100.0) * maxCwWait);
+      computed = (long) ((maxCacheWaitPercent / 100.0) * maxCwWait);
+    } else {
+      computed = Math.min(maxCwWait, maxCacheWaitMs);
     }
-    return Math.min(maxCwWait, maxCacheWaitMs);
+    return Math.max(1L, computed);
   }
 
   public static CacheVerticleConfig defaults() {

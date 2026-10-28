@@ -176,9 +176,10 @@ public class PendingRegistry {
       this.onReply = onReply != null ? onReply : r -> {
       };
       this.replyTransform = replyTransform;
-      long half = Math.max(1, maxWaitMs / 2);
+      long clampedWait = Math.max(1L, maxWaitMs);
+      long half = Math.max(1L, clampedWait / 2);
       this.alertTimerId = vertx.setTimer(half, id -> fireAlert());
-      this.timeoutTimerId = vertx.setTimer(maxWaitMs, id -> fireTimeout(null));
+      this.timeoutTimerId = vertx.setTimer(clampedWait, id -> fireTimeout(null));
     }
 
     public EcmRequest request() {

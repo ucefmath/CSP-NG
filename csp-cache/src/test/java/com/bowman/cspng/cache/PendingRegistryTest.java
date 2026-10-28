@@ -146,6 +146,23 @@ class PendingRegistryTest {
     assertNull(w);
   }
 
+  // ---- Test défensif : maxWaitMs=0 ne doit pas lever IllegalArgumentException
+
+  @Test
+  void waiterWithZeroMaxWaitDoesNotThrow() throws Exception {
+    registry.addRequest(request(KEY, "origin"));
+    CountDownLatch latch = new CountDownLatch(1);
+
+    // maxWaitMs=0 était la cause du bug "Cannot schedule a timer with delay < 1 ms"
+    assertDoesNotThrow(() ->
+        registry.addWaiter(request(KEY, "w1"), 0L, null,
+            r -> latch.countDown(),
+            r -> {},
+            r -> r)
+    );
+    assertTrue(latch.await(2, TimeUnit.SECONDS));
+  }
+
   private static EcmRequest request(EcmKey key, String originId) {
     return new EcmRequest(key, null, "default", "remote", originId, System.currentTimeMillis(), null, 500);
   }
