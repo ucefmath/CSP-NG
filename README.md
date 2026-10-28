@@ -49,7 +49,7 @@ Ou directement en ligne de commande non-interactive selon la variante souhaitée
 
 - 🇫🇷 **[Guide Utilisateur Complet (Français)](docs/user-guide.md)**
 - 🇬🇧 **[Complete User Guide (English)](docs/user-guide.en.md)**
-- 📦 **[Télécharger les binaires pré-compilés (Release v1.0.0 — JARs & Workers Natifs Linux x86_64 / ARM64)](https://github.com/ucefmath/CSP-NG/releases/tag/v1.0.0)**
+- 📦 **[Télécharger les binaires pré-compilés (Release v1.0.1 — JARs & Workers Natifs Linux x86_64 / ARM64)](https://github.com/ucefmath/CSP-NG/releases/tag/v1.0.1)**
 
 ## Présentation
 

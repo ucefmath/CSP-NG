@@ -46,6 +46,8 @@ public class NewcamdSession extends AbstractSession {
   protected int profileNetworkId = -1;
   protected int profileCaId = 0;
   protected int[] profileProviders = new int[0];
+  protected volatile boolean profileCacheOnly = false;
+  protected volatile long profileMaxCwWaitMs = 5000L;
 
   public NewcamdSession(Vertx vertx, CacheVerticle cacheVerticle,
                          SessionRegistry registry, byte[] configKey14) {
@@ -66,6 +68,12 @@ public class NewcamdSession extends AbstractSession {
     this.profileProviders = providers != null ? providers.clone() : new int[0];
   }
   public int[] getProfileProviders() { return profileProviders.clone(); }
+  public void setProfileCacheOnly(boolean cacheOnly) { this.profileCacheOnly = cacheOnly; }
+  public boolean isProfileCacheOnly() { return profileCacheOnly; }
+  public void setProfileMaxCwWaitMs(long maxCwWaitMs) {
+    this.profileMaxCwWaitMs = maxCwWaitMs > 0 ? maxCwWaitMs : 5000L;
+  }
+  public long getProfileMaxCwWaitMs() { return profileMaxCwWaitMs; }
   protected NetSocket getSocket() { return socket; }
   protected byte[] getDesKey16() { return desKey16; }
   protected Context getSessionContext() { return sessionContext; }
@@ -195,7 +203,7 @@ public class NewcamdSession extends AbstractSession {
 
       case 0x80: case 0x81: case 0x82:
         EcmKey key = new EcmKey(commandTag, serviceId, networkId, caId, dataHash);
-        EcmRequest request = buildEcmRequest(key, customData, 5000);
+        EcmRequest request = buildEcmRequest(key, customData, profileMaxCwWaitMs);
         processEcm(request, header);
         break;
 
@@ -408,18 +416,26 @@ public class NewcamdSession extends AbstractSession {
     processEcm(request, new ReplyHeader(0, request.key().serviceId(), request.key().caId()));
   }
   protected void processEcm(EcmRequest request, ReplyHeader header) {
-    cacheVerticle.processRequest(0, request, false, 5000)
+    boolean hasConnectedConnector = !profileCacheOnly
+        && connectorManager != null
+        && request.profileName() != null
+        && !connectorManager.getConnectedConnectorsForProfile(request.profileName()).isEmpty();
+    boolean alwaysWait = profileCacheOnly || !hasConnectedConnector;
+    long maxCwWait = request.maxWaitMs() > 0 ? request.maxWaitMs() : profileMaxCwWaitMs;
+    cacheVerticle.processRequest(0, request, alwaysWait, maxCwWait)
         .onComplete(ar -> {
           if (ar.succeeded() && ar.result().isHit()) {
             CwReply reply = ar.result().reply();
             sendCwReply(request, reply, header);
-          } else if (connectorManager != null) {
+          } else if (!profileCacheOnly && connectorManager != null) {
+            cacheVerticle.handleRemoteRequest(request);
             connectorManager.sendEcmRequest(request).onComplete(car -> {
-              if (car.succeeded() && car.result() != null) {
+              if (car.succeeded() && car.result() != null && !car.result().isEmpty()) {
                 CwReply reply = car.result();
                 cacheVerticle.handleReply(request, reply);
                 sendCwReply(request, reply, header);
               } else {
+                cacheVerticle.handleReply(request, null);
                 sendCwReply(request, new CwReply(request.key(),
                     request.key().commandTag(), new byte[0], null, null,
                     System.currentTimeMillis()), header);
@@ -438,7 +454,15 @@ public class NewcamdSession extends AbstractSession {
   }
   protected void sendCwReply(EcmRequest request, CwReply reply, ReplyHeader header) {
     byte[] replyData = reply.isEmpty() ? new byte[0] : reply.cw();
-    byte[] message = buildSimpleMessage(reply.commandTag(), replyData, header.sequence());
+    int commandTag = (request != null && request.key() != null
+        && (request.key().commandTag() == 0x80 || request.key().commandTag() == 0x81))
+        ? request.key().commandTag()
+        : reply.commandTag();
+    byte[] message = buildSimpleMessage(commandTag, replyData, header.sequence());
+    if (header != null && header.serviceId() != 0) {
+      message[2] = (byte) ((header.serviceId() >> 8) & 0xFF);
+      message[3] = (byte) (header.serviceId() & 0xFF);
+    }
     sendEncrypted(message);
   }
 

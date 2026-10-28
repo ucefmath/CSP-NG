@@ -45,7 +45,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 GITHUB_REPO="ucefmath/CSP-NG"
-CSP_VERSION="${CSP_VERSION:-v1.0.0}"
+CSP_VERSION="${CSP_VERSION:-v1.0.1}"
 
 # Defaults for CLI flags
 MODE=""
@@ -137,7 +137,7 @@ Options for --mode worker-native / worker-jvm:
   --cert-bundle </path/to/worker-certs.tar.gz>    Optional pre-generated mTLS bundle
 
 General Options:
-  --version <tag>                                 Release tag (default: v1.0.0)
+  --version <tag>                                 Release tag (default: v1.0.1)
   -y, --yes                                       Non-interactive mode (accept defaults)
   -h, --help                                      Show this help message
 EOF

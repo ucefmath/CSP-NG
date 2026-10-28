@@ -437,23 +437,7 @@ public class ListenerManager {
         } else if ("newcamd".equals(finalDl.protocol)) {
           NewcamdSession session = new NewcamdSession(vertx, cv, registry, finalDesKey14);
           session.setProfileName(finalDl.profileName);
-          try {
-            ConfigSnapshot snapForNet = appliedSnapshot != null ? appliedSnapshot : holder.get();
-            if (snapForNet != null) {
-              for (var p : snapForNet.profiles()) {
-                if (p.name().equals(finalDl.profileName)) {
-                  session.setProfileNetworkId(p.networkId());
-                  session.setProfileCaId(p.caId());
-                  break;
-                }
-              }
-              var idents = snapForNet.providerIdentsFor(finalDl.profileName);
-              if (idents != null && !idents.isEmpty()) {
-                int[] provs = idents.stream().mapToInt(pi -> pi.providerIdent()).toArray();
-                session.setProfileProviders(provs);
-              }
-            }
-          } catch (Exception ignored) {}
+          applyProfileSettingsToNewcamd(session, finalDl.profileName);
           session.setConnectorManager(cm);
           session.setMaxMsgSize(finalDl.maxMsgSize);
           session.setPreauthLease(lease);
@@ -463,6 +447,7 @@ public class ListenerManager {
         } else if ("radegast".equals(finalDl.protocol)) {
           RadegastSession session = new RadegastSession(vertx, cv, registry);
           session.setProfileName(finalDl.profileName);
+          applyProfileSettingsToRadegast(session, finalDl.profileName);
           session.setConnectorManager(cm);
           session.setPreauthLease(lease);
           finalMs.sessions.add(session);
@@ -476,6 +461,10 @@ public class ListenerManager {
             } catch (Exception ignore) {}
           }
           StrictEcmRouter strictRouter = new StrictEcmRouter(cm, null, null, cardDiscoveryService, finalDl.cardMode);
+          if (cv != null) {
+            strictRouter.setCacheExLookup((prof, caid, prov, sid, oddEven, dataHash) ->
+                cv.peekLocalCache(new com.bowman.cspng.domain.EcmKey(oddEven, sid, 0, caid, dataHash)));
+          }
            if (runtimeCore != null) {
              strictRouter.setAdaptiveRoutingEngine(runtimeCore.adaptiveRoutingEngine());
              var dcwProvider = runtimeCore.dcwPolicyProvider(holder);
@@ -517,6 +506,10 @@ public class ListenerManager {
           session.accept(socket);
         } else if ("cs378x".equals(finalDl.protocol)) {
           StrictEcmRouter strictRouter = new StrictEcmRouter(cm, null, null, cardDiscoveryService, finalDl.cardMode);
+          if (cv != null) {
+            strictRouter.setCacheExLookup((prof, caid, prov, sid, oddEven, dataHash) ->
+                cv.peekLocalCache(new com.bowman.cspng.domain.EcmKey(oddEven, sid, 0, caid, dataHash)));
+          }
            if (runtimeCore != null) {
              strictRouter.setAdaptiveRoutingEngine(runtimeCore.adaptiveRoutingEngine());
              var dcwProvider = runtimeCore.dcwPolicyProvider(holder);
@@ -595,10 +588,61 @@ public class ListenerManager {
     return false;
   }
 
+  private void applyProfileSettingsToNewcamd(NewcamdSession session, String profileName) {
+    if (session == null || profileName == null) return;
+    try {
+      ConfigSnapshot snapForNet = appliedSnapshot != null ? appliedSnapshot : (holder.isInitialized() ? holder.get() : null);
+      if (snapForNet != null) {
+        for (var p : snapForNet.profiles()) {
+          if (p.name().equals(profileName)) {
+            session.setProfileNetworkId(p.networkId());
+            session.setProfileCaId(p.caId());
+            session.setProfileCacheOnly(p.cacheOnly());
+            session.setProfileMaxCwWaitMs(p.maxCwWaitMs());
+            break;
+          }
+        }
+        var idents = snapForNet.providerIdentsFor(profileName);
+        if (idents != null && !idents.isEmpty()) {
+          int[] provs = idents.stream().mapToInt(pi -> pi.providerIdent()).toArray();
+          session.setProfileProviders(provs);
+        }
+      }
+    } catch (Exception ignored) {}
+  }
+
+  private void applyProfileSettingsToRadegast(RadegastSession session, String profileName) {
+    if (session == null || profileName == null) return;
+    try {
+      ConfigSnapshot snapForNet = appliedSnapshot != null ? appliedSnapshot : (holder.isInitialized() ? holder.get() : null);
+      if (snapForNet != null) {
+        for (var p : snapForNet.profiles()) {
+          if (p.name().equals(profileName)) {
+            session.setProfileCacheOnly(p.cacheOnly());
+            session.setProfileMaxCwWaitMs(p.maxCwWaitMs());
+            break;
+          }
+        }
+      }
+    } catch (Exception ignored) {}
+  }
+
   private void refreshExtSessions() {
     Set<ExtNewcamdSession> toRefresh = new HashSet<>();
     synchronized (extSessions) { toRefresh.addAll(extSessions); }
-    for (ManagedServer ms : active.values()) if (ms.isExtended) synchronized (ms.sessions) { for (AbstractSession s : ms.sessions) if (s instanceof ExtNewcamdSession es) toRefresh.add(es); }
+    for (ManagedServer ms : active.values()) {
+      synchronized (ms.sessions) {
+        for (AbstractSession s : ms.sessions) {
+          if (s instanceof ExtNewcamdSession es) {
+            toRefresh.add(es);
+          } else if (s instanceof NewcamdSession ns) {
+            applyProfileSettingsToNewcamd(ns, ns.getProfileName());
+          } else if (s instanceof RadegastSession rs) {
+            applyProfileSettingsToRadegast(rs, rs.getProfileName());
+          }
+        }
+      }
+    }
     for (ExtNewcamdSession s : toRefresh) try { s.refreshMappingAsync(); } catch (Exception e) { LOG.warning("refresh ext session failed: " + e.getMessage()); }
   }
 

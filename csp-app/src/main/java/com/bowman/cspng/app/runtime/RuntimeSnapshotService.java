@@ -134,7 +134,7 @@ public class RuntimeSnapshotService {
       if (v != null && !v.isBlank()) return v;
     } catch (Exception ignored) {}
     // fallback: try reading from properties if available without I/O? Use constant
-    return "1.0.0";
+    return "1.0.1";
   }
 
   public List<ProfileDto> profileSnapshots() {

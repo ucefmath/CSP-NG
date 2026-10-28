@@ -68,6 +68,7 @@ public class RuntimeCore {
    */
   static final long PEER_QUALITY_SWEEP_INTERVAL_MS = 30_000L;
   private volatile Long peerQualitySweepTimerId;
+  private volatile io.vertx.core.eventbus.MessageConsumer<Object> cacheConfigReloadConsumer;
 
   @Inject
   public RuntimeCore(Vertx vertx, UserDirectory userDirectory) {
@@ -113,11 +114,30 @@ public class RuntimeCore {
       this.cacheDeploymentId = id;
       this.started = true;
       LOG.info("CacheVerticle deployed id=" + id);
+      applyCacheConfigFromHolder();
+      cacheConfigReloadConsumer = vertx.eventBus().consumer(
+          com.bowman.cspng.config.ConfigWatcher.CONFIG_RELOADED_ADDRESS,
+          msg -> applyCacheConfigFromHolder());
       peerQualitySweepTimerId = vertx.setPeriodic(PEER_QUALITY_SWEEP_INTERVAL_MS, tid -> sweepPeerQualityState());
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to deploy CacheVerticle", e);
       // fail-fast (tous profils)
       throw new IllegalStateException("FAIL-FAST: CacheVerticle deploy failed", e);
+    }
+  }
+
+  private void applyCacheConfigFromHolder() {
+    try {
+      if (configHolder != null && configHolder.isInitialized() && cacheVerticle != null) {
+        var snap = configHolder.get();
+        if (snap != null && snap.cache() != null) {
+          var cc = snap.cache();
+          cacheVerticle.configure(new com.bowman.cspng.cache.CacheVerticleConfig(
+              cc.cwMaxAgeMs(), cc.maximumSize(), cc.maxCacheWaitMs(), cc.maxCacheWaitPercent()));
+        }
+      }
+    } catch (Exception e) {
+      LOG.log(Level.WARNING, "Failed to apply CacheConfig to CacheVerticle", e);
     }
   }
 
@@ -154,6 +174,14 @@ public class RuntimeCore {
   }
 
   public void onStop(@Observes @Priority(200) ShutdownEvent event) {
+    var reloadCons = cacheConfigReloadConsumer;
+    if (reloadCons != null) {
+      cacheConfigReloadConsumer = null;
+      try {
+        reloadCons.unregister();
+      } catch (Exception ignored) {
+      }
+    }
     Long sweepId = peerQualitySweepTimerId;
     if (sweepId != null) {
       peerQualitySweepTimerId = null;

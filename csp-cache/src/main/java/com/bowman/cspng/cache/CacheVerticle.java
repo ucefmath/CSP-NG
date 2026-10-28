@@ -78,7 +78,7 @@ public class CacheVerticle extends AbstractVerticle {
     ECM_LOG.info(sb.toString());
   }
 
-  private CacheVerticleConfig config = CacheVerticleConfig.defaults();
+  private volatile CacheVerticleConfig config = CacheVerticleConfig.defaults();
   private LocalCwStore localStore = new LocalCwStore(config);
   private PendingRegistry pending;
   private ContestedRegistry contestedRegistry = new ContestedRegistry();
@@ -147,12 +147,23 @@ public class CacheVerticle extends AbstractVerticle {
     return started && context != null && pending != null;
   }
 
-  public void configure(CacheVerticleConfig config) {
-    context.runOnContext(v -> {
-      this.config = config;
-      this.localStore = new LocalCwStore(config);
+  public void configure(CacheVerticleConfig newConfig) {
+    if (newConfig == null) return;
+    CacheVerticleConfig prev = this.config;
+    this.config = newConfig;
+    Runnable applyStore = () -> {
+      if (this.localStore == null
+          || prev.cwMaxAgeMs() != newConfig.cwMaxAgeMs()
+          || prev.maximumSize() != newConfig.maximumSize()) {
+        this.localStore = new LocalCwStore(newConfig);
+      }
       this.pendingPeak.set(0);
-    });
+    };
+    if (context != null) {
+      context.runOnContext(v -> applyStore.run());
+    } else {
+      applyStore.run();
+    }
   }
 
   public CacheVerticleConfig cacheConfig() {
@@ -329,18 +340,23 @@ public class CacheVerticle extends AbstractVerticle {
    */
   private CwReply buildReturnedReply(CachedReply enriched, EcmRequest request) {
     CwReply reply = enriched.reply();
-    int serviceId = request.key().serviceId();
+    int serviceId = request.key().serviceId() != 0 ? request.key().serviceId() : reply.key().serviceId();
     int networkId = reply.key().networkId() == 0 ? request.key().networkId() : reply.key().networkId();
-    EcmKey key;
-    if (serviceId != 0) {
-      key = new EcmKey(reply.key().commandTag(), serviceId, networkId, reply.key().caId(), reply.key().dataHash());
-    } else if (networkId != reply.key().networkId()) {
-      key = new EcmKey(reply.key().commandTag(), reply.key().serviceId(), networkId, reply.key().caId(), reply.key().dataHash());
-    } else {
-      key = reply.key();
+    int reqTag = request.key().commandTag();
+    int keyTag = (reply.key().commandTag() == 0x80 || reply.key().commandTag() == 0x81)
+        ? reply.key().commandTag()
+        : (reqTag != 0 ? reqTag : reply.key().commandTag());
+    int rplTag = (reply.commandTag() == 0x80 || reply.commandTag() == 0x81)
+        ? reply.commandTag()
+        : (reqTag != 0 ? reqTag : reply.commandTag());
+    EcmKey key = new EcmKey(keyTag, serviceId, networkId, reply.key().caId(), reply.key().dataHash());
+    if (key.commandTag() == reply.key().commandTag()
+        && key.serviceId() == reply.key().serviceId()
+        && key.networkId() == reply.key().networkId()
+        && rplTag == reply.commandTag()) {
+      return reply;
     }
-    if (key == reply.key()) return reply;
-    return new CwReply(key, reply.commandTag(), reply.cw(), reply.connectorName(), reply.originAddress(), reply.timestamp());
+    return new CwReply(key, rplTag, reply.cw(), reply.connectorName(), reply.originAddress(), reply.timestamp());
   }
 
   private void addRequest(int successFactor, EcmRequest request) {

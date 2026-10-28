@@ -160,9 +160,14 @@ public class ExtNewcamdSession extends NewcamdSession {
     String profileName;
     int networkId;
     boolean cacheOnly = false;
+    long maxCwWait = 5000L;
     if (profile != null) {
       profileName = profile.name();
       networkId = profile.networkId();
+      cacheOnly = profile.cacheOnly();
+      if (profile.maxCwWaitMs() > 0) {
+        maxCwWait = profile.maxCwWaitMs();
+      }
     } else {
       ExtendedNewcamdConfig cc = currentConfig();
       boolean catchAll = cc != null && cc.catchAll();
@@ -186,9 +191,9 @@ public class ExtNewcamdSession extends NewcamdSession {
       }
     }
     EcmKey key = new EcmKey(commandTag, serviceId, networkId, caId, dataHash);
-    EcmRequest request = new EcmRequest(key, customData, profileName, getRemoteAddress(), null, System.currentTimeMillis(), null, 5000);
+    EcmRequest request = new EcmRequest(key, customData, profileName, getRemoteAddress(), null, System.currentTimeMillis(), null, maxCwWait);
     if (cacheOnly) {
-      cacheVerticle.processRequest(0, request, true, 5000).onComplete(ar -> {
+      cacheVerticle.processRequest(0, request, true, maxCwWait).onComplete(ar -> {
         if (ar.succeeded() && ar.result().isHit()) sendCwReply(request, ar.result().reply(), header);
         else sendCwReply(request, new CwReply(key, commandTag, new byte[0], null, null, System.currentTimeMillis()), header);
       });

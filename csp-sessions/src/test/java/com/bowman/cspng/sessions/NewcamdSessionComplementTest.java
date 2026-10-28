@@ -148,4 +148,68 @@ class NewcamdSessionComplementTest {
     assertEquals(1, capExt.out2.size());
     assertEquals(0x55, capExt.out2.get(0)[0]&0xFF); assertEquals(0x66, capExt.out2.get(0)[1]&0xFF);
   }
+
+  @Test
+  void newcamdWaitsOnCacheWhenCacheOnlyOrNoConnectorsAndCwArrivesFromCacheEx() throws Exception {
+    vertx = Vertx.vertx();
+    var cache = new CacheVerticle();
+    vertx.deployVerticle(cache).toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    cache.configure(new com.bowman.cspng.cache.CacheVerticleConfig(30_000L, 100_000L, 2000L, -1));
+    var reg = new SessionRegistry(vertx);
+
+    CountDownLatch replyLatch = new CountDownLatch(1);
+    List<byte[]> replies = new ArrayList<>();
+    class Cap extends NewcamdSession {
+      Cap(Vertx v, CacheVerticle c, SessionRegistry r, byte[] k) { super(v, c, r, k); }
+      @Override protected void sendEncrypted(byte[] msg) {
+        replies.add(msg.clone());
+        replyLatch.countDown();
+      }
+    }
+    var cap = new Cap(vertx, cache, reg, new byte[14]);
+    cap.setProfileName("polsat");
+    cap.setProfileCaId(0x1884);
+    cap.setProfileNetworkId(0);
+    cap.setProfileCacheOnly(true);
+    cap.setProfileMaxCwWaitMs(2000L);
+    setField(cap, "authenticated", true);
+    setField(cap, "alive", true);
+    setField(cap, "desKey16", new byte[16]);
+    cap.setNoEncrypt(true);
+
+    byte[] body = new byte[]{0x10, 0x20, 0x30, 0x40};
+    byte[] dec = new byte[13 + body.length];
+    dec[0] = 0x00; dec[1] = 0x07;
+    dec[2] = 0x11; dec[3] = 0x36; // sid 0x1136
+    dec[4] = 0x18; dec[5] = (byte) 0x84; // caid 0x1884
+    dec[10] = (byte) 0x80;
+    dec[11] = 0; dec[12] = (byte) body.length;
+    System.arraycopy(body, 0, dec, 13, body.length);
+
+    Method hm = NewcamdSession.class.getDeclaredMethod("handleMessage", byte[].class);
+    hm.setAccessible(true);
+    hm.invoke(cap, (Object) dec);
+
+    // 100ms later, simulate CacheEx push arriving into CacheVerticle
+    byte[] expectedCw = new byte[]{
+        1, 2, 3, 6, 4, 5, 6, 15,
+        7, 8, 9, 24, 10, 11, 12, 33
+    };
+    int hash = NewcamdSession.computeHash(body);
+    // Simulate CS378x CacheEx push with oddEven=0 (unknown parity from OSCam)
+    EcmKey pushKey = new EcmKey(0, 0x1136, 0, 0x1884, hash);
+    vertx.setTimer(100, tid -> {
+      EcmRequest synth = new EcmRequest(pushKey, new byte[0], "default", "77.90.60.222", "@STB@", System.currentTimeMillis(), null, 5000);
+      CwReply pushed = new CwReply(pushKey, 0, expectedCw, "L3:@STB@", "77.90.60.222", System.currentTimeMillis());
+      cache.handleReply(synth, pushed);
+    });
+
+    assertTrue(replyLatch.await(2, TimeUnit.SECONDS), "Newcamd session must wait and receive CW from CacheEx push");
+    assertEquals(1, replies.size());
+    byte[] msg = replies.get(0);
+    assertEquals(13 + 16, msg.length, "Must return 16-byte CW, not 0-byte NOT FOUND");
+    assertEquals(0x80, msg[10] & 0xFF, "Newcamd reply commandTag must match request table-id (0x80), even when CacheEx push had oddEven=0");
+    byte[] actualCw = java.util.Arrays.copyOfRange(msg, 13, 29);
+    assertArrayEquals(expectedCw, actualCw);
+  }
 }

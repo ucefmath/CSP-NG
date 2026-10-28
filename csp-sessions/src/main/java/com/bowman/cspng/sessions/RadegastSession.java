@@ -24,6 +24,8 @@ public class RadegastSession extends AbstractSession {
 
   private NetSocket socket;
   private CwsConnectorManager connectorManager;
+  private volatile boolean profileCacheOnly = false;
+  private volatile long profileMaxCwWaitMs = 5000L;
 
   public RadegastSession(Vertx vertx, CacheVerticle cacheVerticle,
                           SessionRegistry registry) {
@@ -31,6 +33,12 @@ public class RadegastSession extends AbstractSession {
   }
 
   public void setConnectorManager(CwsConnectorManager cm) { this.connectorManager = cm; }
+  public void setProfileCacheOnly(boolean cacheOnly) { this.profileCacheOnly = cacheOnly; }
+  public boolean isProfileCacheOnly() { return profileCacheOnly; }
+  public void setProfileMaxCwWaitMs(long maxCwWaitMs) {
+    this.profileMaxCwWaitMs = maxCwWaitMs > 0 ? maxCwWaitMs : 5000L;
+  }
+  public long getProfileMaxCwWaitMs() { return profileMaxCwWaitMs; }
 
   /**
    * Accepte une connexion entrante Radegast.
@@ -75,24 +83,32 @@ public class RadegastSession extends AbstractSession {
     // Compute hash
     int dataHash = computeHash(req.customData());
     EcmKey key = new EcmKey(req.commandTag(), req.serviceId(), 0, req.caId(), dataHash);
-    EcmRequest request = buildEcmRequest(key, req.customData(), 5000);
+    EcmRequest request = buildEcmRequest(key, req.customData(), profileMaxCwWaitMs);
 
     processEcm(request);
   }
 
   private void processEcm(EcmRequest request) {
-    cacheVerticle.processRequest(0, request, false, 5000)
+    boolean hasConnectedConnector = !profileCacheOnly
+        && connectorManager != null
+        && request.profileName() != null
+        && !connectorManager.getConnectedConnectorsForProfile(request.profileName()).isEmpty();
+    boolean alwaysWait = profileCacheOnly || !hasConnectedConnector;
+    long maxCwWait = request.maxWaitMs() > 0 ? request.maxWaitMs() : profileMaxCwWaitMs;
+    cacheVerticle.processRequest(0, request, alwaysWait, maxCwWait)
         .onComplete(ar -> {
           if (ar.succeeded() && ar.result().isHit()) {
             CwReply reply = ar.result().reply();
             sendCwReply(reply);
-          } else if (connectorManager != null) {
+          } else if (!profileCacheOnly && connectorManager != null) {
+            cacheVerticle.handleRemoteRequest(request);
             connectorManager.sendEcmRequest(request).onComplete(car -> {
-              if (car.succeeded() && car.result() != null) {
+              if (car.succeeded() && car.result() != null && !car.result().isEmpty()) {
                 CwReply reply = car.result();
                 cacheVerticle.handleReply(request, reply);
                 sendCwReply(reply);
               } else {
+                cacheVerticle.handleReply(request, null);
                 sendCwReply(new CwReply(request.key(),
                     request.key().commandTag(), new byte[0],
                     null, null, System.currentTimeMillis()));

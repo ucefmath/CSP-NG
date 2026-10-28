@@ -16,7 +16,7 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-COPY csp-app/target/csp-app-1.0.0-runner.jar /app/app.jar
+COPY csp-app/target/csp-app-1.0.1-runner.jar /app/app.jar
 
 EXPOSE 8080 9009/udp
 

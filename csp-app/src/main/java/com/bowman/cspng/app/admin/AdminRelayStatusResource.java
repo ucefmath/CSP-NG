@@ -59,26 +59,26 @@ public class AdminRelayStatusResource {
       List<ConnectorSnapshot> connectors = connectorManager != null
           ? connectorManager.snapshotConnectors() : null;
       var snap = relayPolicyService.snapshot();
-      // Stats remontees worker->central (brutes JSON bornees, absentes => null).
-      java.util.Map<String, String> workerStats = null;
-      if (configRepository != null) {
-        try {
-          workerStats = configRepository.loadNodeStats()
-              .toCompletionStage().toCompletableFuture().get(5, java.util.concurrent.TimeUnit.SECONDS);
-        } catch (Exception ignored) {
-        }
-      }
-      var payload = new RelayStatusPayload(
-          nodes,
-          connectors,
-          snap != null ? snap.relayCaches() : null,
-          snap != null ? snap.listenerCacheLinks() : null,
-          relayPolicyService.effectiveTtlMs(),
-          now,
-          workerStats);
-      return Uni.createFrom().item(Response.ok(payload)
-          .header("Cache-Control", AdminRuntimeResource.CACHE_CONTROL)
-          .header("Pragma", AdminRuntimeResource.PRAGMA).build());
+      // Stats remontees worker->central (brutes JSON bornees, absentes => null) sans bloquer l'event-loop.
+      Uni<java.util.Map<String, String>> statsUni = configRepository != null
+          ? Uni.createFrom().completionStage(() -> configRepository.loadNodeStats().toCompletionStage())
+              .ifNoItem().after(java.time.Duration.ofSeconds(5)).fail()
+              .onFailure().recoverWithItem((java.util.function.Function<Throwable, java.util.Map<String, String>>) t -> null)
+          : Uni.createFrom().item((java.util.Map<String, String>) null);
+
+      return statsUni.onItem().transform(workerStats -> {
+        var payload = new RelayStatusPayload(
+            nodes,
+            connectors,
+            snap != null ? snap.relayCaches() : null,
+            snap != null ? snap.listenerCacheLinks() : null,
+            relayPolicyService.effectiveTtlMs(),
+            now,
+            workerStats);
+        return Response.ok(payload)
+            .header("Cache-Control", AdminRuntimeResource.CACHE_CONTROL)
+            .header("Pragma", AdminRuntimeResource.PRAGMA).build();
+      });
     } catch (Exception e) {
       return Uni.createFrom().item(Response.status(500)
           .entity(ErrorResponse.of("INTERNAL_ERROR", "Internal error")).build());

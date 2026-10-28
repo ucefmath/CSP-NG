@@ -38,7 +38,7 @@ docker info >/dev/null 2>&1 || { echo "FATAL: daemon docker injoignable"; exit 1
 [ -d "$OSCAM_SRC" ] || { echo "FATAL: $OSCAM_SRC absent"; exit 1; }
 
 echo "=== [2/6] Build du jar csp-app (uber-jar) si nécessaire ==="
-JAR="$CSP_NEW/csp-app/target/csp-app-1.0.0-runner.jar"
+JAR="$CSP_NEW/csp-app/target/csp-app-1.0.1-runner.jar"
 if [ ! -f "$JAR" ]; then
   echo "Jar absent -> build Maven (hors-ligne) :"
   mvn -o -f "$CSP_NEW/pom.xml" -pl csp-app -am install -DskipTests \
