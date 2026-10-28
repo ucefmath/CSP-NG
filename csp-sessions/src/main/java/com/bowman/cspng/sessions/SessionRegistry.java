@@ -39,7 +39,7 @@ public class SessionRegistry {
 
   /** Constructeur rétrocompatible pour tests sans PG : InMemory vide. */
   public SessionRegistry(Vertx vertx) {
-    this(vertx, new InMemoryUserDirectory());
+    this(vertx, new InMemoryUserDirectory(vertx));
   }
 
   public UserDirectory userDirectory() { return userDirectory; }

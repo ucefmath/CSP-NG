@@ -44,6 +44,8 @@ public class NewcamdSession extends AbstractSession {
   protected int maxMsgSize = NewcamdConstants.CWS_NETMSGSIZE;
   protected Context sessionContext;
   protected int profileNetworkId = -1;
+  protected int profileCaId = 0;
+  protected int[] profileProviders = new int[0];
 
   public NewcamdSession(Vertx vertx, CacheVerticle cacheVerticle,
                          SessionRegistry registry, byte[] configKey14) {
@@ -58,6 +60,12 @@ public class NewcamdSession extends AbstractSession {
   public int getMaxMsgSize() { return maxMsgSize; }
   public void setProfileNetworkId(int networkId) { this.profileNetworkId = networkId; }
   public int getProfileNetworkId() { return profileNetworkId; }
+  public void setProfileCaId(int caId) { this.profileCaId = caId; }
+  public int getProfileCaId() { return profileCaId; }
+  public void setProfileProviders(int[] providers) {
+    this.profileProviders = providers != null ? providers.clone() : new int[0];
+  }
+  public int[] getProfileProviders() { return profileProviders.clone(); }
   protected NetSocket getSocket() { return socket; }
   protected byte[] getDesKey16() { return desKey16; }
   protected Context getSessionContext() { return sessionContext; }
@@ -159,10 +167,10 @@ public class NewcamdSession extends AbstractSession {
       return;
     }
 
-    // Extract ECM data — fail-close if declared length != available
-    int customDataLen = ((decrypted[11] & 0xFF) << 8) | (decrypted[12] & 0xFF);
-    if (customDataLen != decrypted.length - 13) {
-      logger.warning("Truncated ECM declaredLen " + customDataLen + " != available " + (decrypted.length - 13));
+    // Extract ECM data — fail-close if declared length > available
+    int customDataLen = ((decrypted[11] & 0x0F) << 8) | (decrypted[12] & 0xFF);
+    if (customDataLen > decrypted.length - 13) {
+      logger.warning("Truncated ECM declaredLen " + customDataLen + " > available " + (decrypted.length - 13));
       close();
       return;
     }
@@ -177,6 +185,10 @@ public class NewcamdSession extends AbstractSession {
     ReplyHeader header = new ReplyHeader(sequence, serviceId, caId);
 
     switch (commandTag) {
+      case NewcamdConstants.MSG_CARD_DATA_REQ:
+        sendCardData(header);
+        break;
+
       case NewcamdConstants.MSG_KEEPALIVE:
         sendKeepAlive(header);
         break;
@@ -234,6 +246,7 @@ public class NewcamdSession extends AbstractSession {
       return;
     }
 
+    int loginSeq = ((decrypted[0] & 0xFF) << 8) | (decrypted[1] & 0xFF);
     String user = new String(customData, 0, null1);
     String password = new String(customData, null1 + 1, null2 - null1 - 1);
 
@@ -242,11 +255,11 @@ public class NewcamdSession extends AbstractSession {
 
     registry.authenticate(user, password).onComplete(ar -> {
       // Sérialiser sur l'event-loop de la session pour ordonner avec closeHandler
-      vertx.runOnContext(v -> completeLogin(ar, user, password));
+      vertx.runOnContext(v -> completeLogin(ar, user, password, loginSeq));
     });
   }
 
-  private void completeLogin(io.vertx.core.AsyncResult<Boolean> ar, String user, String password) {
+  private void completeLogin(io.vertx.core.AsyncResult<Boolean> ar, String user, String password, int loginSeq) {
     if (!alive || socket == null) {
       authPending = false;
       return;
@@ -312,24 +325,47 @@ public class NewcamdSession extends AbstractSession {
     authenticated = true;
     AuthAudit.authOk("newcamd", canonical, remoteAddress);
 
+    // Envoyer LOGIN_ACK chiffré avec la clé de handshake, puis basculer sur la clé de session
+    sendLoginAck(loginSeq);
     byte[] newKey14 = NewcamdCrypto.xorUserPass(configKey14, password);
     byte[] newDesKey16 = NewcamdCrypto.desKeySpread(newKey14);
     desKey16 = newDesKey16;
     // wipe temp key
     java.util.Arrays.fill(newKey14, (byte)0);
-    sendLoginAck();
     logger.info("User " + canonical + " logged in from " + remoteAddress);
     authPending = false;
   }
 
   protected void sendLoginAck() {
-    byte[] ackMsg = buildSimpleMessage(NewcamdConstants.MSG_CLIENT_2_SERVER_LOGIN_ACK, new byte[0]);
+    sendLoginAck(0);
+  }
+  protected void sendLoginAck(int sequence) {
+    byte[] ackMsg = buildSimpleMessage(NewcamdConstants.MSG_CLIENT_2_SERVER_LOGIN_ACK, new byte[0], sequence);
     sendEncrypted(ackMsg);
   }
 
   protected void sendLoginNak() {
     byte[] nakMsg = buildSimpleMessage(NewcamdConstants.MSG_CLIENT_2_SERVER_LOGIN_NAK, new byte[0]);
     sendEncrypted(nakMsg);
+  }
+
+  protected void sendCardData(ReplyHeader header) {
+    int[] provs = (profileProviders != null && profileProviders.length > 0) ? profileProviders : new int[]{0};
+    byte[] cardData = new byte[12 + 11 * provs.length];
+    cardData[0] = 0x02; // userId (anonymous)
+    int ca = profileCaId > 0 ? profileCaId : 0;
+    cardData[1] = (byte) ((ca >> 8) & 0xFF);
+    cardData[2] = (byte) (ca & 0xFF);
+    cardData[11] = (byte) (provs.length & 0xFF);
+    for (int i = 0; i < provs.length; i++) {
+      int prov = provs[i];
+      int off = 12 + i * 11;
+      cardData[off] = (byte) ((prov >> 16) & 0xFF);
+      cardData[off + 1] = (byte) ((prov >> 8) & 0xFF);
+      cardData[off + 2] = (byte) (prov & 0xFF);
+    }
+    byte[] cardMsg = buildSimpleMessage(NewcamdConstants.MSG_CARD_DATA, cardData, header.sequence());
+    sendEncrypted(cardMsg);
   }
 
   protected void sendKeepAlive() {

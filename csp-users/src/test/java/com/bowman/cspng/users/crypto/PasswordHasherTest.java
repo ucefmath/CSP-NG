@@ -76,4 +76,16 @@ class PasswordHasherTest {
         String hash = MD5Crypt.crypt(plain, salt);
         assertFalse(TEST_HASHER.verify("wrongLegacyPass", hash));
     }
+
+    @Test
+    void verifyAcceptsNewcamdMd5CryptWirePasswordAgainstBcryptAndLegacy() {
+        String plain = "i6RZ'w26S,]Dq)4";
+        String wireHash = MD5Crypt.crypt(plain, "abcdefgh");
+        String bcryptStored = new PasswordHasher(10).hash(plain);
+
+        assertTrue(PasswordVerifier.verify(plain, bcryptStored), "Plaintext must verify against bcrypt");
+        assertTrue(PasswordVerifier.verify(wireHash, bcryptStored), "Newcamd $1$abcdefgh$ wire hash must verify against bcrypt");
+        assertTrue(PasswordVerifier.verify(wireHash, wireHash), "Newcamd $1$abcdefgh$ wire hash must verify against $1$ stored hash");
+        assertFalse(PasswordVerifier.verify(MD5Crypt.crypt("wrong", "abcdefgh"), bcryptStored));
+    }
 }

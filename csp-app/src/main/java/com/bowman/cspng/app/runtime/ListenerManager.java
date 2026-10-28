@@ -439,7 +439,20 @@ public class ListenerManager {
           session.setProfileName(finalDl.profileName);
           try {
             ConfigSnapshot snapForNet = appliedSnapshot != null ? appliedSnapshot : holder.get();
-            if (snapForNet != null) for (var p : snapForNet.profiles()) if (p.name().equals(finalDl.profileName)) { session.setProfileNetworkId(p.networkId()); break; }
+            if (snapForNet != null) {
+              for (var p : snapForNet.profiles()) {
+                if (p.name().equals(finalDl.profileName)) {
+                  session.setProfileNetworkId(p.networkId());
+                  session.setProfileCaId(p.caId());
+                  break;
+                }
+              }
+              var idents = snapForNet.providerIdentsFor(finalDl.profileName);
+              if (idents != null && !idents.isEmpty()) {
+                int[] provs = idents.stream().mapToInt(pi -> pi.providerIdent()).toArray();
+                session.setProfileProviders(provs);
+              }
+            }
           } catch (Exception ignored) {}
           session.setConnectorManager(cm);
           session.setMaxMsgSize(finalDl.maxMsgSize);

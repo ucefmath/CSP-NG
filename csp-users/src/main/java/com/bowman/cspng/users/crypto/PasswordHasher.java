@@ -36,6 +36,13 @@ public final class PasswordHasher {
     }
   }
 
+  static String toBcryptInput(String plainPassword) {
+    if (plainPassword.startsWith("$1$abcdefgh$")) {
+      return plainPassword;
+    }
+    return MD5Crypt.crypt(plainPassword, "abcdefgh");
+  }
+
   /**
    * Hash synchrone — réservé aux tests hors event-loop ou aux contextes déjà offloadés.
    * Fail-fast si bcrypt et appelé depuis l'event-loop Vert.x.
@@ -53,7 +60,7 @@ public final class PasswordHasher {
       throw ise;
     } catch (Throwable ignored) {
     }
-    return BcryptUtil.bcryptHash(plainPassword, cost);
+    return BcryptUtil.bcryptHash(toBcryptInput(plainPassword), cost);
   }
 
   /**
@@ -72,7 +79,7 @@ public final class PasswordHasher {
         return Future.failedFuture(e);
       }
     }
-    return vertx.executeBlocking(() -> BcryptUtil.bcryptHash(plainPassword, cost), false);
+    return vertx.executeBlocking(() -> BcryptUtil.bcryptHash(toBcryptInput(plainPassword), cost), false);
   }
 
   /**

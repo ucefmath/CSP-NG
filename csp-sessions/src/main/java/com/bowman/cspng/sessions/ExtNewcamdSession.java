@@ -140,10 +140,10 @@ public class ExtNewcamdSession extends NewcamdSession {
       close();
       return;
     }
-    int declaredLen = ((decrypted[11] & 0xFF) << 8) | (decrypted[12] & 0xFF);
-    if (declaredLen != decrypted.length - 13) {
-      // fail-close if declared length mismatches available
-      logger.warning("Truncated ECM declaredLen " + declaredLen + " != available " + (decrypted.length - 13));
+    int declaredLen = ((decrypted[11] & 0x0F) << 8) | (decrypted[12] & 0xFF);
+    if (declaredLen > decrypted.length - 13) {
+      // fail-close if declared length exceeds available
+      logger.warning("Truncated ECM declaredLen " + declaredLen + " > available " + (decrypted.length - 13));
       close();
       return;
     }

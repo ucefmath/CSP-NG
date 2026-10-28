@@ -152,4 +152,88 @@ class NewcamdSessionIntegrationTest {
 
     client.close();
   }
+
+  @Test
+  @DisplayName("Client Newcamd standard (md5crypt + LOGIN_ACK clé login + MSG_CARD_DATA_REQ)")
+  void standardNewcamdClientMd5CryptLoginAckAndCardData() throws Exception {
+    String bcryptHash = new com.bowman.cspng.users.crypto.PasswordHasher(10).hash("i6RZ'w26S,]Dq)4");
+    registry.addTestUser(new com.bowman.cspng.users.UserRecord(
+        "test", "test", bcryptHash, true, false, java.util.Set.of("polsat"), 5));
+
+    CountDownLatch ready = new CountDownLatch(1);
+    vertx.createNetServer().connectHandler(socket -> {
+      NewcamdSession s = new NewcamdSession(vertx, cacheVerticle, registry, CONFIG_KEY_14);
+      s.setProfileName("polsat");
+      s.setProfileCaId(0x1884);
+      s.setProfileProviders(new int[]{0x000000});
+      s.accept(socket);
+    }).listen(0, ar -> {
+      if (ar.succeeded()) { server = ar.result(); ready.countDown(); }
+    });
+    assertTrue(ready.await(5, TimeUnit.SECONDS));
+
+    CountDownLatch cardDataLatch = new CountDownLatch(1);
+    AtomicReference<byte[]> cardDataMsgRef = new AtomicReference<>();
+
+    vertx.createNetClient().connect(server.actualPort(), "127.0.0.1", ar -> {
+      assertTrue(ar.succeeded());
+      io.vertx.core.net.NetSocket sock = ar.result();
+      String wirePass = com.bowman.cspng.codec.newcamd.Md5Crypt.md5Crypt("i6RZ'w26S,]Dq)4", "$1$abcdefgh$");
+      AtomicReference<byte[]> loginKeyRef = new AtomicReference<>();
+      AtomicReference<byte[]> sessionKeyRef = new AtomicReference<>();
+
+      sock.handler(buf -> {
+        if (loginKeyRef.get() == null && buf.length() == 14) {
+          byte[] random14 = buf.getBytes(0, 14);
+          byte[] loginKey16 = NewcamdCrypto.desKeySpread(NewcamdCrypto.xorKey(CONFIG_KEY_14, random14));
+          loginKeyRef.set(loginKey16);
+          sessionKeyRef.set(NewcamdCrypto.desKeySpread(NewcamdCrypto.xorUserPass(CONFIG_KEY_14, wirePass)));
+
+          byte[] loginPayload = ("test\0" + wirePass + "\0").getBytes();
+          byte[] loginFrame = new byte[13 + loginPayload.length];
+          loginFrame[0] = 0x00;
+          loginFrame[1] = 0x01;
+          loginFrame[10] = (byte) NewcamdConstants.MSG_CLIENT_2_SERVER_LOGIN;
+          loginFrame[12] = (byte) loginPayload.length;
+          System.arraycopy(loginPayload, 0, loginFrame, 13, loginPayload.length);
+
+          byte[] enc = NewcamdCrypto.desEncrypt(loginFrame, loginFrame.length, loginKey16, NewcamdConstants.CWS_NETMSGSIZE);
+          Buffer out = Buffer.buffer(2 + enc.length);
+          out.appendByte((byte) (enc.length >> 8)).appendByte((byte) (enc.length & 0xFF)).appendBytes(enc);
+          sock.write(out);
+        } else if (buf.length() > 2) {
+          int len = ((buf.getByte(0) & 0xFF) << 8) | (buf.getByte(1) & 0xFF);
+          byte[] data = buf.getBytes(2, 2 + len);
+          // 1) Try decrypting LOGIN_ACK with loginKey16
+          byte[] decAck = NewcamdCrypto.desDecrypt(data, data.length, loginKeyRef.get());
+          if (decAck != null && (decAck[10] & 0xFF) == NewcamdConstants.MSG_CLIENT_2_SERVER_LOGIN_ACK) {
+            // Send MSG_CARD_DATA_REQ encrypted with sessionKey16
+            byte[] reqFrame = new byte[13];
+            reqFrame[0] = 0x00;
+            reqFrame[1] = 0x02;
+            reqFrame[10] = (byte) NewcamdConstants.MSG_CARD_DATA_REQ;
+            byte[] encReq = NewcamdCrypto.desEncrypt(reqFrame, reqFrame.length, sessionKeyRef.get(), NewcamdConstants.CWS_NETMSGSIZE);
+            Buffer out = Buffer.buffer(2 + encReq.length);
+            out.appendByte((byte) (encReq.length >> 8)).appendByte((byte) (encReq.length & 0xFF)).appendBytes(encReq);
+            sock.write(out);
+          } else {
+            // 2) Decrypt MSG_CARD_DATA with sessionKey16
+            byte[] decCard = NewcamdCrypto.desDecrypt(data, data.length, sessionKeyRef.get());
+            if (decCard != null && (decCard[10] & 0xFF) == NewcamdConstants.MSG_CARD_DATA) {
+              cardDataMsgRef.set(decCard);
+              cardDataLatch.countDown();
+            }
+          }
+        }
+      });
+    });
+
+    assertTrue(cardDataLatch.await(5, TimeUnit.SECONDS), "Client must receive MSG_CARD_DATA after LOGIN_ACK");
+    byte[] cardMsg = cardDataMsgRef.get();
+    assertNotNull(cardMsg);
+    assertEquals(0x00, cardMsg[0] & 0xFF);
+    assertEquals(0x02, cardMsg[1] & 0xFF);
+    int caid = ((cardMsg[14] & 0xFF) << 8) | (cardMsg[15] & 0xFF);
+    assertEquals(0x1884, caid);
+  }
 }
