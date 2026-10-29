@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch, apiJson, describeError, formatSid, parseInteger, parseSidList } from "../api";
 import type { ProtocolSecret, UserEntry } from "../types";
 import { BulkBar, SelectBox } from "../components/BulkBar";
@@ -20,6 +20,101 @@ function getBulkScalarFields(t: (k: MessageKey, params?: Record<string, string |
   ];
 }
 
+/** Session client sanitisée renvoyée par GET /api/admin/sessions (IP déjà anonymisée côté serveur). */
+export interface LiveSession {
+  id: string;
+  username: string | null;
+  remoteAddress: string;
+  protocol: string;
+  profile: string | null;
+  authenticated: boolean;
+  alive: boolean;
+}
+
+const LIVE_STORAGE_KEY = "csp.users.liveStatus";
+export const LIVE_REFRESH_MS = 3000;
+const LIVE_PAGE_SIZE = 100;
+const LIVE_MAX_PAGES = 50;
+
+type LivePage = { payload?: { items?: LiveSession[]; totalPages?: number } };
+
+async function fetchAllSessions(): Promise<LiveSession[]> {
+  const out: LiveSession[] = [];
+  for (let page = 0; page < LIVE_MAX_PAGES; page++) {
+    const { res, body } = await apiJson<LivePage>(`/api/admin/sessions?page=${page}&size=${LIVE_PAGE_SIZE}`);
+    if (!res.ok) throw { status: res.status, ...((body ?? {}) as object) };
+    const items = body?.payload?.items ?? [];
+    out.push(...items);
+    const totalPages = body?.payload?.totalPages ?? 0;
+    if (page + 1 >= totalPages || items.length === 0) break;
+  }
+  return out;
+}
+
+function readLivePref(): boolean {
+  try {
+    return typeof localStorage !== "undefined" && localStorage.getItem(LIVE_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Sondage périodique des sessions, en pause quand l'onglet est masqué. */
+function useLiveSessions(enabled: boolean) {
+  const [byUser, setByUser] = useState<Map<string, LiveSession[]>>(new Map());
+  const [error, setError] = useState<unknown>(null);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!enabled) {
+      setByUser(new Map());
+      setError(null);
+      setUpdatedAt(null);
+      return;
+    }
+    let cancelled = false;
+    let inflight = false;
+    const tick = async () => {
+      if (inflight || (typeof document !== "undefined" && document.hidden)) return;
+      inflight = true;
+      try {
+        const list = await fetchAllSessions();
+        if (cancelled) return;
+        const m = new Map<string, LiveSession[]>();
+        for (const s of list) {
+          if (!s.username || !s.authenticated || !s.alive) continue;
+          const k = s.username.toLowerCase();
+          const arr = m.get(k) ?? [];
+          arr.push(s);
+          m.set(k, arr);
+        }
+        setByUser(m);
+        setError(null);
+        setUpdatedAt(Date.now());
+      } catch (e) {
+        if (!cancelled) setError(e);
+      } finally {
+        inflight = false;
+      }
+    };
+    void tick();
+    const timer = setInterval(() => void tick(), LIVE_REFRESH_MS);
+    const onVis = () => {
+      if (!document.hidden) void tick();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [enabled]);
+
+  return { byUser, error, updatedAt };
+}
+
+type ConnFilter = "all" | "online" | "offline";
+
 export function UsersPage() {
   const t = useT();
   const snap = useSnapshot(fetchSnapshot);
@@ -30,15 +125,35 @@ export function UsersPage() {
   const [deleting, setDeleting] = useState<UserEntry | null>(null);
   const [secretsOf, setSecretsOf] = useState<UserEntry | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [live, setLive] = useState<boolean>(readLivePref);
+  const [connFilter, setConnFilter] = useState<ConnFilter>("all");
+  const liveData = useLiveSessions(live);
+
+  const toggleLive = (v: boolean) => {
+    setLive(v);
+    if (!v) setConnFilter("all");
+    try {
+      localStorage.setItem(LIVE_STORAGE_KEY, v ? "1" : "0");
+    } catch {
+      /* stockage indisponible : préférence non persistée */
+    }
+  };
 
   const bulkScalarFields = useMemo(() => getBulkScalarFields(t), [t]);
 
   const list = useMemo(() => {
-    const all = users.data ?? [];
+    let all = users.data ?? [];
+    if (live && connFilter !== "all") {
+      all = all.filter((u) => {
+        const on = (liveData.byUser.get(u.name.toLowerCase())?.length ?? 0) > 0;
+        return connFilter === "online" ? on : !on;
+      });
+    }
     if (!filter.trim()) return all;
     const q = filter.toLowerCase();
     return all.filter((u) => `${u.name} ${u.displayName ?? ""} ${u.email ?? ""}`.toLowerCase().includes(q));
-  }, [users.data, filter]);
+  }, [users.data, filter, live, connFilter, liveData.byUser]);
+  const onlineCount = live ? (users.data ?? []).filter((u) => (liveData.byUser.get(u.name.toLowerCase())?.length ?? 0) > 0).length : 0;
 
   if (users.loading) return <Loading />;
   if (users.error) return <LoadError error={users.error} onRetry={users.reload} />;
@@ -115,6 +230,32 @@ export function UsersPage() {
           users.reload();
         }}
       />
+      <div className="toolbar live-toolbar">
+        <label className="check-row">
+          <input type="checkbox" checked={live} onChange={(e) => toggleLive(e.target.checked)} />
+          <span>{t("users.liveToggle")}</span>
+        </label>
+        {live && (
+          <>
+            <label className="check-row" htmlFor="users-conn-filter">
+              <span>{t("users.liveFilterLabel")}</span>
+            </label>
+            <select id="users-conn-filter" value={connFilter} onChange={(e) => setConnFilter(e.target.value as ConnFilter)}>
+              <option value="all">{t("users.liveFilterAll")}</option>
+              <option value="online">{t("users.liveFilterOnline")}</option>
+              <option value="offline">{t("users.liveFilterOffline")}</option>
+            </select>
+            <span className="muted small" role="status" aria-live="polite">
+              {liveData.error
+                ? t("users.liveStale", { error: describeError(liveData.error) })
+                : liveData.updatedAt
+                  ? t("users.liveSummary", { online: onlineCount, total: (users.data ?? []).length, seconds: LIVE_REFRESH_MS / 1000 })
+                  : t("users.liveLoading")}
+            </span>
+          </>
+        )}
+      </div>
+      {live && <p className="muted small">{t("users.liveNotice")}</p>}
       <p className="muted small">{t("users.bulkNotice")}</p>
       {!list.length ? (
         <Empty msg={(users.data ?? []).length ? t("users.noResult") : t("users.emptyList")} />
@@ -129,6 +270,7 @@ export function UsersPage() {
                 <th>{t("users.thEmail")}</th>
                 <th>{t("users.thRole")}</th>
                 <th>{t("users.thState")}</th>
+                {live && <th>{t("users.thConnection")}</th>}
                 <th>{t("users.thProfiles")}</th>
                 <th>{t("users.thVersion")}</th>
                 <th>{t("users.thActions")}</th>
@@ -151,6 +293,11 @@ export function UsersPage() {
                       {u.enabled ? t("users.badgeEnabled") : t("users.badgeDisabled")}
                     </span>
                   </td>
+                  {live && (
+                    <td>
+                      <ConnectionCell sessions={liveData.byUser.get(u.name.toLowerCase()) ?? []} maxConnections={u.maxConnections} stale={!!liveData.error || !liveData.updatedAt} />
+                    </td>
+                  )}
                   <td className="mono small">{(u.profiles ?? []).join(", ") || "—"}</td>
                   <td className="mono">v{u.version}</td>
                   <td>
@@ -186,6 +333,22 @@ export function UsersPage() {
       )}
       {secretsOf && <UserSecretsDialog user={secretsOf} onClose={() => setSecretsOf(null)} />}
     </div>
+  );
+}
+
+function ConnectionCell({ sessions, maxConnections, stale }: { sessions: LiveSession[]; maxConnections?: number; stale: boolean }) {
+  const t = useT();
+  if (stale && !sessions.length) return <span className="badge badge-muted">{t("users.liveUnknown")}</span>;
+  if (!sessions.length) return <span className="badge badge-muted" data-conn="offline">⚪ {t("users.liveOffline")}</span>;
+  const limit = maxConnections && maxConnections > 0 ? `/${maxConnections}` : "";
+  const kinds = Array.from(new Set(sessions.map((s) => `${s.protocol}${s.profile ? ` · ${s.profile}` : ""}`)));
+  const detail = sessions.map((s) => `${s.protocol} · ${s.profile ?? "—"} · ${s.remoteAddress}`).join("\n");
+  return (
+    <span title={detail} data-conn="online">
+      <span className="badge badge-ok">🟢 {t("users.liveOnline", { count: sessions.length, limit })}</span>{" "}
+      <span className="mono small">{kinds.join(", ")}</span>
+      <span className="sr-only"> — {detail}</span>
+    </span>
   );
 }
 

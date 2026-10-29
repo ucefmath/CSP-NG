@@ -7,7 +7,7 @@
   <parent>
     <groupId>com.bowman.cspng</groupId>
     <artifactId>csp-new-parent</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
   </parent>
 
   <artifactId>csp-connectors</artifactId>

@@ -1169,12 +1169,16 @@ public class CcCamConnector extends AbstractConnector implements com.bowman.cspn
             System.currentTimeMillis(), null, 5000);
         cacheVerticle.handleReply(syntheticRequest, reply);
         if (statsRegistry != null) statsRegistry.countReceived(name, push.caid(), push.prid(), push.srvid());
+        com.bowman.cspng.connectors.cacheex.CacheExPushLog.accepted("cccam", name, realOrigin,
+            push.caid(), push.prid(), push.srvid(), oe, push.nodeIds().size());
         if (gate != null) gate.postInjected(name);
       } else if (cacheExBridge != null && cacheExBridge.feedReceived(
           profile, -1, push.caid(), push.prid(), push.srvid(), oe, pushCw,
           push.dataHash(), push.cycleTimeSec(), push.nextCwCycle(),
           push.nodeIds(), originAddress, name)) {
         if (statsRegistry != null) statsRegistry.countReceived(name, push.caid(), push.prid(), push.srvid());
+        com.bowman.cspng.connectors.cacheex.CacheExPushLog.accepted("cccam", name, realOrigin,
+            push.caid(), push.prid(), push.srvid(), oe, push.nodeIds().size());
         if (gate != null) gate.postInjected(name);
       } else {
         // Aucun cache routable (worker sans pont / profil inconnu) — rejet explicite

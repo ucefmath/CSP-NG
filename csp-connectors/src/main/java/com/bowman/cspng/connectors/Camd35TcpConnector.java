@@ -545,12 +545,16 @@ public class Camd35TcpConnector extends AbstractConnector implements com.bowman.
           System.currentTimeMillis(), null, 5000);
       cacheVerticle.handleReply(synthetic, reply);
       if (statsRegistry != null) statsRegistry.countReceived(name, push.caid(), push.prid(), push.srvid());
+      com.bowman.cspng.connectors.cacheex.CacheExPushLog.accepted("cs378x", name, realOrigin,
+          push.caid(), push.prid(), push.srvid(), oe, push.nodeIds().size());
       if (gate != null) gate.postInjected(name);
     } else if (cacheExBridge != null && cacheExBridge.feedReceived(
         profile, -1, push.caid(), push.prid(), push.srvid(), oe, cw,
         push.dataHash(), push.cycleTimeSec(), push.nextCwCycle(),
         push.nodeIds(), origin, name)) {
       if (statsRegistry != null) statsRegistry.countReceived(name, push.caid(), push.prid(), push.srvid());
+      com.bowman.cspng.connectors.cacheex.CacheExPushLog.accepted("cs378x", name, realOrigin,
+          push.caid(), push.prid(), push.srvid(), oe, push.nodeIds().size());
       if (gate != null) gate.postInjected(name);
     } else {
       countDrop(CacheExStatsRegistry.REASON_INVALID, push.caid(), push.prid(), push.srvid());
