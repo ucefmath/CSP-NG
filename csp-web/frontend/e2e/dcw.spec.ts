@@ -173,6 +173,30 @@ test.describe("dcw", () => {
     });
   });
 
+  test("mapping cross-CAID avec même provider (1884:000000 -> 1813:000000) : POST inclut targetProvider: 0", async ({ page }) => {
+    const api = await mockApi(page);
+    await login(page);
+    await page.goto("/admin/dcw");
+    await page.getByRole("tab", { name: "Mappings" }).click();
+    await page.getByRole("button", { name: "Nouveau mapping" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel(/Profil/).fill("PL-1884");
+    await dialog.getByLabel(/CAID/).fill("1884");
+    await dialog.getByLabel(/Provider/).fill("000000");
+    await dialog.locator("#dm-tcaid").fill("1813");
+    await dialog.locator("#dm-tprov").fill("000000");
+    await dialog.getByLabel(/SID Source/).fill("0");
+    await dialog.getByLabel(/SID Cible/).fill("0");
+    await dialog.getByRole("button", { name: "Créer" }).click();
+    await expect(dialog).toBeHidden();
+    const post = api.last("/api/admin/dcw/mappings", "POST");
+    expect(post?.body).toMatchObject({
+      profile: "PL-1884", caid: 0x1884, provider: 0,
+      targetCaid: 0x1813, targetProvider: 0,
+      sourceSid: 0, targetSid: 0, approved: true, enabled: true, expiresAtMs: 0,
+    });
+  });
+
   test("observabilité : compteurs + candidats, endpoints 404 → inconnu", async ({ page }) => {
     await mockApi(page);
     await login(page);

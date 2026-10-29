@@ -713,7 +713,7 @@ function MappingDialog({ existing, onClose, onSaved }: { existing: DcwMapping | 
       if (targetCaid !== undefined && targetCaid !== caid) {
         payload.targetCaid = targetCaid;
       }
-      if (targetProvider !== undefined && targetProvider !== provider) {
+      if (targetProvider !== undefined && (targetProvider !== provider || payload.targetCaid !== undefined)) {
         payload.targetProvider = targetProvider;
       }
       if (isEdit) {
