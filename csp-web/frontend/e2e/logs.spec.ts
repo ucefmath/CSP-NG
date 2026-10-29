@@ -51,6 +51,14 @@ test.describe("logs filtre", () => {
     await page.getByLabel("Catégorie :").selectOption("com.bowman.cspng.ecm");
     await expect(consoleRegion.locator(".log-line")).toHaveCount(1);
 
+    // Aide : un exemple cliquable applique le filtre et le mode regex
+    await page.getByLabel("Catégorie :").selectOption("");
+    await page.getByText("Aide et exemples de filtres").click();
+    await page.getByRole("button", { name: "Appliquer le filtre caid=0x18(13|84)" }).click();
+    await expect(page.getByLabel("Filtre :")).toHaveValue("caid=0x18(13|84)");
+    await expect(page.getByRole("checkbox", { name: "Regex" })).toBeChecked();
+    await expect(consoleRegion.locator(".log-line")).toHaveCount(2);
+
     // Filtre restauré depuis l'URL
     await page.goto("/admin/logs?q=parity%3D0x81");
     await expect(page.getByLabel("Filtre :")).toHaveValue("parity=0x81");

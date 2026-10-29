@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router";
 import { apiJson, describeError, formatDate } from "../api";
 import type { LogEntry, LogsResponse } from "../types";
 import { Loading, useToast } from "../components/ui";
-import { useT } from "../i18n";
+import { useT, type MessageKey } from "../i18n";
 import { compileLogFilter, splitHighlight } from "../logFilter";
 
 interface Envelope<T> {
@@ -12,6 +12,15 @@ interface Envelope<T> {
   schemaVersion: string;
   payload: T;
 }
+
+const LOG_FILTER_EXAMPLES: Array<{ q: string; regex: boolean; desc: MessageKey }> = [
+  { q: "CACHEEX sid=0x3D55", regex: false, desc: "logs.guideExCacheexSid" },
+  { q: "sid=0x3D55 -CACHEEX", regex: false, desc: "logs.guideExExclude" },
+  { q: '"type=REMOTE"', regex: false, desc: "logs.guideExPhrase" },
+  { q: "caid=0x18(13|84)", regex: true, desc: "logs.guideExCaids" },
+  { q: "time=[0-9]{4,}ms", regex: true, desc: "logs.guideExSlow" },
+  { q: "^\\[(WARN|ERROR)", regex: true, desc: "logs.guideExLevel" },
+];
 
 export function LogsPage() {
   const t = useT();
@@ -275,6 +284,50 @@ export function LogsPage() {
       <p id="log-filter-help" className="small muted">
         {compiled.ok ? (regexMode ? t("logs.filterHelpRegex") : t("logs.filterHelpText")) : null}
       </p>
+      <details className="logs-filter-guide small">
+        <summary>{t("logs.guideTitle")}</summary>
+        <p className="muted">{t("logs.guideIntro")}</p>
+        <table className="logs-guide-table">
+          <thead>
+            <tr>
+              <th>{t("logs.guideColExample")}</th>
+              <th>{t("logs.guideColMode")}</th>
+              <th>{t("logs.guideColEffect")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {LOG_FILTER_EXAMPLES.map((ex) => (
+              <tr key={ex.q}>
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm mono"
+                    onClick={() => {
+                      setQuery(ex.q);
+                      setRegexMode(ex.regex);
+                      setInvert(false);
+                    }}
+                    aria-label={t("logs.guideApply", { example: ex.q })}
+                  >
+                    {ex.q}
+                  </button>
+                </td>
+                <td>{ex.regex ? t("logs.filterRegex") : t("logs.guideModeText")}</td>
+                <td>{t(ex.desc)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="muted">{t("logs.guideRegexTitle")}</p>
+        <ul className="logs-guide-list mono">
+          <li><code>a|b</code> — {t("logs.guideReOr")}</li>
+          <li><code>^</code> / <code>$</code> — {t("logs.guideReAnchors")}</li>
+          <li><code>.*</code> — {t("logs.guideReAny")}</li>
+          <li><code>[0-9A-F]{"{4}"}</code> — {t("logs.guideReClass")}</li>
+          <li><code>\.</code> — {t("logs.guideReEscape")}</li>
+        </ul>
+        <p className="muted">{t("logs.guideScope")}</p>
+      </details>
       {!compiled.ok && (
         <div className="field-error small" role="alert">
           {t("logs.filterInvalid", { error: compiled.error })}
