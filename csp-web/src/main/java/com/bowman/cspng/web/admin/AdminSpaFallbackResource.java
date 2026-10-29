@@ -29,7 +29,7 @@ public class AdminSpaFallbackResource {
     static final Set<String> SPA_ROUTES = Set.of(
             "overview", "general", "cache", "cache-etat", "cacheex", "cluster",
             "profiles", "listeners", "catalog", "connectors", "proxys", "relais",
-            "dcw", "cw-cycle", "users", "login");
+            "dcw", "cw-cycle", "users", "logs", "login");
 
     static final String INDEX_CLASSPATH = "/META-INF/resources/admin/index.html";
 

@@ -29,6 +29,21 @@ class AdminUiSpaFallbackTest {
     assertTrue(AdminSpaFallbackResource.SPA_ROUTES.contains("cache-etat"), "cache-etat missing");
     assertTrue(AdminSpaFallbackResource.SPA_ROUTES.contains("cacheex"), "cacheex missing");
     assertTrue(AdminSpaFallbackResource.SPA_ROUTES.contains("cw-cycle"), "cw-cycle missing");
+    assertTrue(AdminSpaFallbackResource.SPA_ROUTES.contains("logs"), "logs missing");
+  }
+
+  @Test
+  @DisplayName("1b. Chaque route ADMIN_ROUTES du frontend (router.tsx) est une route fallback serveur")
+  void frontendRoutesMirrorServerFallback() throws Exception {
+    java.nio.file.Path router = java.nio.file.Path.of("frontend/src/router.tsx");
+    org.junit.jupiter.api.Assumptions.assumeTrue(java.nio.file.Files.exists(router), "router.tsx absent");
+    String src = java.nio.file.Files.readString(router);
+    java.util.regex.Matcher m = java.util.regex.Pattern.compile("path:\\s*\"([a-z0-9-]+)\"").matcher(src);
+    java.util.Set<String> missing = new java.util.TreeSet<>();
+    while (m.find()) {
+      if (!AdminSpaFallbackResource.SPA_ROUTES.contains(m.group(1))) missing.add(m.group(1));
+    }
+    assertTrue(missing.isEmpty(), "routes frontend sans fallback serveur (404 au rechargement) : " + missing);
   }
 
   @Test
