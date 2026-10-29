@@ -39,7 +39,8 @@ class AdminStaticResourcesTest {
         // SPA React : landmarks rendus côté client ; le shell servi garantit
         // racine, langue, script externe déterministe et feuille de style.
         // (landmarks header/nav/main/dialog couverts en E2E : e2e/a11y.spec.ts.)
-        org.junit.jupiter.api.Assertions.assertTrue(body.contains("<html lang=\"fr\""), "html lang fr");
+        // UI anglaise par défaut (v1.0.2) ; la langue choisie (EN/FR) est appliquée côté client.
+        org.junit.jupiter.api.Assertions.assertTrue(body.matches("(?s).*<html lang=\"(en|fr)\".*"), "html lang en|fr");
         org.junit.jupiter.api.Assertions.assertTrue(body.contains("<div id=\"root\">"), "SPA root div");
         org.junit.jupiter.api.Assertions.assertTrue(body.contains("/admin/assets/app.js"), "bundle script");
         org.junit.jupiter.api.Assertions.assertTrue(body.contains("/admin/assets/app.css"), "bundle stylesheet");
@@ -91,7 +92,9 @@ class AdminStaticResourcesTest {
         String css = given().get("/admin/assets/app.css").then().statusCode(200).extract().body().asString();
         // puits DOM / stockages interdits (secrets jamais en stockage web ;
         // sessionStorage éventuel = internals routeur, jamais nos secrets)
-        org.junit.jupiter.api.Assertions.assertFalse(appJs.contains("localStorage"), "no localStorage");
+        // localStorage/sessionStorage : le bundle contient les internals du routeur (scroll) et des
+        // préférences UI non sensibles ; la liste blanche est vérifiée sur les SOURCES applicatives
+        // par AdminUiWebStorageContractTest (csp-web) — jamais de secret/jeton en stockage web.
         org.junit.jupiter.api.Assertions.assertFalse(appJs.contains("document.cookie"), "no cookie");
         // pas de rendu HTML brut applicatif : garanti au niveau sources
         // (AdminUiE2eContractTest scanne les .tsx : aucun dangerouslySetInnerHTML)
