@@ -143,6 +143,7 @@ export const dcw = defineMessages(
     mappingErrProvider: 'Provider required (0..16777215)',
     mappingErrTargetCaid: 'Invalid Target CAID (1..65535)',
     mappingErrTargetProvider: 'Invalid Target Provider (0..16777215)',
+    mappingErrTargetProviderRequired: 'Target Provider required when Target CAID differs from source CAID',
     mappingErrSourceSid: 'Source SID required (0 or 1..65535)',
     mappingErrTargetSid: 'Target SID required (0 or 1..65535)',
     mappingErrSidGlobalOrSpecific:
@@ -339,6 +340,7 @@ export const dcw = defineMessages(
     mappingErrProvider: 'Provider requis (0..16777215)',
     mappingErrTargetCaid: 'CAID Cible invalide (1..65535)',
     mappingErrTargetProvider: 'Provider Cible invalide (0..16777215)',
+    mappingErrTargetProviderRequired: 'Provider Cible requis quand le CAID Cible diffère du CAID source',
     mappingErrSourceSid: 'SID Source requis (0 ou 1..65535)',
     mappingErrTargetSid: 'SID Cible requis (0 ou 1..65535)',
     mappingErrSidGlobalOrSpecific:

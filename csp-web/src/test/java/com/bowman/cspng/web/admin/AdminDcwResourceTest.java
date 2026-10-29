@@ -145,6 +145,46 @@ class AdminDcwResourceTest {
   }
 
   @Test
+  @DisplayName("Mapping cross-CAID sans provider cible -> 400 (héritage silencieux interdit) ; explicite -> 201")
+  void crossCaidMappingRequiresExplicitTargetProvider() {
+    // 0500:30B00 -> 1883 sans targetProvider : refusé (héritage silencieux = piège TNTSAT provider 000000)
+    Response rejected = resource.createMapping(
+        new CreateDcwServiceMappingRequest("TNT-0500", 0x0500, 0x030B00, 0x1883, null, 0, 0, true, true, 0L))
+        .await().indefinitely();
+    assertEquals(400, rejected.getStatus());
+    assertTrue(body(rejected).contains("targetProvider is required"), "message explicite : " + body(rejected));
+    assertTrue(repo.calls.isEmpty(), "aucune écriture DB");
+
+    // 0500:30B00 -> 1883:003311 explicite : accepté et restitué tel quel
+    Response ok = resource.createMapping(
+        new CreateDcwServiceMappingRequest("TNT-0500", 0x0500, 0x030B00, 0x1883, 0x003311, 0, 0, true, true, 0L))
+        .await().indefinitely();
+    assertEquals(201, ok.getStatus());
+    var m = (DcwServiceMappingResponse) ok.getEntity();
+    assertEquals(0x1883L, (long) m.targetCaid(), "CAID cible explicite conservé");
+    assertEquals(0x003311L, (long) m.targetProvider(), "provider cible explicite conservé");
+
+    // Provider cible 0 explicite cross-CAID reste légitime (ex. Videoguard 0963:000000)
+    Response zero = resource.createMapping(
+        new CreateDcwServiceMappingRequest("p", 0x0500, 0x030B00, 0x0963, 0, 0, 0, true, true, 0L))
+        .await().indefinitely();
+    assertEquals(201, zero.getStatus());
+
+    // Remap provider-only même CAID (targetCaid absent) toujours autorisé
+    Response providerOnly = resource.createMapping(
+        new CreateDcwServiceMappingRequest("p", 0x0500, 0x030B00, null, 0x003311, 0, 0, true, true, 0L))
+        .await().indefinitely();
+    assertEquals(201, providerOnly.getStatus());
+
+    // targetCaid == caid en valeur, sans targetProvider : pas un cross-CAID, accepté
+    // (garde la comparaison intValue() — des Integer distincts de même valeur ne doivent pas déclencher la règle)
+    Response sameCaid = resource.createMapping(
+        new CreateDcwServiceMappingRequest("p", 0x1884, 0x30, 0x1884, null, 5, 6, true, true, 0L))
+        .await().indefinitely();
+    assertEquals(201, sameCaid.getStatus());
+  }
+
+  @Test
   @DisplayName("Mapping global entre couples CAID:Provider (sourceSid=targetSid=0) accepté et restitué")
   void caidProviderGlobalMapping() {
     // Ordre des champs aligné sur DcwServiceMappingConfig :

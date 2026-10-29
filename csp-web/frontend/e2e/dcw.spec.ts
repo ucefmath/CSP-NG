@@ -144,6 +144,35 @@ test.describe("dcw", () => {
     });
   });
 
+  test("mapping cross-CAID sans provider cible : erreur inline ; corrigé -> POST targetProvider", async ({ page }) => {
+    const api = await mockApi(page);
+    await login(page);
+    await page.goto("/admin/dcw");
+    await page.getByRole("tab", { name: "Mappings" }).click();
+    await page.getByRole("button", { name: "Nouveau mapping" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel(/Profil/).fill("TNT-0500");
+    await dialog.getByLabel(/CAID/).fill("0500");
+    await dialog.getByLabel(/Provider/).fill("30B00");
+    // Champs cible : label sans htmlFor, on cible les ids (dm-tcaid / dm-tprov)
+    await dialog.locator("#dm-tcaid").fill("1883");
+    await dialog.getByLabel(/SID Source/).fill("0");
+    await dialog.getByLabel(/SID Cible/).fill("0");
+    await dialog.getByRole("button", { name: "Créer" }).click();
+    await expect(dialog.getByRole("alert")).toContainText(/Provider Cible requis/);
+    expect(api.captured.filter((c) => c.url.endsWith("/dcw/mappings") && c.method === "POST")).toHaveLength(0);
+    // Corrigé : provider cible explicite
+    await dialog.locator("#dm-tprov").fill("003311");
+    await dialog.getByRole("button", { name: "Créer" }).click();
+    await expect(dialog).toBeHidden();
+    const post = api.last("/api/admin/dcw/mappings", "POST");
+    expect(post?.body).toMatchObject({
+      profile: "TNT-0500", caid: 0x0500, provider: 0x30b00,
+      targetCaid: 0x1883, targetProvider: 0x003311,
+      sourceSid: 0, targetSid: 0, approved: true, enabled: true, expiresAtMs: 0,
+    });
+  });
+
   test("observabilité : compteurs + candidats, endpoints 404 → inconnu", async ({ page }) => {
     await mockApi(page);
     await login(page);

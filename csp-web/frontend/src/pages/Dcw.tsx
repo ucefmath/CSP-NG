@@ -673,6 +673,12 @@ function MappingDialog({ existing, onClose, onSaved }: { existing: DcwMapping | 
       targetProvider = parsed;
     }
 
+    // Un CAID cible différent change l'espace de providers : l'héritage silencieux du provider
+    // source est interdit (bug TNTSAT : 0500:30B00 → 1883 stocké avec provider cible 000000).
+    if (targetCaid !== undefined && targetCaid !== caid && targetProvider === undefined) {
+      return setErr(t("dcw.mappingErrTargetProviderRequired"));
+    }
+
     const sourceSid = parseHexId(f.sourceSid, "sid");
     if (isNaN(sourceSid) || sourceSid < 0 || sourceSid > 65535) return setErr(t("dcw.mappingErrSourceSid"));
     const targetSid = parseHexId(f.targetSid, "sid");

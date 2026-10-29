@@ -181,6 +181,12 @@ public class AdminDcwResource {
     if (caid == null || provider == null || sourceSid == null || targetSid == null || approved == null) {
       throw new IllegalArgumentException("profile, caid, provider, sourceSid, targetSid, approved are required");
     }
+    // Un CAID cible différent change l'espace de providers : l'héritage silencieux du provider
+    // source est refusé (bug TNTSAT : 0500:30B00 -> 1883 stocké avec provider cible 000000,
+    // jamais matché par StrictEcmRouter). Un provider cible explicite (y compris 0) reste valide.
+    if (targetCaid != null && targetCaid.intValue() != caid.intValue() && targetProvider == null) {
+      throw new IllegalArgumentException("targetProvider is required when targetCaid differs from caid");
+    }
     int effTargetCaid = targetCaid != null ? targetCaid : caid;
     int effTargetProvider = targetProvider != null ? targetProvider : provider;
     DcwServiceMappingConfig m = new DcwServiceMappingConfig(id, profile, caid, provider,
