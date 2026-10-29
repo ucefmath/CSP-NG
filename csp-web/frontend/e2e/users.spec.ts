@@ -62,14 +62,14 @@ test.describe("utilisateurs statut temps réel", () => {
   test("désactivé par défaut : aucun appel /sessions ; activé : colonne, filtre, persistance", async ({ page }) => {
     const api = await mockApi(page, {
       overrides: [{
-        match: (url) => new URL(url).pathname === "/api/admin/sessions",
+        match: (url) => new URL(url).pathname === "/api/admin/runtime/sessions",
         handle: (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(sessionsPayload) }),
       }],
     });
     await login(page);
     await page.goto("/admin/users");
     await expect(page.getByRole("columnheader", { name: "Connexion" })).toHaveCount(0);
-    expect(api.captured.filter((c) => c.url.includes("/api/admin/sessions"))).toHaveLength(0);
+    expect(api.captured.filter((c) => c.url.includes("/api/admin/runtime/sessions"))).toHaveLength(0);
 
     await page.getByRole("checkbox", { name: "Statut de connexion en temps réel" }).check();
     await expect(page.getByRole("columnheader", { name: "Connexion" })).toBeVisible();

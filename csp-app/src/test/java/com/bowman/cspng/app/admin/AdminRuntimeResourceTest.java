@@ -268,4 +268,19 @@ class AdminRuntimeResourceQuarkusTest {
     io.restassured.RestAssured.given().get("/api/admin/status").then().statusCode(401);
     io.restassured.RestAssured.given().auth().basic("admin", "adminPass123456").get("/api/admin/status").then().statusCode(200).header("Cache-Control", org.hamcrest.Matchers.containsString("no-store"));
   }
+
+  @Test
+  void runtimeSessionsPathDoesNotCollideWithSessionLoginResource() throws Exception {
+    Method m = AdminRuntimeResource.class.getMethod("runtimeSessions", String.class, String.class);
+    String full = AdminRuntimeResource.class.getAnnotation(jakarta.ws.rs.Path.class).value()
+        + m.getAnnotation(jakarta.ws.rs.Path.class).value();
+    assertEquals("/api/admin/runtime/sessions", full);
+    for (Class<?> other : new Class<?>[] {
+        com.bowman.cspng.web.admin.AdminSessionResource.class,
+        com.bowman.cspng.web.admin.AdminCacheResource.class,
+        com.bowman.cspng.web.admin.AdminUserResource.class }) {
+      String prefix = other.getAnnotation(jakarta.ws.rs.Path.class).value();
+      assertFalse(full.startsWith(prefix), full + " ne doit pas être capturé par " + other.getSimpleName());
+    }
+  }
 }

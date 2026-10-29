@@ -20,7 +20,7 @@ function getBulkScalarFields(t: (k: MessageKey, params?: Record<string, string |
   ];
 }
 
-/** Session client sanitisée renvoyée par GET /api/admin/sessions (IP déjà anonymisée côté serveur). */
+/** Session client sanitisée renvoyée par GET /api/admin/runtime/sessions (IP déjà anonymisée côté serveur). */
 export interface LiveSession {
   id: string;
   username: string | null;
@@ -41,7 +41,7 @@ type LivePage = { payload?: { items?: LiveSession[]; totalPages?: number } };
 async function fetchAllSessions(): Promise<LiveSession[]> {
   const out: LiveSession[] = [];
   for (let page = 0; page < LIVE_MAX_PAGES; page++) {
-    const { res, body } = await apiJson<LivePage>(`/api/admin/sessions?page=${page}&size=${LIVE_PAGE_SIZE}`);
+    const { res, body } = await apiJson<LivePage>(`/api/admin/runtime/sessions?page=${page}&size=${LIVE_PAGE_SIZE}`);
     if (!res.ok) throw { status: res.status, ...((body ?? {}) as object) };
     const items = body?.payload?.items ?? [];
     out.push(...items);

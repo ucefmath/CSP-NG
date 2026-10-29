@@ -77,6 +77,16 @@ public class AdminRuntimeResource {
     }
   }
 
+  /**
+   * Alias sans ambiguïté de {@code /sessions} : en RESTEasy Reactive, la ressource de login
+   * {@code @Path("/api/admin/session")} capture {@code /api/admin/sessions} (404). L'UI utilise ce chemin.
+   */
+  @GET
+  @Path("/runtime/sessions")
+  public Uni<Response> runtimeSessions(@QueryParam("page") String pageStr, @QueryParam("size") String sizeStr) {
+    return sessions(pageStr, sizeStr);
+  }
+
   @GET
   @Path("/sessions")
   public Uni<Response> sessions(@QueryParam("page") String pageStr, @QueryParam("size") String sizeStr) {
