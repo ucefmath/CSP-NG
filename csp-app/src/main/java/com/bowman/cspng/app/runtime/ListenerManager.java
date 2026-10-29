@@ -462,8 +462,17 @@ public class ListenerManager {
           }
           StrictEcmRouter strictRouter = new StrictEcmRouter(cm, null, null, cardDiscoveryService, finalDl.cardMode);
           if (cv != null) {
-            strictRouter.setCacheExLookup((prof, caid, prov, sid, oddEven, dataHash) ->
-                cv.peekLocalCache(new com.bowman.cspng.domain.EcmKey(oddEven, sid, 0, caid, dataHash)));
+            strictRouter.setCacheExLookup(new StrictEcmRouter.CacheExLookup() {
+              @Override
+              public com.bowman.cspng.domain.CwReply lookup(String prof, int caid, int prov, int sid, int oddEven, int dataHash) {
+                return cv.peekLocalCache(new com.bowman.cspng.domain.EcmKey(oddEven, sid, 0, caid, dataHash));
+              }
+
+              @Override
+              public com.bowman.cspng.domain.CwReply lookupMapped(String prof, int caid, int prov, int sid, int oddEven, int dataHash) {
+                return cv.peekMappedCache(caid, prov, sid, oddEven, dataHash);
+              }
+            });
           }
            if (runtimeCore != null) {
              strictRouter.setAdaptiveRoutingEngine(runtimeCore.adaptiveRoutingEngine());
@@ -507,8 +516,17 @@ public class ListenerManager {
         } else if ("cs378x".equals(finalDl.protocol)) {
           StrictEcmRouter strictRouter = new StrictEcmRouter(cm, null, null, cardDiscoveryService, finalDl.cardMode);
           if (cv != null) {
-            strictRouter.setCacheExLookup((prof, caid, prov, sid, oddEven, dataHash) ->
-                cv.peekLocalCache(new com.bowman.cspng.domain.EcmKey(oddEven, sid, 0, caid, dataHash)));
+            strictRouter.setCacheExLookup(new StrictEcmRouter.CacheExLookup() {
+              @Override
+              public com.bowman.cspng.domain.CwReply lookup(String prof, int caid, int prov, int sid, int oddEven, int dataHash) {
+                return cv.peekLocalCache(new com.bowman.cspng.domain.EcmKey(oddEven, sid, 0, caid, dataHash));
+              }
+
+              @Override
+              public com.bowman.cspng.domain.CwReply lookupMapped(String prof, int caid, int prov, int sid, int oddEven, int dataHash) {
+                return cv.peekMappedCache(caid, prov, sid, oddEven, dataHash);
+              }
+            });
           }
            if (runtimeCore != null) {
              strictRouter.setAdaptiveRoutingEngine(runtimeCore.adaptiveRoutingEngine());
@@ -593,8 +611,10 @@ public class ListenerManager {
     try {
       ConfigSnapshot snapForNet = appliedSnapshot != null ? appliedSnapshot : (holder.isInitialized() ? holder.get() : null);
       if (snapForNet != null) {
+        com.bowman.cspng.config.ProfileConfig matchedProfile = null;
         for (var p : snapForNet.profiles()) {
           if (p.name().equals(profileName)) {
+            matchedProfile = p;
             session.setProfileNetworkId(p.networkId());
             session.setProfileCaId(p.caId());
             session.setProfileCacheOnly(p.cacheOnly());
@@ -602,10 +622,32 @@ public class ListenerManager {
             break;
           }
         }
+        java.util.LinkedHashSet<Integer> provSet = new java.util.LinkedHashSet<>();
         var idents = snapForNet.providerIdentsFor(profileName);
         if (idents != null && !idents.isEmpty()) {
-          int[] provs = idents.stream().mapToInt(pi -> pi.providerIdent()).toArray();
-          session.setProfileProviders(provs);
+          for (var pi : idents) provSet.add(pi.providerIdent());
+        }
+        if (matchedProfile != null && matchedProfile.providerFilter() != null && !matchedProfile.providerFilter().isBlank()) {
+          for (String token : matchedProfile.providerFilter().split("[,;\\s]+")) {
+            String t = token.trim();
+            if (t.startsWith("0x") || t.startsWith("0X")) t = t.substring(2);
+            if (!t.isEmpty() && t.matches("[0-9a-fA-F]{1,6}")) {
+              provSet.add(Integer.parseInt(t, 16));
+            }
+          }
+        }
+        if (provSet.isEmpty() && matchedProfile != null && matchedProfile.caId() > 0 && snapForNet.dcwPolicy() != null
+            && snapForNet.dcwPolicy().mappings() != null) {
+          int profCaid = matchedProfile.caId();
+          for (var m : snapForNet.dcwPolicy().mappings()) {
+            if (m != null && m.enabled() && m.approved()) {
+              if (m.caid() == profCaid) provSet.add(m.provider());
+              if (m.targetCaid() == profCaid) provSet.add(m.targetProvider());
+            }
+          }
+        }
+        if (!provSet.isEmpty()) {
+          session.setProfileProviders(provSet.stream().mapToInt(Integer::intValue).toArray());
         }
       }
     } catch (Exception ignored) {}

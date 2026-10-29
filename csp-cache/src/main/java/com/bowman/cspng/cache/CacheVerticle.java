@@ -46,6 +46,34 @@ public class CacheVerticle extends AbstractVerticle {
   private static final Logger ECM_LOG = Logger.getLogger("com.bowman.cspng.ecm");
 
   private volatile com.bowman.cspng.domain.srvid.ServiceResolver serviceResolver = com.bowman.cspng.domain.srvid.ServiceResolver.EMPTY;
+  private volatile java.util.function.Supplier<com.bowman.cspng.domain.dcw.DcwQualityPolicy> dcwPolicySupplier;
+
+  /**
+   * Durée maximale de fraîcheur d'une CW indexée par service (sans correspondance de dataHash ECM).
+   * Bornée sous la durée d'un cycle CW DVB standard (~10 s) pour ne jamais servir la CW du cycle N-2
+   * de même parité (t + 20 s) avant l'arrivée du push CacheEx du cycle courant.
+   */
+  public static final long SERVICE_CW_MAX_AGE_MS = 8_500L;
+  private static final int MAX_SERVICE_CW_ENTRIES = 4_096;
+
+  public record ServiceCwKey(int caid, int provider, int sid, int commandTag) {}
+  private record ServiceCachedEntry(CachedReply cached, long firstSeenAtMs) {}
+
+  private final java.util.Map<ServiceCwKey, ServiceCachedEntry> serviceStore =
+      java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<ServiceCwKey, ServiceCachedEntry> eldest) {
+          return size() > MAX_SERVICE_CW_ENTRIES;
+        }
+      });
+
+  public void setDcwPolicySupplier(java.util.function.Supplier<com.bowman.cspng.domain.dcw.DcwQualityPolicy> supplier) {
+    this.dcwPolicySupplier = supplier;
+  }
+
+  public java.util.function.Supplier<com.bowman.cspng.domain.dcw.DcwQualityPolicy> getDcwPolicySupplier() {
+    return dcwPolicySupplier;
+  }
 
   public void setServiceResolver(com.bowman.cspng.domain.srvid.ServiceResolver resolver) {
     this.serviceResolver = resolver != null ? resolver : com.bowman.cspng.domain.srvid.ServiceResolver.EMPTY;
@@ -55,14 +83,20 @@ public class CacheVerticle extends AbstractVerticle {
     return serviceResolver;
   }
 
+  private static int effectiveProvider(EcmRequest request) {
+    if (request == null) return 0;
+    if (request.provider() != 0) return request.provider();
+    if (request.body() != null && request.body().length > 0) {
+      return com.bowman.cspng.codec.EcmProviderExtractor.extractProvider(request.key().caId(), request.body());
+    }
+    return 0;
+  }
+
   private void logCacheHit(String type, EcmRequest request, CwReply reply, long elapsedMs) {
     if (!ECM_LOG.isLoggable(Level.INFO)) return;
     int caid = request.key().caId();
     int sid = request.key().serviceId();
-    int provid = 0;
-    if (request.body() != null && request.body().length > 0) {
-      provid = com.bowman.cspng.codec.EcmProviderExtractor.extractProvider(caid, request.body());
-    }
+    int provid = effectiveProvider(request);
     String ch = serviceResolver != null ? serviceResolver.resolveChannelName(caid, sid) : null;
     String prov = serviceResolver != null ? serviceResolver.resolveProviderName(caid, provid) : null;
     String origin = reply != null ? (reply.originAddress() != null ? reply.originAddress() : reply.connectorName()) : null;
@@ -124,10 +158,7 @@ public class CacheVerticle extends AbstractVerticle {
     if (a == null || reply == null || reply.isEmpty()) return;
     int caid = request.key().caId();
     int srvid = request.key().serviceId();
-    int provid = 0;
-    if (request.body() != null && request.body().length > 0) {
-      provid = com.bowman.cspng.codec.EcmProviderExtractor.extractProvider(caid, request.body());
-    }
+    int provid = effectiveProvider(request);
     a.recordServedHit(reply.originAddress(), reply.connectorName(), caid, provid, srvid);
   }
 
@@ -218,6 +249,19 @@ public class CacheVerticle extends AbstractVerticle {
       CachedReply cached = localStore.get(request.key());
       if (cached != null) {
         CwReply reply = buildReturnedReply(cached, request);
+        instantHits.incrementAndGet();
+        if (reply.originAddress() != null) remoteHits.incrementAndGet();
+        recordServedHit(reply, request);
+        long elapsed = System.currentTimeMillis() - start;
+        logCacheHit("INSTANT", request, reply, elapsed);
+        resultPromise.complete(new CacheResult(reply, true, false, false, elapsed));
+        return;
+      }
+
+      // 1b) Hit instantané via DcwServiceMapping (Simulcrypt CAID:Provider ou SID lié)
+      CachedReply mappedCached = lookupMappedServiceCw(request, start);
+      if (mappedCached != null) {
+        CwReply reply = buildMappedReturnedReply(mappedCached, request);
         instantHits.incrementAndGet();
         if (reply.originAddress() != null) remoteHits.incrementAndGet();
         recordServedHit(reply, request);
@@ -328,6 +372,7 @@ public class CacheVerticle extends AbstractVerticle {
         } else {
           addReply(request, reply);
         }
+        wakeMappedWaiters(request, reply);
       }
     });
   }
@@ -416,6 +461,7 @@ public class CacheVerticle extends AbstractVerticle {
 
     CachedReply enriched = new CachedReply(storedReply, request.profileName());
     CachedReply old = localStore.put(request.key(), enriched);
+    indexServiceCw(request, storedReply, enriched);
 
     if (old != null) {
       CwReply oldReply = old.reply();
@@ -543,6 +589,193 @@ public class CacheVerticle extends AbstractVerticle {
   public CwReply peekLocalCache(EcmKey key) {
     CachedReply cached = localStore.get(key);
     return cached != null ? cached.reply() : null;
+  }
+
+  /**
+   * Lecture sans effet de bord pour une cible résolue par {@code DcwServiceMapping} :
+   * tente d'abord {@code peekLocalCache} par {@code dataHash}, puis l'index par service
+   * {@code (caid, provider, sid, oddEven)} lorsque les octets d'ECM diffèrent (Simulcrypt).
+   */
+  public CwReply peekMappedCache(int caid, int provider, int sid, int oddEven, int dataHash) {
+    if (dataHash != 0) {
+      CachedReply direct = localStore.get(new EcmKey(oddEven, sid, 0, caid, dataHash));
+      if (direct != null && direct.reply() != null
+          && direct.reply().key().caId() == caid
+          && direct.reply().key().serviceId() == sid) {
+        return direct.reply();
+      }
+    }
+    CachedReply bySvc = lookupServiceCw(caid, provider, sid, oddEven, System.currentTimeMillis());
+    return bySvc != null ? bySvc.reply() : null;
+  }
+
+  private long maxServiceCwAgeMs() {
+    long cfgAge = config != null && config.cwMaxAgeMs() > 0 ? config.cwMaxAgeMs() : SERVICE_CW_MAX_AGE_MS;
+    return Math.min(SERVICE_CW_MAX_AGE_MS, cfgAge);
+  }
+
+  private void indexServiceCw(EcmRequest request, CwReply storedReply, CachedReply enriched) {
+    int caid = storedReply.key().caId() != 0 ? storedReply.key().caId() : request.key().caId();
+    int sid = storedReply.key().serviceId() != 0 ? storedReply.key().serviceId() : request.key().serviceId();
+    if (caid <= 0 || sid <= 0) return;
+    int prov = effectiveProvider(request);
+    int rTag = storedReply.key().commandTag();
+    int qTag = request.key().commandTag();
+    int tag = (rTag == 0x80 || rTag == 0x81) ? rTag : ((qTag == 0x80 || qTag == 0x81) ? qTag : 0);
+    long now = System.currentTimeMillis();
+
+    putServiceCwEntry(new ServiceCwKey(caid, prov, sid, tag), enriched, now);
+    if (prov != 0) {
+      putServiceCwEntry(new ServiceCwKey(caid, 0, sid, tag), enriched, now);
+    }
+    if (tag == 0x80 || tag == 0x81) {
+      int oppTag = (tag == 0x80) ? 0x81 : 0x80;
+      evictPreviousCycleIfAged(new ServiceCwKey(caid, prov, sid, oppTag), now);
+      if (prov != 0) {
+        evictPreviousCycleIfAged(new ServiceCwKey(caid, 0, sid, oppTag), now);
+      }
+    }
+  }
+
+  private void putServiceCwEntry(ServiceCwKey key, CachedReply enriched, long now) {
+    ServiceCachedEntry prev = serviceStore.get(key);
+    long firstSeen = (prev != null && prev.cached() != null && prev.cached().reply() != null
+        && Arrays.equals(prev.cached().reply().cw(), enriched.reply().cw())
+        && (now - prev.firstSeenAtMs()) <= maxServiceCwAgeMs())
+        ? prev.firstSeenAtMs()
+        : now;
+    serviceStore.put(key, new ServiceCachedEntry(enriched, firstSeen));
+  }
+
+  private void evictPreviousCycleIfAged(ServiceCwKey key, long now) {
+    ServiceCachedEntry opp = serviceStore.get(key);
+    if (opp != null && (now - opp.firstSeenAtMs()) > 4_000L) {
+      serviceStore.remove(key);
+    }
+  }
+
+  private CachedReply getFreshServiceCw(ServiceCwKey key, long now) {
+    ServiceCachedEntry entry = serviceStore.get(key);
+    if (entry == null) return null;
+    if ((now - entry.firstSeenAtMs()) > maxServiceCwAgeMs()) {
+      serviceStore.remove(key);
+      return null;
+    }
+    return entry.cached();
+  }
+
+  private CachedReply lookupServiceCw(int caid, int provider, int sid, int reqTag, long now) {
+    if (caid <= 0 || sid <= 0) return null;
+    int normTag = (reqTag == 0x80 || reqTag == 0x81) ? reqTag : 0;
+    CachedReply exact = getFreshServiceCw(new ServiceCwKey(caid, provider, sid, normTag), now);
+    if (exact != null) return exact;
+    if (normTag != 0) {
+      CachedReply unkParity = getFreshServiceCw(new ServiceCwKey(caid, provider, sid, 0), now);
+      if (unkParity != null) return unkParity;
+    }
+    if (provider != 0) {
+      CachedReply zeroProv = getFreshServiceCw(new ServiceCwKey(caid, 0, sid, normTag), now);
+      if (zeroProv != null) return zeroProv;
+      if (normTag != 0) {
+        CachedReply zeroProvUnk = getFreshServiceCw(new ServiceCwKey(caid, 0, sid, 0), now);
+        if (zeroProvUnk != null) return zeroProvUnk;
+      }
+    }
+    return null;
+  }
+
+  private List<com.bowman.cspng.domain.dcw.DcwServiceMapping.MappedTarget> resolveMappedTargets(
+      String profile, int caid, int provider, int sid, long nowMs) {
+    var sup = dcwPolicySupplier;
+    if (sup == null || caid <= 0 || sid <= 0) return java.util.Collections.emptyList();
+    com.bowman.cspng.domain.dcw.DcwQualityPolicy policy;
+    try {
+      policy = sup.get();
+    } catch (Exception e) {
+      return java.util.Collections.emptyList();
+    }
+    if (policy == null || !policy.enabled() || policy.mappings() == null || policy.mappings().isEmpty()) {
+      return java.util.Collections.emptyList();
+    }
+    List<com.bowman.cspng.domain.dcw.DcwServiceMapping.MappedTarget> out = new ArrayList<>();
+    for (var mapping : policy.mappings()) {
+      if (mapping == null || !mapping.isActive(nowMs)) continue;
+      var targetOpt = mapping.resolveTarget(profile, caid, provider, sid, nowMs);
+      if (targetOpt.isEmpty()) {
+        targetOpt = mapping.resolveTargetCrossProfile(caid, provider, sid, nowMs);
+      }
+      if (targetOpt.isPresent() && !out.contains(targetOpt.get())) {
+        out.add(targetOpt.get());
+      }
+    }
+    return out;
+  }
+
+  private CachedReply lookupMappedServiceCw(EcmRequest request, long nowMs) {
+    if (request == null || request.key() == null) return null;
+    int reqCaid = request.key().caId();
+    int reqSid = request.key().serviceId();
+    int reqProv = effectiveProvider(request);
+    int reqTag = request.key().commandTag();
+    var targets = resolveMappedTargets(request.profileName(), reqCaid, reqProv, reqSid, nowMs);
+    for (var target : targets) {
+      CachedReply hit = lookupServiceCw(target.caid(), target.provider(), target.sid(), reqTag, nowMs);
+      if (hit != null && hit.reply() != null && !hit.reply().isEmpty()) {
+        return hit;
+      }
+    }
+    return null;
+  }
+
+  private CwReply buildMappedReturnedReply(CachedReply enriched, EcmRequest request) {
+    CwReply reply = enriched.reply();
+    int reqTag = request.key().commandTag();
+    int keyTag = (reqTag == 0x80 || reqTag == 0x81)
+        ? reqTag
+        : ((reply.key().commandTag() == 0x80 || reply.key().commandTag() == 0x81)
+            ? reply.key().commandTag() : reqTag);
+    int rplTag = (reqTag == 0x80 || reqTag == 0x81)
+        ? reqTag
+        : ((reply.commandTag() == 0x80 || reply.commandTag() == 0x81)
+            ? reply.commandTag() : reqTag);
+    EcmKey key = new EcmKey(keyTag, request.key().serviceId(), request.key().networkId(),
+        request.key().caId(), request.key().dataHash());
+    return new CwReply(key, rplTag, reply.cw(), reply.connectorName(), reply.originAddress(), reply.timestamp());
+  }
+
+  private void wakeMappedWaiters(EcmRequest request, CwReply reply) {
+    int rCaid = reply.key().caId() != 0 ? reply.key().caId() : request.key().caId();
+    int rSid = reply.key().serviceId() != 0 ? reply.key().serviceId() : request.key().serviceId();
+    if (rCaid <= 0 || rSid <= 0) return;
+    int rProv = effectiveProvider(request);
+    int rTag = (reply.key().commandTag() == 0x80 || reply.key().commandTag() == 0x81)
+        ? reply.key().commandTag()
+        : ((request.key().commandTag() == 0x80 || request.key().commandTag() == 0x81) ? request.key().commandTag() : 0);
+    long now = System.currentTimeMillis();
+
+    var targets = resolveMappedTargets(request.profileName(), rCaid, rProv, rSid, now);
+    if (targets.isEmpty()) return;
+
+    for (var target : targets) {
+      List<PendingRegistry.PendingEntry> matching = pending.findMatchingEntries(originReq -> {
+        if (originReq == null || originReq.key() == null) return false;
+        if (originReq.key().caId() != target.caid() || originReq.key().serviceId() != target.sid()) return false;
+        int oTag = originReq.key().commandTag();
+        if (rTag != 0 && (oTag == 0x80 || oTag == 0x81) && oTag != rTag) return false;
+        int oProv = effectiveProvider(originReq);
+        return oProv == target.provider() || oProv == 0 || target.provider() == 0;
+      });
+      for (PendingRegistry.PendingEntry pe : matching) {
+        EcmRequest originReq = pe.originRequest();
+        List<PendingRegistry.Waiter> mappedWaiters = pending.remove(originReq.key());
+        if (mappedWaiters.isEmpty()) continue;
+        CwReply mappedReply = buildMappedReturnedReply(new CachedReply(reply, originReq.profileName()), originReq);
+        localStore.put(originReq.key(), new CachedReply(mappedReply, originReq.profileName()));
+        for (PendingRegistry.Waiter w : mappedWaiters) {
+          w.fireReply(mappedReply);
+        }
+      }
+    }
   }
 
   public void resetCounters() {

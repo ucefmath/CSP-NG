@@ -51,6 +51,9 @@ public class WorkerCacheExBridge implements CacheExBridge {
 
   /** Clé de lookup hash (push sans corps ECM). */
   public record LookupKey(String profile, int caid, int prid, int srvid, int oddEven, int dataHash) {}
+  /** Clé de lookup par service (pour résolution de mapping Simulcrypt où dataHash diffère). */
+  public record ServiceLookupKey(int caid, int prid, int srvid, int oddEven) {}
+  public static final long SERVICE_ENTRY_TTL_MS = 8_500L;
 
   private static final class StoredCw {
     final byte[] cw;
@@ -81,6 +84,14 @@ public class WorkerCacheExBridge implements CacheExBridge {
         }
       });
 
+  private final Map<ServiceLookupKey, StoredCw> serviceStore = Collections.synchronizedMap(
+      new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<ServiceLookupKey, StoredCw> eldest) {
+          return size() > MAX_ENTRIES;
+        }
+      });
+
   private final CacheExStatsRegistry stats;
   private final Map<Long, StrictEcmRouter> routersByListener = new ConcurrentHashMap<>();
   private final Map<String, Long> listenerByProfile = new ConcurrentHashMap<>();
@@ -100,7 +111,17 @@ public class WorkerCacheExBridge implements CacheExBridge {
     if (profile != null && !profile.isBlank()) {
       listenerByProfile.putIfAbsent(profile, listenerId);
     }
-    router.setCacheExLookup(this::lookup);
+    router.setCacheExLookup(new StrictEcmRouter.CacheExLookup() {
+      @Override
+      public CwReply lookup(String p, int c, int pr, int s, int oe, int h) {
+        return WorkerCacheExBridge.this.lookup(p, c, pr, s, oe, h);
+      }
+
+      @Override
+      public CwReply lookupMapped(String p, int c, int pr, int s, int oe, int h) {
+        return WorkerCacheExBridge.this.lookupMapped(p, c, pr, s, oe, h);
+      }
+    });
   }
 
   /** Détache un listener fermé (routeur + sessions émettrices). */
@@ -166,10 +187,18 @@ public class WorkerCacheExBridge implements CacheExBridge {
         if (n != null && n.length == 8) path.add(n.clone());
       }
     }
+    long nowMs = System.currentTimeMillis();
     LookupKey key = new LookupKey(profile, caid, prid, srvid, oddEven, dataHash);
-    store.put(key, new StoredCw(cw.clone(), System.currentTimeMillis() + ENTRY_TTL_MS,
+    store.put(key, new StoredCw(cw.clone(), nowMs + ENTRY_TTL_MS,
         List.copyOf(path), Math.max(0, Math.min(127, cycleTimeSec)), nextCwCycle,
         originAddr, sourceName));
+    StoredCw svcEntry = new StoredCw(cw.clone(), nowMs + SERVICE_ENTRY_TTL_MS,
+        List.copyOf(path), Math.max(0, Math.min(127, cycleTimeSec)), nextCwCycle,
+        originAddr, sourceName);
+    serviceStore.put(new ServiceLookupKey(caid, prid, srvid, oddEven), svcEntry);
+    if (prid != 0) {
+      serviceStore.put(new ServiceLookupKey(caid, 0, srvid, oddEven), svcEntry);
+    }
 
     // Forwarding vers les paires d'émission avec le chemin COMPLET (C2) :
     // chaque cible applique sa gate (filtre/hop/file/dédup/anti-reflet) via onReply.
@@ -244,6 +273,40 @@ public class WorkerCacheExBridge implements CacheExBridge {
     EcmKey key = new EcmKey(oddEven, sid, 0, caid, dataHash);
     return new CwReply(key, oddEven, e.cw.clone(), e.sourceName, e.originAddr,
         System.currentTimeMillis());
+  }
+
+  /**
+   * Lookup pour une cible résolue par {@code DcwServiceMapping} : tente d'abord par {@code dataHash},
+   * puis par identité de service {@code (caid, provider, sid, oddEven)} lorsque les octets d'ECM
+   * diffèrent entre les deux flux liés (Simulcrypt).
+   */
+  public CwReply lookupMapped(String profile, int caid, int provider, int sid, int oddEven, int dataHash) {
+    CwReply direct = lookup(profile, caid, provider, sid, oddEven, dataHash);
+    if (direct != null) return direct;
+    long now = System.currentTimeMillis();
+    StoredCw e = getFreshServiceEntry(new ServiceLookupKey(caid, provider, sid, oddEven), now);
+    if (e == null && oddEven != 0) {
+      e = getFreshServiceEntry(new ServiceLookupKey(caid, provider, sid, 0), now);
+    }
+    if (e == null && provider != 0) {
+      e = getFreshServiceEntry(new ServiceLookupKey(caid, 0, sid, oddEven), now);
+      if (e == null && oddEven != 0) {
+        e = getFreshServiceEntry(new ServiceLookupKey(caid, 0, sid, 0), now);
+      }
+    }
+    if (e == null) return null;
+    EcmKey key = new EcmKey(oddEven, sid, 0, caid, dataHash);
+    return new CwReply(key, oddEven, e.cw.clone(), e.sourceName, e.originAddr, now);
+  }
+
+  private StoredCw getFreshServiceEntry(ServiceLookupKey key, long now) {
+    StoredCw e = serviceStore.get(key);
+    if (e == null) return null;
+    if (now > e.expiresAtMs) {
+      serviceStore.remove(key);
+      return null;
+    }
+    return e;
   }
 
   /** Accès test : taille du store. */

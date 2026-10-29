@@ -187,7 +187,12 @@ public class NewcamdSession extends AbstractSession {
 
     int sequence = ((decrypted[0] & 0xFF) << 8) | (decrypted[1] & 0xFF);
     int serviceId = ((decrypted[2] & 0xFF) << 8) | (decrypted[3] & 0xFF);
-    int caId = ((decrypted[4] & 0xFF) << 8) | (decrypted[5] & 0xFF);
+    int wireCaId = ((decrypted[4] & 0xFF) << 8) | (decrypted[5] & 0xFF);
+    int caId = wireCaId > 0 ? wireCaId : Math.max(0, profileCaId);
+    int provider = ((decrypted[6] & 0xFF) << 16) | ((decrypted[7] & 0xFF) << 8) | (decrypted[8] & 0xFF);
+    if (provider == 0 && profileProviders != null && profileProviders.length == 1) {
+      provider = profileProviders[0];
+    }
     int networkId = profileNetworkId; // fallback -1 (legacy tests sans config)
     int dataHash = computeHash(customData);
     ReplyHeader header = new ReplyHeader(sequence, serviceId, caId);
@@ -203,7 +208,7 @@ public class NewcamdSession extends AbstractSession {
 
       case 0x80: case 0x81: case 0x82:
         EcmKey key = new EcmKey(commandTag, serviceId, networkId, caId, dataHash);
-        EcmRequest request = buildEcmRequest(key, customData, profileMaxCwWaitMs);
+        EcmRequest request = buildEcmRequest(key, customData, profileMaxCwWaitMs).withProvider(provider);
         processEcm(request, header);
         break;
 

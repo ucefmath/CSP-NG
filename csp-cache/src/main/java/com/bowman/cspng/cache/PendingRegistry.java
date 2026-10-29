@@ -63,6 +63,20 @@ public class PendingRegistry {
   }
 
   /**
+   * Retourne les entrées pending dont la requête d'origine satisfait le prédicat fourni.
+   */
+  public List<PendingEntry> findMatchingEntries(java.util.function.Predicate<EcmRequest> filter) {
+    if (filter == null || entries.isEmpty()) return Collections.emptyList();
+    List<PendingEntry> out = new ArrayList<>();
+    for (PendingEntry e : entries.values()) {
+      if (filter.test(e.originRequest())) {
+        out.add(e);
+      }
+    }
+    return out;
+  }
+
+  /**
    * Retire l'entrée pending et retourne la liste des waiters encore présents pour être
    * résolus par l'appelant.
    */

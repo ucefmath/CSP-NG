@@ -265,9 +265,18 @@ public class StrictEcmRouter implements SessionEcmRouter {
    * (cohérent avec les autres hits) mais SANS check de provenance (le push a
    * déjà été gaté par filtre/hop/checksum à la réception).
    */
+  @FunctionalInterface
   public interface CacheExLookup {
     /** @return CW servable ou null (jamais d'exception — appelant fail-closed). */
     CwReply lookup(String profile, int caid, int provider, int sid, int oddEven, int dataHash);
+
+    /**
+     * Lookup pour une cible résolue par un {@code DcwServiceMapping} (Simulcrypt CAID:Provider
+     * ou SID lié, où le {@code dataHash} de l'ECM demandeur peut différer de celui du push).
+     */
+    default CwReply lookupMapped(String profile, int caid, int provider, int sid, int oddEven, int dataHash) {
+      return lookup(profile, caid, provider, sid, oddEven, dataHash);
+    }
   }
 
   private volatile CacheExLookup cacheExLookup;
@@ -377,14 +386,21 @@ public class StrictEcmRouter implements SessionEcmRouter {
         for (var mapping : cxPolicy.mappings()) {
           if (mapping == null || !mapping.isActive(nowMs)) continue;
           var targetOpt = mapping.resolveTarget(profile, caid, provider, serviceId, nowMs);
+          if (targetOpt.isEmpty() && mapping.caid() != mapping.targetCaid()) {
+            targetOpt = mapping.resolveTargetCrossProfile(caid, provider, serviceId, nowMs);
+          }
           if (targetOpt.isEmpty()) continue;
           var target = targetOpt.get();
           // Vérification ACL sur le SID cible : un mapping ne contourne JAMAIS un service bloqué
           if (!isServiceAllowedByAcl(profile, target.sid(), authContext)) continue;
           CwReply mappedHit = null;
           try {
-            mappedHit = cxLookup.lookup(profile, target.caid(), target.provider(), target.sid(),
+            mappedHit = cxLookup.lookupMapped(profile, target.caid(), target.provider(), target.sid(),
                 request.key().commandTag(), request.key().dataHash());
+            if ((mappedHit == null || mappedHit.isEmpty()) && !mapping.profile().equalsIgnoreCase(profile)) {
+              mappedHit = cxLookup.lookupMapped(mapping.profile(), target.caid(), target.provider(), target.sid(),
+                  request.key().commandTag(), request.key().dataHash());
+            }
           } catch (Exception ignored) {
             // fail-closed : on continue vers le mapping suivant
           }

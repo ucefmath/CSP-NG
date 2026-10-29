@@ -191,7 +191,7 @@ public class ExtNewcamdSession extends NewcamdSession {
       }
     }
     EcmKey key = new EcmKey(commandTag, serviceId, networkId, caId, dataHash);
-    EcmRequest request = new EcmRequest(key, customData, profileName, getRemoteAddress(), null, System.currentTimeMillis(), null, maxCwWait);
+    EcmRequest request = new EcmRequest(key, customData, profileName, getRemoteAddress(), null, System.currentTimeMillis(), null, maxCwWait, provider);
     if (cacheOnly) {
       cacheVerticle.processRequest(0, request, true, maxCwWait).onComplete(ar -> {
         if (ar.succeeded() && ar.result().isHit()) sendCwReply(request, ar.result().reply(), header);

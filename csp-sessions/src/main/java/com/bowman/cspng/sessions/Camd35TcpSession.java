@@ -728,7 +728,7 @@ public class Camd35TcpSession extends AbstractSession implements com.bowman.cspn
     if (cacheVerticle != null) {
       EcmRequest synthetic = new EcmRequest(key, new byte[0],
           peerProfile, remoteAddress, username,
-          System.currentTimeMillis(), null, 5000);
+          System.currentTimeMillis(), null, 5000, push.prid());
       cacheVerticle.handleReply(synthetic, reply);
       if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId(), push.caid(), push.prid(), push.srvid());
       if (gate != null) gate.postInjected(peerId);

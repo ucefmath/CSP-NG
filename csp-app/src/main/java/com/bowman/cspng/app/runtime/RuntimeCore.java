@@ -114,6 +114,7 @@ public class RuntimeCore {
       this.cacheDeploymentId = id;
       this.started = true;
       LOG.info("CacheVerticle deployed id=" + id);
+      dcwPolicyProvider(configHolder);
       applyCacheConfigFromHolder();
       cacheConfigReloadConsumer = vertx.eventBus().consumer(
           com.bowman.cspng.config.ConfigWatcher.CONFIG_RELOADED_ADDRESS,
@@ -330,6 +331,7 @@ public class RuntimeCore {
           () -> holder.isInitialized() ? holder.get().dcwPolicy() : null);
       ensureInitialized();
       connectorManager.setDcwPolicySupplier(dcwPolicyProvider);
+      cacheVerticle.setDcwPolicySupplier(dcwPolicyProvider);
     }
     return dcwPolicyProvider;
   }

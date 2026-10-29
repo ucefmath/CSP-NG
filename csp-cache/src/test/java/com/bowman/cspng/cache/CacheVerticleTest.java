@@ -613,6 +613,69 @@ class CacheVerticleTest {
     assertEquals(0, verticle.transportCount());
   }
 
+  @Test
+  void crossCaidMappingServesInstantHitWithDifferentEcmHash() throws Exception {
+    var mapping = new com.bowman.cspng.domain.dcw.DcwServiceMapping(
+        4L, "TNT-0500", 0x0500, 0x030B00, 0x1883, 0x003311, 0, 0, true, true, 0L, 6L, 0L);
+    var policy = new com.bowman.cspng.domain.dcw.DcwQualityPolicy(
+        true, true, true, true, com.bowman.cspng.domain.dcw.ChecksumMode.IGNORE,
+        com.bowman.cspng.domain.dcw.DcwRepairMode.OFF, true, java.util.List.of(), java.util.List.of(mapping));
+    verticle.setDcwPolicySupplier(() -> policy);
+
+    // 1. Push CacheEx 0500:030B00 sur SID 0x2457 (M6) avec hash Viaccess (0x11111111)
+    EcmKey key0500 = new EcmKey(0x80, 0x2457, 0, 0x0500, 0x11111111);
+    EcmRequest pushReq = new EcmRequest(key0500, new byte[0], "default", "217.154.57.173", "@STB@",
+        System.currentTimeMillis(), null, 5000, 0x030B00);
+    CwReply pushReply = new CwReply(key0500, 0x80, CW_VALID, "L3:@STB@", "217.154.57.173", System.currentTimeMillis());
+    ctxRunAndWait(() -> verticle.handleReply(pushReq, pushReply));
+
+    // 2. Requête Newcamd sur profil 1883-TNT pour 1883:003311 SID 0x2457 avec hash Nagra différent (0x22222222)
+    EcmKey key1883 = new EcmKey(0x80, 0x2457, 0, 0x1883, 0x22222222);
+    EcmRequest req1883 = new EcmRequest(key1883, new byte[]{1, 2, 3}, "1883-TNT", "217.154.42.222", "test1",
+        System.currentTimeMillis(), null, 5000, 0x003311);
+    CacheResult result = awaitResult(verticle.processRequest(0, req1883, true, 5000));
+
+    assertTrue(result.instant(), "Le mapping inter-CAID doit servir un hit instantané même avec un dataHash différent");
+    assertNotNull(result.reply());
+    assertArrayEquals(CW_VALID, result.reply().cw());
+    assertEquals(0x1883, result.reply().key().caId());
+    assertEquals(0x2457, result.reply().key().serviceId());
+    assertEquals(0x22222222, result.reply().key().dataHash());
+  }
+
+  @Test
+  void crossCaidMappingWakesWaitingRequestWhenPushArrivesLater() throws Exception {
+    var mapping = new com.bowman.cspng.domain.dcw.DcwServiceMapping(
+        4L, "TNT-0500", 0x0500, 0x030B00, 0x1883, 0x003311, 0, 0, true, true, 0L, 6L, 0L);
+    var policy = new com.bowman.cspng.domain.dcw.DcwQualityPolicy(
+        true, true, true, true, com.bowman.cspng.domain.dcw.ChecksumMode.IGNORE,
+        com.bowman.cspng.domain.dcw.DcwRepairMode.OFF, true, java.util.List.of(), java.util.List.of(mapping));
+    verticle.setDcwPolicySupplier(() -> policy);
+
+    // 1. Le client 1883-TNT demande 1883:003311 SID 0x2457 AVANT l'arrivée du push 0500:030B00
+    EcmKey key1883 = new EcmKey(0x81, 0x2457, 0, 0x1883, 0x33333333);
+    EcmRequest req1883 = new EcmRequest(key1883, new byte[]{4, 5, 6}, "1883-TNT", "217.154.42.222", "test1",
+        System.currentTimeMillis(), null, 5000, 0x003311);
+    Future<CacheResult> future = verticle.processRequest(0, req1883, true, 5000);
+    ctxFlush();
+
+    // 2. Le push CacheEx 0500:030B00 arrive 100 ms plus tard avec son propre dataHash (0x44444444)
+    EcmKey key0500 = new EcmKey(0x81, 0x2457, 0, 0x0500, 0x44444444);
+    EcmRequest pushReq = new EcmRequest(key0500, new byte[0], "default", "217.154.57.173", "@STB@",
+        System.currentTimeMillis(), null, 5000, 0x030B00);
+    CwReply pushReply = new CwReply(key0500, 0x81, CW_VALID, "L3:@STB@", "217.154.57.173", System.currentTimeMillis());
+    ctxRun(() -> verticle.handleReply(pushReq, pushReply));
+    ctxFlush();
+
+    CacheResult result = awaitResult(future);
+    assertTrue(result.waitHit(), "Le waiter 1883:003311 doit être réveillé par le push 0500:030B00 mappé");
+    assertNotNull(result.reply());
+    assertArrayEquals(CW_VALID, result.reply().cw());
+    assertEquals(0x1883, result.reply().key().caId());
+    assertEquals(0x2457, result.reply().key().serviceId());
+    assertEquals(0x81, result.reply().commandTag());
+  }
+
   // ---- Helper methods — all use verticle.context for proper event loop ordering ----
 
   private void seedCache(EcmKey key, byte[] cw, String originAddress) throws Exception {

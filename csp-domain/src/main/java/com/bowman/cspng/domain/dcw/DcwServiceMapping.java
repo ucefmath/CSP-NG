@@ -96,6 +96,36 @@ public record DcwServiceMapping(
     return Optional.empty();
   }
 
+  /**
+   * Résout la cible mappée indépendamment du profil d'entrée lorsque la requête correspond
+   * à l'un des deux côtés d'un mapping actif. Utilisé pour les mappings inter-CAID (où chaque
+   * CAID est rattaché à son propre profil/listener Newcamd ou au profil CacheEx) et pour le
+   * cache L1 partagé. Si {@code reqProvider == 0} sur un mapping inter-CAID ({@code caid != targetCaid}),
+   * tolère un client ou transport qui ne renseigne pas le provider dans l'en-tête.
+   */
+  public Optional<MappedTarget> resolveTargetCrossProfile(int reqCaid, int reqProvider, int reqSid, long nowMs) {
+    if (!isActive(nowMs) || reqProvider == DcwRuleScope.UNKNOWN_PROVIDER || reqSid < 1 || reqSid > 0xFFFF) {
+      return Optional.empty();
+    }
+    boolean crossCaid = caid != targetCaid;
+    if (sourceSid == 0 && targetSid == 0) {
+      if (reqCaid == caid && (reqProvider == provider || (reqProvider == 0 && crossCaid))) {
+        return Optional.of(new MappedTarget(targetCaid, targetProvider, reqSid));
+      }
+      if (reqCaid == targetCaid && (reqProvider == targetProvider || (reqProvider == 0 && crossCaid))) {
+        return Optional.of(new MappedTarget(caid, provider, reqSid));
+      }
+    } else if (sourceSid > 0 && targetSid > 0) {
+      if (reqCaid == caid && (reqProvider == provider || (reqProvider == 0 && crossCaid)) && reqSid == sourceSid) {
+        return Optional.of(new MappedTarget(targetCaid, targetProvider, targetSid));
+      }
+      if (reqCaid == targetCaid && (reqProvider == targetProvider || (reqProvider == 0 && crossCaid)) && reqSid == targetSid) {
+        return Optional.of(new MappedTarget(caid, provider, sourceSid));
+      }
+    }
+    return Optional.empty();
+  }
+
   /** Correspondance stricte même profil/CAID/provider, paire de SIDs non orientée, mapping actif. */
   public boolean matches(String targetProfile, int reqCaid, int reqProvider, int sidA, int sidB, long nowMs) {
     if (!isActive(nowMs)) return false;
