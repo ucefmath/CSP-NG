@@ -13,7 +13,7 @@ const PORT = Number(process.env.E2E_PORT || 4179);
 const SPA_ROUTES = new Set([
   "overview", "general", "cache", "cache-etat", "cacheex", "cluster",
   "profiles", "listeners", "catalog", "connectors", "proxys", "relais",
-  "dcw", "cw-cycle", "users", "login",
+  "dcw", "cw-cycle", "users", "logs", "login",
 ]);
 
 const MIME = {

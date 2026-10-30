@@ -23,12 +23,9 @@ class AdminUiFieldSelectTest {
     return Files.exists(FRONTEND) ? FRONTEND : Path.of("frontend/src");
   }
 
+  /** Page + namespaces i18n (les libellés vivent dans i18n/ns/*.ts depuis v1.0.2). */
   private static String read(String rel) {
-    try {
-      return Files.readString(frontend().resolve(rel), StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      throw new IllegalStateException("cannot read frontend/src/" + rel + ": " + e.getMessage(), e);
-    }
+    return FrontendSource.withI18n(rel);
   }
 
   @Test

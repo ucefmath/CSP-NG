@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import { apiJson, describeError, formatDate } from "../api";
 import type { LogEntry, LogsResponse } from "../types";
 import { Loading, useToast } from "../components/ui";
-import { useT } from "../i18n";
+import { useT, type MessageKey } from "../i18n";
+import { compileLogFilter, splitHighlight } from "../logFilter";
 
 interface Envelope<T> {
   instanceId: string;
@@ -10,6 +12,15 @@ interface Envelope<T> {
   schemaVersion: string;
   payload: T;
 }
+
+const LOG_FILTER_EXAMPLES: Array<{ q: string; regex: boolean; desc: MessageKey }> = [
+  { q: "CACHEEX sid=0x3D55", regex: false, desc: "logs.guideExCacheexSid" },
+  { q: "sid=0x3D55 -CACHEEX", regex: false, desc: "logs.guideExExclude" },
+  { q: '"type=REMOTE"', regex: false, desc: "logs.guideExPhrase" },
+  { q: "caid=0x18(13|84)", regex: true, desc: "logs.guideExCaids" },
+  { q: "time=[0-9]{4,}ms", regex: true, desc: "logs.guideExSlow" },
+  { q: "^\\[(WARN|ERROR)", regex: true, desc: "logs.guideExLevel" },
+];
 
 export function LogsPage() {
   const t = useT();
@@ -21,6 +32,12 @@ export function LogsPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
+  const [regexMode, setRegexMode] = useState(() => searchParams.get("re") === "1");
+  const [caseSensitive, setCaseSensitive] = useState(() => searchParams.get("cs") === "1");
+  const [invert, setInvert] = useState(() => searchParams.get("inv") === "1");
+  const [loggerFilter, setLoggerFilter] = useState(() => searchParams.get("logger") ?? "");
 
   const afterSeqRef = useRef<number>(0);
   const generationRef = useRef<number>(0);
@@ -113,6 +130,49 @@ export function LogsPage() {
     return () => clearInterval(timer);
   }, [fetchLogsBatch, isLive]);
 
+  // Filtre persisté dans l'URL (partage / signet), sans entrée d'historique à chaque frappe
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    const setOrDel = (k: string, v: string) => (v ? next.set(k, v) : next.delete(k));
+    setOrDel("q", query);
+    setOrDel("re", regexMode ? "1" : "");
+    setOrDel("cs", caseSensitive ? "1" : "");
+    setOrDel("inv", invert ? "1" : "");
+    setOrDel("logger", loggerFilter);
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
+  }, [query, regexMode, caseSensitive, invert, loggerFilter, searchParams, setSearchParams]);
+
+  const compiled = useMemo(
+    () => compileLogFilter({ query, regex: regexMode, caseSensitive, invert }),
+    [query, regexMode, caseSensitive, invert],
+  );
+
+  const loggers = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of logs) if (l.logger) set.add(l.logger);
+    if (loggerFilter) set.add(loggerFilter);
+    return Array.from(set).sort();
+  }, [logs, loggerFilter]);
+
+  const visibleLogs = useMemo(() => {
+    let out = loggerFilter ? logs.filter((l) => l.logger === loggerFilter) : logs;
+    if (compiled.ok && compiled.active) {
+      out = out.filter((l) => compiled.test(`[${(l.level ?? "").toUpperCase()}] [${l.logger ?? ""}] ${l.message ?? ""}`));
+    }
+    return out;
+  }, [logs, loggerFilter, compiled]);
+  const filtering = !!loggerFilter || (compiled.ok && compiled.active);
+  const highlight = compiled.ok ? compiled.highlight : null;
+  const filterTouched = !!query.trim() || regexMode || caseSensitive || invert || !!loggerFilter;
+
+  const resetFilter = () => {
+    setQuery("");
+    setRegexMode(false);
+    setCaseSensitive(false);
+    setInvert(false);
+    setLoggerFilter("");
+  };
+
   const clearLogs = () => {
     setLogs([]);
     push(t("logs.toastReset"));
@@ -170,11 +230,109 @@ export function LogsPage() {
             {t("logs.clear")}
           </button>
 
-          <span className="small muted logs-counter">
-            {logs.length > 1 ? t("logs.lineCountPlural", { count: logs.length }) : t("logs.lineCountSingular", { count: logs.length })}
+          <span className="small muted logs-counter" role="status" aria-live="polite">
+            {filtering
+              ? t("logs.filteredCount", { shown: visibleLogs.length, total: logs.length })
+              : logs.length > 1 ? t("logs.lineCountPlural", { count: logs.length }) : t("logs.lineCountSingular", { count: logs.length })}
           </span>
         </div>
       </div>
+
+      <div className="logs-controls logs-filter" role="search" aria-label={t("logs.filterAria")}>
+        <label htmlFor="log-filter" className="small muted">
+          {t("logs.filterLabel")}
+        </label>
+        <input
+          id="log-filter"
+          type="search"
+          className={`search-input logs-filter-input${compiled.ok ? "" : " input-invalid"}`}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={regexMode ? t("logs.filterPlaceholderRegex") : t("logs.filterPlaceholderText")}
+          aria-invalid={!compiled.ok}
+          aria-describedby="log-filter-help"
+          spellCheck={false}
+          autoComplete="off"
+        />
+        <label className="check-row small">
+          <input type="checkbox" checked={regexMode} onChange={(e) => setRegexMode(e.target.checked)} />
+          <span>{t("logs.filterRegex")}</span>
+        </label>
+        <label className="check-row small">
+          <input type="checkbox" checked={caseSensitive} onChange={(e) => setCaseSensitive(e.target.checked)} />
+          <span>{t("logs.filterCase")}</span>
+        </label>
+        <label className="check-row small">
+          <input type="checkbox" checked={invert} onChange={(e) => setInvert(e.target.checked)} />
+          <span>{t("logs.filterInvert")}</span>
+        </label>
+        <label htmlFor="log-logger" className="small muted">
+          {t("logs.loggerLabel")}
+        </label>
+        <select id="log-logger" className="select-sm" value={loggerFilter} onChange={(e) => setLoggerFilter(e.target.value)}>
+          <option value="">{t("logs.loggerAll")}</option>
+          {loggers.map((l) => (
+            <option key={l} value={l}>{l}</option>
+          ))}
+        </select>
+        {filterTouched && (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={resetFilter}>
+            {t("logs.filterReset")}
+          </button>
+        )}
+      </div>
+      <p id="log-filter-help" className="small muted">
+        {compiled.ok ? (regexMode ? t("logs.filterHelpRegex") : t("logs.filterHelpText")) : null}
+      </p>
+      <details className="logs-filter-guide small">
+        <summary>{t("logs.guideTitle")}</summary>
+        <p className="muted">{t("logs.guideIntro")}</p>
+        <table className="logs-guide-table">
+          <thead>
+            <tr>
+              <th>{t("logs.guideColExample")}</th>
+              <th>{t("logs.guideColMode")}</th>
+              <th>{t("logs.guideColEffect")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {LOG_FILTER_EXAMPLES.map((ex) => (
+              <tr key={ex.q}>
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm mono"
+                    onClick={() => {
+                      setQuery(ex.q);
+                      setRegexMode(ex.regex);
+                      setInvert(false);
+                    }}
+                    aria-label={t("logs.guideApply", { example: ex.q })}
+                  >
+                    {ex.q}
+                  </button>
+                </td>
+                <td>{ex.regex ? t("logs.filterRegex") : t("logs.guideModeText")}</td>
+                <td>{t(ex.desc)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="muted">{t("logs.guideRegexTitle")}</p>
+        <ul className="logs-guide-list mono">
+          <li><code>a|b</code> — {t("logs.guideReOr")}</li>
+          <li><code>^</code> / <code>$</code> — {t("logs.guideReAnchors")}</li>
+          <li><code>.*</code> — {t("logs.guideReAny")}</li>
+          <li><code>[0-9A-F]{"{4}"}</code> — {t("logs.guideReClass")}</li>
+          <li><code>\.</code> — {t("logs.guideReEscape")}</li>
+        </ul>
+        <p className="muted">{t("logs.guideScope")}</p>
+      </details>
+      {!compiled.ok && (
+        <div className="field-error small" role="alert">
+          {t("logs.filterInvalid", { error: compiled.error })}
+        </div>
+      )}
 
       {error && <div className="field-error small" role="alert">{error}</div>}
 
@@ -192,9 +350,11 @@ export function LogsPage() {
           </div>
         ) : logs.length === 0 ? (
           <div className="terminal-empty">{t("logs.empty")}</div>
+        ) : visibleLogs.length === 0 ? (
+          <div className="terminal-empty">{t("logs.filterNoMatch")}</div>
         ) : (
           <div className="terminal-content mono">
-            {logs.map((log) => {
+            {visibleLogs.map((log) => {
               const lvl = log.level?.toUpperCase() || "INFO";
               let lvlClass = "log-info";
               if (lvl === "ERROR" || lvl === "SEVERE") lvlClass = "log-error";
@@ -206,7 +366,11 @@ export function LogsPage() {
                   <span className="log-time">{formatDate(log.timestamp)}</span>
                   <span className={`log-badge ${lvlClass}`}>[{lvl.padEnd(5)}]</span>
                   <span className="log-logger">[{log.logger}]</span>
-                  <span className="log-msg">{log.message}</span>
+                  <span className="log-msg">
+                    {splitHighlight(log.message ?? "", highlight).map((seg, i) =>
+                      seg.hit ? <mark key={i} className="log-hit">{seg.text}</mark> : <span key={i}>{seg.text}</span>,
+                    )}
+                  </span>
                 </div>
               );
             })}

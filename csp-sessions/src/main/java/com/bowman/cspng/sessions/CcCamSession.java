@@ -831,12 +831,16 @@ public class CcCamSession extends AbstractSession implements com.bowman.cspng.co
           System.currentTimeMillis(), null, 5000, push.prid());
       cacheVerticle.handleReply(synthetic, reply);
       if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId(), push.caid(), push.prid(), push.srvid());
+      com.bowman.cspng.connectors.cacheex.CacheExPushLog.accepted("cccam", cacheExPeerId(), realOrigin,
+          push.caid(), push.prid(), push.srvid(), oe, push.nodeIds().size());
       if (gate != null) gate.postInjected(peerId);
     } else if (cacheExBridge != null && cacheExBridge.feedReceived(
         peerProfile, listenerId, push.caid(), push.prid(), push.srvid(), oe, cw,
         push.dataHash(), push.cycleTimeSec(), push.nextCwCycle(),
         push.nodeIds(), remoteAddress, peerId)) {
       if (statsRegistry != null) statsRegistry.countReceived(cacheExPeerId(), push.caid(), push.prid(), push.srvid());
+      com.bowman.cspng.connectors.cacheex.CacheExPushLog.accepted("cccam", cacheExPeerId(), realOrigin,
+          push.caid(), push.prid(), push.srvid(), oe, push.nodeIds().size());
       if (gate != null) gate.postInjected(peerId);
     } else {
       countDrop("invalid", push.caid(), push.prid(), push.srvid());

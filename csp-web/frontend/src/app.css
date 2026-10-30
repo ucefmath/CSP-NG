@@ -497,3 +497,12 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.55); }
 .login-promo-link:hover {
   text-decoration: underline;
 }
+.logs-filter { flex-wrap: wrap; margin-top: 8px; }
+.logs-filter-input { min-width: 260px; flex: 1 1 260px; font-family: var(--mono, monospace); }
+.input-invalid { border-color: var(--err) !important; }
+.log-hit { background: #facc15; color: #111827; border-radius: 2px; padding: 0 1px; }
+.logs-filter-guide { margin: 4px 0 10px; }
+.logs-filter-guide summary { cursor: pointer; color: var(--primary, #2563eb); }
+.logs-guide-table { margin: 6px 0; font-size: 0.85rem; }
+.logs-guide-table td, .logs-guide-table th { padding: 2px 8px; vertical-align: middle; }
+.logs-guide-list { margin: 4px 0 6px 18px; font-size: 0.85rem; }

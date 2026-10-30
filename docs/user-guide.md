@@ -63,7 +63,7 @@ curl -fsSL https://raw.githubusercontent.com/ucefmath/CSP-NG/main/install.sh | s
 Le script affiche un menu interactif prenant en charge **toutes les variantes** :
 1. **Serveur Central Complet** : installe PostgreSQL + Java 21, crée la base `csp`, vérifie les sommes SHA-256, exécute le bootstrap initial en 2 phases (désactivation automatique du listener d'exemple sur le port `15000`), configure `systemd`, **Nginx HTTPS** (au choix : certificat auto-signé sur IP, certificat Let's Encrypt sur domaine, ou loopback seul) et **Fail2ban**, puis affiche vos identifiants `admin` à l'écran.
 2. **Worker Relais Natif (sans Java)** : détecte automatiquement votre architecture (`x86_64` ou `arm64`) et votre version `glibc` (`2.31`, `2.36` ou `2.41`), installe le binaire et le service `csp-worker`.
-3. **Worker Relais JVM** : installe Java 21 et le `csp-worker-v1.0.2-shaded.jar`.
+3. **Worker Relais JVM** : installe Java 21 et le `csp-worker-v1.0.3-shaded.jar`.
 4. **Générateur PKI mTLS** : génère l'Autorité de Certification (`ca.pem`), le certificat central et l'archive cliente prête à copier sur vos workers.
 5. **Mise à jour sans coupure (`--mode upgrade`)** :
    Met à jour votre Serveur Central (`/opt/csp/current` + configuration Nginx) ou votre Worker Relais vers la dernière version sans toucher à votre base PostgreSQL ni à vos secrets :
@@ -109,8 +109,8 @@ Vous n'avez **pas besoin de compiler le code source** : téléchargez directemen
 sudo mkdir -p /opt/csp /etc/csp/secrets/imported /var/lib/csp
 cd /opt/csp
 
-curl -LO https://github.com/ucefmath/CSP-NG/releases/download/v1.0.2/csp-app-v1.0.2-quarkus-app.tar.gz
-tar -xzf csp-app-v1.0.2-quarkus-app.tar.gz
+curl -LO https://github.com/ucefmath/CSP-NG/releases/download/v1.0.3/csp-app-v1.0.3-quarkus-app.tar.gz
+tar -xzf csp-app-v1.0.3-quarkus-app.tar.gz
 ```
 
 ### 3. Premier lancement (Mode Test / Rapide)
@@ -133,7 +133,7 @@ export CSP_RUNTIME_ENABLED="false"
 
 # Autoriser l'accès HTTP local sans HTTPS pour ce premier test (sinon utilisez un reverse-proxy HTTPS) :
 java -Dcsp.admin.require-https=false -Dquarkus.http.host=0.0.0.0 \
-     -jar /opt/csp/csp-app-v1.0.2/quarkus-app/quarkus-run.jar
+     -jar /opt/csp/csp-app-v1.0.3/quarkus-app/quarkus-run.jar
 ```
 
 > 💡 **Pourquoi `CSP_RUNTIME_ENABLED="false"` au tout premier démarrage ?**
@@ -256,12 +256,12 @@ Si vous souhaitez masquer l'adresse IP de votre serveur CSP-NG vis-à-vis d'un f
 
 Vous pouvez installer de petits serveurs relais (`csp-worker`) sur des VPS distants pour rapprocher les ports d'écoute de vos clients ou répartir la charge, **sans installer ni Java ni PostgreSQL** sur ces VPS :
 
-1. Sur le VPS distant, téléchargez le binaire natif correspondant à votre système depuis la page [GitHub Releases](https://github.com/ucefmath/CSP-NG/releases/tag/v1.0.2) :
+1. Sur le VPS distant, téléchargez le binaire natif correspondant à votre système depuis la page [GitHub Releases](https://github.com/ucefmath/CSP-NG/releases/tag/v1.0.3) :
    ```bash
    # Exemple pour un VPS Linux x86_64 (Debian 11, 12, 13 ou Ubuntu 20.04, 22.04, 24.04) :
-   curl -LO https://github.com/ucefmath/CSP-NG/releases/download/v1.0.2/csp-worker-v1.0.2-linux-x86_64-glibc2.31.tar.gz
-   tar -xzf csp-worker-v1.0.2-linux-x86_64-glibc2.31.tar.gz
-   sudo install -m 0755 csp-worker-v1.0.2-linux-x86_64-glibc2.31/csp-worker /usr/local/bin/csp-worker
+   curl -LO https://github.com/ucefmath/CSP-NG/releases/download/v1.0.3/csp-worker-v1.0.3-linux-x86_64-glibc2.31.tar.gz
+   tar -xzf csp-worker-v1.0.3-linux-x86_64-glibc2.31.tar.gz
+   sudo install -m 0755 csp-worker-v1.0.3-linux-x86_64-glibc2.31/csp-worker /usr/local/bin/csp-worker
    ```
 2. Copiez vos certificats mTLS dans `/etc/csp/worker/` (`cert.pem`, `key.pem`, `ca.pem`) et installez le service systemd fourni (`csp-worker.service`).
 3. Dans l'interface Web du serveur central (**Relais & accès → Relais** — `/admin/relais`), déclarez le nœud worker (`nodeId`) et assignez-lui les Listeners et Connecteurs qu'il doit gérer. Le worker récupère automatiquement sa configuration toutes les 10 secondes !
@@ -295,7 +295,7 @@ Pour une installation de production permanente (démarrage automatique au boot, 
 - **L'application s'arrête au tout premier lancement avec une erreur sur `CSP_PROFILE_DES_KEY` :**
   Au 1er lancement sur une base vierge, démarrez avec `CSP_RUNTIME_ENABLED=false`, connectez-vous à `/admin/listeners` pour désactiver ou reconfigurer le listener Newcamd d'exemple (port `15000`), puis repassez `CSP_RUNTIME_ENABLED=true`.
 - **Quelle version de `csp-worker` choisir pour mon VPS ?**
-  En cas de doute sur un serveur Intel/AMD 64 bits, prenez **`csp-worker-v1.0.2-linux-x86_64-glibc2.31.tar.gz`** : compilé sur Debian 11 (`glibc 2.31`), il fonctionne sur toutes les distributions récentes (Debian 11/12/13, Ubuntu 20.04/22.04/24.04, AlmaLinux/Rocky 9).
+  En cas de doute sur un serveur Intel/AMD 64 bits, prenez **`csp-worker-v1.0.3-linux-x86_64-glibc2.31.tar.gz`** : compilé sur Debian 11 (`glibc 2.31`), il fonctionne sur toutes les distributions récentes (Debian 11/12/13, Ubuntu 20.04/22.04/24.04, AlmaLinux/Rocky 9).
 - **Une boîte de dialogue Basic Auth du navigateur apparaît sur `/admin/login` :**
   Si vous utilisez votre propre configuration Nginx personnalisée, ajoutez `proxy_hide_header WWW-Authenticate;` dans le bloc `server` Nginx (ou lancez `install.sh --mode upgrade` qui l'ajoute automatiquement) afin que le navigateur n'intercepte pas le `401` initial de vérification de session.
 - **J'ai oublié le mot de passe `admin` de la console Web :**

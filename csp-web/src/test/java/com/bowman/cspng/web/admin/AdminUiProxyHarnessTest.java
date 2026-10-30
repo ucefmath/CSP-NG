@@ -24,12 +24,9 @@ class AdminUiProxyHarnessTest {
     return Files.exists(FRONTEND) ? FRONTEND : Path.of("frontend/src");
   }
 
+  /** Page + namespaces i18n (les libellés vivent dans i18n/ns/*.ts depuis v1.0.2). */
   private static String read(String rel) {
-    try {
-      return Files.readString(frontend().resolve(rel), StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      throw new IllegalStateException("cannot read frontend/src/" + rel + ": " + e.getMessage(), e);
-    }
+    return FrontendSource.withI18n(rel);
   }
 
   @Test
@@ -45,8 +42,10 @@ class AdminUiProxyHarnessTest {
       assertTrue(router.contains("\"" + r + "\""), "router must declare new screen " + r);
     }
     assertTrue(ui.contains("Proxys"), "grouped nav must contain Proxys");
-    assertTrue(Pattern.compile("aria-label=\"Navigation principale\"").matcher(ui).find(),
-        "nav must be labelled");
+    assertTrue(Pattern.compile("<nav[^>]*aria-label=\\{t\\(\"shell\\.mainNav\"\\)\\}").matcher(ui).find()
+        || ui.contains("aria-label=\"Navigation principale\""), "nav must be labelled");
+    assertTrue(ui.contains("Navigation principale") && ui.contains("Main navigation"),
+        "nav label must be translated (FR/EN)");
   }
 
   @Test
