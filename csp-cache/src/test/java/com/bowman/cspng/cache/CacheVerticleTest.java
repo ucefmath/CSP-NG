@@ -644,6 +644,34 @@ class CacheVerticleTest {
   }
 
   @Test
+  void crossCaidMappedHitIsRememberedForRepeatedIdenticalEcm() throws Exception {
+    var mapping = new com.bowman.cspng.domain.dcw.DcwServiceMapping(
+        5L, "polsat_1", 0x1884, 0, 0x1813, 0, 0, 0, true, true, 0L, 1L, 0L);
+    var policy = new com.bowman.cspng.domain.dcw.DcwQualityPolicy(
+        true, true, true, true, com.bowman.cspng.domain.dcw.ChecksumMode.IGNORE,
+        com.bowman.cspng.domain.dcw.DcwRepairMode.OFF, true, java.util.List.of(), java.util.List.of(mapping));
+    verticle.setDcwPolicySupplier(() -> policy);
+
+    EcmKey pushKey = new EcmKey(0x80, 0x3D55, 0, 0x1884, 0x55555555);
+    EcmRequest pushReq = new EcmRequest(pushKey, new byte[0], "default", "peer", "@STB1@",
+        System.currentTimeMillis(), null, 5000, 0);
+    ctxRunAndWait(() -> verticle.handleReply(pushReq, new CwReply(pushKey, 0x80, CW_VALID, "L3:@STB1@", "peer", System.currentTimeMillis())));
+
+    EcmKey clientKey = new EcmKey(0x80, 0x3D55, 0, 0x1813, 0x66666666);
+    EcmRequest first = new EcmRequest(clientKey, new byte[]{1}, "polsat_2", "client", "test",
+        System.currentTimeMillis(), null, 5000, 0);
+    assertTrue(awaitResult(verticle.processRequest(0, first, true, 5000)).instant());
+
+    // La même trame ECM ré-émise doit être servie par la clé exacte, sans dépendre de l'index par service.
+    assertNotNull(verticle.peekLocalCache(clientKey), "mapped hit must be stored under the client's exact ECM key");
+    EcmRequest repeat = new EcmRequest(clientKey, new byte[]{1}, "polsat_2", "client", "test",
+        System.currentTimeMillis(), null, 5000, 0);
+    CacheResult again = awaitResult(verticle.processRequest(0, repeat, true, 5000));
+    assertTrue(again.instant());
+    assertArrayEquals(CW_VALID, again.reply().cw());
+  }
+
+  @Test
   void crossCaidMappingWakesWaitingRequestWhenPushArrivesLater() throws Exception {
     var mapping = new com.bowman.cspng.domain.dcw.DcwServiceMapping(
         4L, "TNT-0500", 0x0500, 0x030B00, 0x1883, 0x003311, 0, 0, true, true, 0L, 6L, 0L);

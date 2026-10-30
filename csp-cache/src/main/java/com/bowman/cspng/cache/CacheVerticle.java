@@ -262,6 +262,9 @@ public class CacheVerticle extends AbstractVerticle {
       CachedReply mappedCached = lookupMappedServiceCw(request, start);
       if (mappedCached != null) {
         CwReply reply = buildMappedReturnedReply(mappedCached, request);
+        // Mémorise sous la clé ECM exacte du client : les ré-émissions du même ECM (même dataHash,
+        // donc même CW) restent servies au-delà de la fenêtre de fraîcheur de l'index par service.
+        localStore.put(request.key(), new CachedReply(reply, request.profileName()));
         instantHits.incrementAndGet();
         if (reply.originAddress() != null) remoteHits.incrementAndGet();
         recordServedHit(reply, request);
